@@ -53,8 +53,8 @@ $.extend({
 //jQuery.myMethod();
 */
 var data=[];	
-rows = [1];	
-cols = [3,0,2];
+rows = [1,2];	
+cols = [3,0];
 data_col=4;	
 for (i=0;i<3;i++)
 	for (j=0;j<3;j++)
@@ -72,7 +72,9 @@ function jpv_initialSort(a,b,rows,cols)
 		 //Less than 0: Sort "a" to be a lower index than "b"
 		 //Zero: "a" and "b" should be considered equal, and no sorting performed.
 		 //Greater than 0: Sort "b" to be a lower index than "a".
-		 
+		 // rows keep idexes of row keys 
+		 // cols keep idexes of col keys 
+		 //compare by rows order then cols order
 		 for (i=0;i < rows.length;i++)
 		 		{
 		 		if (a[rows[i]] < b[rows[i]] ) return  1; 
@@ -98,6 +100,21 @@ function jpv_getIndexOfElementInArray(element, array, addIfAbsent)
 	  	}
 	  return null;
 		}
+function jpv_count_keys_span(span_array,key)	
+		{
+		//create array of [key,count] like  [ [key1,1],[key2,2],[key1,1] ]
+		var last_element=span_array.length-1
+		if ( (last_element >= 0) && (span_array[last_element][0]==key)) span_array[last_element][1]++;
+		else span_array.push([key,1]);
+		}	
+function jpv_create_2Darray(len)
+		{
+		var a=[];
+		for (i=0;i<len;i++) a.push([]);
+		return a;
+		}		
+		
+			
 function jpv_pivotDrawData($this)
 		{
 			  //draw data
@@ -176,14 +193,14 @@ function jpv_pivotDrawData($this)
     				
     		//console.dir(data_ptr); 
     		
-				//create mappings for each data row to pivot rows and cols  			
-  			var cols_composite_index=[];
-  			var rows_keys= []; for (i=0;i< rows_length; i++) rows_keys.push([]); //keep unique values for row keys
-  			var cols_keys= []; for (i=0;i< cols_length; i++) cols_keys.push([]);//keep unique values for col keys
-  			var data_row2pv_col=[];
-  			var rows_composite_index=[];
-  			var data_row2pv_row=[];  		
- 
+				
+  			var rows_keys = jpv_create_2Darray(rows_length); //keep unique values for row keys
+  			var cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys
+  			var rows_composite_index=[]; //row key value unique composite indexes
+  			var cols_composite_index=[]; //col kye value unique composite indexes			
+  			var data_row2pv_row=[];  //map raw data rows to pivot rows		
+  			var data_row2pv_col=[];  //map raw data cols to pivot cols	
+ 			
 				for (i=0; i < data_length ; i++)
 						{
 						
@@ -209,16 +226,10 @@ function jpv_pivotDrawData($this)
   		 	this.pv={};
   		 	this.pv.data_rows_count = rows_composite_index.length; 
   		 	this.pv.data_row_length = cols_composite_index.length+rows_length;
-  		 	this.pv.data=[];
+  		 	this.pv.data=jpv_create_2Darray(this.pv.data_row_length);
   		 	//init pv_data
-  		  for (r=0;r<this.pv.data_rows_count;r++)
-  		  		{
-  		  		var tmp=[];for(i=0;i<this.pv.data_row_length;i++) tmp.push(null);
-  		  		this.pv.data.push(tmp);
-  		  		}
-	  
-  		  //console.dir(pv_data); 
-  		  var data_header=[]; for (c=0;c<cols_length;c++)  data_header.push([]);
+
+  		  var data_header=jpv_create_2Darray(cols_length);
   		  for (i=0;i<data_length;i++)
   		  		{
   		  		for (j=0;j<rows_length;j++) 
@@ -228,34 +239,17 @@ function jpv_pivotDrawData($this)
 								this.pv.data[data_row2pv_row[i]][data_row2pv_col[i]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
 								if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][data_row2pv_col[i] + rows_length] = data_ptr[i][cols_ptr[c]];
   		  		}
-  		  //header for cols
-
-				this.pv.keys_rowspan=[]; 				 ind_r=[];
-				for (r=0;r<rows_length;r++) {this.pv.keys_rowspan.push([]);ind_r.push(0);}
-				for (r=0;r<this.pv.data_rows_count;r++)
-						{
-						for (i=0;i<rows_length;i++)
-								{
-								key=this.pv.data[r][i];
-								if (r==0) {this.pv.keys_rowspan[i].push([ key , 1 ]);} //init
-								else {
-										 if (key == this.pv.keys_rowspan[i][ ind_r[i] ][0]) this.pv.keys_rowspan[i][ind_r[i]][1]++
-										 else {this.pv.keys_rowspan[i].push([key,1]);ind_r[i]++}
-										 }
-								}
-						}
-				//col keys span
-				this.pv.keys_colspan=[]; 	ind_r=[] ; for (r=0;r<cols_length;r++) { this.pv.keys_colspan.push([]); ind_r.push(0);}
+  		 
+				//rows kyes span
+				this.pv.keys_rowspan=jpv_create_2Darray(rows_length);  
+				for (r=0;r<this.pv.data_rows_count;r++)	
+						for (i=0;i<rows_length;i++) 
+								jpv_count_keys_span(this.pv.keys_rowspan[i],this.pv.data[r][i])
+				//cols keys span
+				this.pv.keys_colspan=jpv_create_2Darray(cols_length);
 				for (r=0;r<cols_length;r++)
-						for (c=rows_length;c<this.pv.data_row_length;c++)
-								{
-								key=data_header[r][c];
-								if (c==rows_length) {this.pv.keys_colspan[r].push([ key , 1 ]);} //init
-								else {
-										 if (key == this.pv.keys_colspan[r][ ind_r[r] ][0]) this.pv.keys_colspan[r][ind_r[r]][1]++
-										 else {this.pv.keys_colspan[r].push([key,1]);ind_r[r]++}
-										 }
-								}
+						for (c=rows_length;c<this.pv.data_row_length;c++)								
+								jpv_count_keys_span(this.pv.keys_colspan[r],data_header[r][c]);
 				//th_row_cnt.push(key,cnt)
 				jpv_pivotDrawData(this);
 				return this;                    
