@@ -175,36 +175,42 @@ function jpv_pivotDrawData($this)
     		data_ptr.sort(function(a,b){return jpv_initialSort(a,b,rows,cols);});
     				
     		//console.dir(data_ptr); 
-				//create unique col indexes (col keys)    			
-  			var composite_index='';
-  			
-  			var cols_unic_key=new Array();
+    		
+				//create mappings for each data row to pivot rows and cols  			
+  			var cols_composite_index=[];
+  			var rows_keys= []; for (i=0;i< rows_length; i++) rows_keys.push([]); //keep unique values for row keys
+  			var cols_keys= []; for (i=0;i< cols_length; i++) cols_keys.push([]);//keep unique values for col keys
   			var data_row2pv_col=[];
-  			var rows_unic_key=new Array();
-  			var data_row2pv_row=[];  			
+  			var rows_composite_index=[];
+  			var data_row2pv_row=[];  		
+ 
 				for (i=0; i < data_length ; i++)
 						{
 						
-						composite_index_cols='';
-		  			for (j=0;j<cols_length;j++)	composite_index_cols += data_ptr[i][cols_ptr[j]]+'~~~';  							
-		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index_cols,cols_unic_key,true);
+						composite_index='';
+		  			for (j=0;j<cols_length;j++)	
+		  				{
+		  				composite_index += data_ptr[i][cols_ptr[j]]+'~~~';  							
+		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],cols_keys[j],true);
+		  			  }
+		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index,cols_composite_index,true);
 		  			
-						composite_index_rows='';
+						composite_index='';
 		  			for (j=0;j<rows_length;j++) 
-		  			{
-		  				composite_index_rows += data_ptr[i][rows_ptr[j]]+'~~~'; 
-		  			}
-		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index_rows,rows_unic_key,true);
+				  			{
+				  			composite_index += data_ptr[i][rows_ptr[j]]+'~~~'; 
+				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],rows_keys[j],true);
+				  		  }
+		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index,rows_composite_index,true);
 		  			
 		  			}
 
 	 	
   		 	this.pv={};
-  		 	this.pv.data_rows_count = rows_unic_key.length; 
-  		 	this.pv.data_row_length = cols_unic_key.length+rows_length;
+  		 	this.pv.data_rows_count = rows_composite_index.length; 
+  		 	this.pv.data_row_length = cols_composite_index.length+rows_length;
   		 	this.pv.data=[];
   		 	//init pv_data
-  		 	
   		  for (r=0;r<this.pv.data_rows_count;r++)
   		  		{
   		  		var tmp=[];for(i=0;i<this.pv.data_row_length;i++) tmp.push(null);
@@ -212,6 +218,7 @@ function jpv_pivotDrawData($this)
   		  		}
 	  
   		  //console.dir(pv_data); 
+  		  var data_header=[]; for (c=0;c<cols_length;c++)  data_header.push([]);
   		  for (i=0;i<data_length;i++)
   		  		{
   		  		for (j=0;j<rows_length;j++) 
