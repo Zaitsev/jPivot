@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>jQuery UI Example Page</title>
+		<link type="text/css" href="css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.7.2.custom.min.js"></script>
+		<script type="text/javascript">
+/*
+(function($) { 
+// Private Variables and Functions 
+var privateVariable = {}; 
+function privateFunction() { 
+}; 
+
+// Public Variables and Methods 
+$.namespace = { 
+        options: {}, 
+        publicVariable: []; 
+        publicMethod: function() {} 
+}; 
+
+// Prototype Methods 
+$.fn.extend({ 
+                usernameMethod: function() { 
+                        return this.each(function() { 
+                                        // Persistent Context Variables 
+                                        this.contextVariable = 'foo'; 
+                        } 
+                }. 
+                unusernameMethod: function() { 
+                        return this.each(function() { 
+                                        delete this.contextVariable; 
+                        } 
+                } 
+}); 
+
+//Initialization Code 
+$(function() { 
+}); 
+})(jQuery);
+*/			
+/*
+$.fn.extend({  
+    myMethod: function(){...}  
+});  
+//jQuery("div").myMethod();  
+  
+$.extend({  
+    myMethod2: function(){...}  
+});  
+//jQuery.myMethod();
+*/
+var data=[];	
+rows = [1];	
+cols = [3,0,2];
+data_col=4;	
+for (i=0;i<3;i++)
+	for (j=0;j<3;j++)
+		for (k=0;k<2;k++)
+			for (n=0;n<3;n++)
+			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,'r-s'+i+'-b'+j+'-q'+k+'-qn'+n]);
+			
+			
+			
+(function($) { 
+// Private Variables and Functions 
+function jpv_initialSort(a,b,rows,cols)
+		{
+		 //Compare "a" and "b" in some fashion, and return -1, 0, or 1
+		 //Less than 0: Sort "a" to be a lower index than "b"
+		 //Zero: "a" and "b" should be considered equal, and no sorting performed.
+		 //Greater than 0: Sort "b" to be a lower index than "a".
+		 
+		 for (i=0;i < rows.length;i++)
+		 		{
+		 		if (a[rows[i]] < b[rows[i]] ) return  1; 
+		 		if (a[rows[i]] > b[rows[i]] ) return -1; 
+		 		}
+		 for (i=0;i < cols.length;i++)
+		 		{
+		 		if (a[cols[i]] < b[cols[i]] ) return  1; 
+		 		if (a[cols[i]] > b[cols[i]] ) return -1; 
+		 		}								 		
+		 return 0;
+		}
+function jpv_getIndexOfElementInArray(element, array, addIfAbsent) 
+		{
+	  for (var i = 0; i < array.length; i++) 
+	  	{
+	    if (element == array[i])       return i;
+	  	}
+	  if (addIfAbsent) 
+	  	{
+	    array.push(element);
+	    return (array.length - 1);
+	  	}
+	  return null;
+		}
+function jpv_pivotDrawData($this)
+		{
+			  //draw data
+			  //start header draw
+				var table_data_html=[];
+				var opts=$this.opts;
+				var pv=$this.pv;
+				table_data_html.push('<table class="pv_table">');
+				//header colspans
+				for (r=0;r < pv.keys_colspan.length;r++)
+						{
+						len=pv.keys_colspan[r].length;
+				table_data_html.push('<tr>'); 				
+						for (c=0;c<len;c++)
+								{
+								if ((r==0) && (c==0)) table_data_html.push('<th colspan="'+pv.keys_rowspan.length+'" rowspan="'+pv.keys_colspan.length+'"></th>'); //top left td
+								table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
+							  }
+				table_data_html.push('</tr>'); 
+						}
+				
+				//draw data
+				var ind_r=[]; for (r=0; r < opts.rows_length;r++) {ind_r.push([0,0]);}
+				for (r=0;r< pv.data_rows_count;r++)
+			  		{
+			  		table_data_html.push('<tr>');
+			  		for (c=0;c< pv.data_row_length;c++)
+			  			{
+			  					if ( (c < opts.rows_length)  )
+			  						{//header
+			  						if (ind_r[c][0] == r)
+			  							{
+			  							table_data_html.push('<th  rowspan = "'+pv.keys_rowspan[c][ind_r[c][1]][1]+'" class="ui-state-default">'+pv.keys_rowspan[c][ind_r[c][1]][0]+'</th>');
+			  							ind_r[c][0] += pv.keys_rowspan[c][ind_r[c][1]][1]; //set when next th will be needed by row
+			  							ind_r[c][1]++ ; //set for which section we see
+			  							}
+			  						}
+			  					else
+			  						{//data
+			  						table_data_html.push('<td>'+pv.data[r][c]+'</td>');
+			  						}
+			  			}
+			  		table_data_html.push('</tr>');
+			  		}
+				table_data_html.push('</table>');
+				//end draw data
+				var str=table_data_html.join(' ');
+	
+				$($this).append(str);
+		
+		}
+			
+			
+// Public Variables and Methods declare
+
+
+// Prototype Methods 
+;jQuery.fn.jPivot = function(options)
+    {
+		var jpivot_opts = options; //pass options to each object
+    return this.each(function() { 
+				if (this.jpivot_opts) return; //this is me, next...
+        // Persistent Context Variables 
+        this.contextVariable = 'foo'; 
+    		this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
+    		var tmp_1=0;
+				var data_length=this.opts.data.length;
+				var data_ptr=this.opts.data;   
+				var rows_ptr=this.opts.rows;
+				var rows_length=this.opts.rows.length;
+				var cols_ptr=this.opts.cols;	
+				var cols_length = this.opts.cols.length;
+				
+    		//sort by rows-cols headers
+    		data_ptr.sort(function(a,b){return jpv_initialSort(a,b,rows,cols);});
+    				
+    		//console.dir(data_ptr); 
+				//create unique col indexes (col keys)    			
+  			var composite_index='';
+  			
+  			var cols_unic_key=new Array();
+  			var data_row2pv_col=[];
+  			var rows_unic_key=new Array();
+  			var data_row2pv_row=[];  			
+				for (i=0; i < data_length ; i++)
+						{
+						
+						composite_index_cols='';
+		  			for (j=0;j<cols_length;j++)	composite_index_cols += data_ptr[i][cols_ptr[j]]+'~~~';  							
+		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index_cols,cols_unic_key,true);
+		  			
+						composite_index_rows='';
+		  			for (j=0;j<rows_length;j++) 
+		  			{
+		  				composite_index_rows += data_ptr[i][rows_ptr[j]]+'~~~'; 
+		  			}
+		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index_rows,rows_unic_key,true);
+		  			
+		  			}
+
+	 	
+  		 	this.pv={};
+  		 	this.pv.data_rows_count = rows_unic_key.length; 
+  		 	this.pv.data_row_length = cols_unic_key.length+rows_length;
+  		 	this.pv.data=[];
+  		 	//init pv_data
+  		 	
+  		  for (r=0;r<this.pv.data_rows_count;r++)
+  		  		{
+  		  		var tmp=[];for(i=0;i<this.pv.data_row_length;i++) tmp.push(null);
+  		  		this.pv.data.push(tmp);
+  		  		}
+	  
+  		  //console.dir(pv_data); 
+  		  for (i=0;i<data_length;i++)
+  		  		{
+  		  		for (j=0;j<rows_length;j++) 
+  		  				{
+  		  				this.pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
+  		  				}
+								this.pv.data[data_row2pv_row[i]][data_row2pv_col[i]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
+								if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][data_row2pv_col[i] + rows_length] = data_ptr[i][cols_ptr[c]];
+  		  		}
+  		  //header for cols
+
+				this.pv.keys_rowspan=[]; 				 ind_r=[];
+				for (r=0;r<rows_length;r++) {this.pv.keys_rowspan.push([]);ind_r.push(0);}
+				for (r=0;r<this.pv.data_rows_count;r++)
+						{
+						for (i=0;i<rows_length;i++)
+								{
+								key=this.pv.data[r][i];
+								if (r==0) {this.pv.keys_rowspan[i].push([ key , 1 ]);} //init
+								else {
+										 if (key == this.pv.keys_rowspan[i][ ind_r[i] ][0]) this.pv.keys_rowspan[i][ind_r[i]][1]++
+										 else {this.pv.keys_rowspan[i].push([key,1]);ind_r[i]++}
+										 }
+								}
+						}
+				//col keys span
+				this.pv.keys_colspan=[]; 	ind_r=[] ; for (r=0;r<cols_length;r++) { this.pv.keys_colspan.push([]); ind_r.push(0);}
+				for (r=0;r<cols_length;r++)
+						for (c=rows_length;c<this.pv.data_row_length;c++)
+								{
+								key=data_header[r][c];
+								if (c==rows_length) {this.pv.keys_colspan[r].push([ key , 1 ]);} //init
+								else {
+										 if (key == this.pv.keys_colspan[r][ ind_r[r] ][0]) this.pv.keys_colspan[r][ind_r[r]][1]++
+										 else {this.pv.keys_colspan[r].push([key,1]);ind_r[r]++}
+										 }
+								}
+				//th_row_cnt.push(key,cnt)
+				jpv_pivotDrawData(this);
+				return this;                    
+    });    	
+
+		}
+
+;$.fn.jPivot.defaults=
+		{
+		data:null
+		,rows:null
+		,cols:null
+		,data_col:null	
+		}	
+
+
+//Initialization Code 
+$(function() { }); 
+})(jQuery);			
+
+$(document).ready(function()
+	{
+	$('#pv').jPivot({data:data,rows:rows,cols:cols,data_col:data_col});  	
+	}
+	);
+
+			
+		</script>
+		<style>
+			table.pv_table{border-collapse:collapse;border:1px solid red;}
+			.pv_table td{border:1px solid green;}
+			.pv_table th{border:1px solid silver;}
+		</style>
+	</head>
+	<body>
+		<hr>
+		<div id='pv'></div>
+		<hr>
+		<div id='pv2'></div>
+	</body>
