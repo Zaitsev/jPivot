@@ -3,7 +3,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 		<title>jQuery UI Example Page</title>
-		<link type="text/css" href="./css/cupertino/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		<link type="text/css" href="./css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
 		<script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
 		<script type="text/javascript" src="./js/jquery-ui-1.7.2.custom.min.js"></script>
 		<script type="text/javascript">
@@ -62,7 +62,7 @@ for (i=0;i<3;i++)
 			for (n=0;n<3;n++)
 			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,'r-s'+i+'-b'+j+'-q'+k+'-qn'+n]);
 			
-			
+var data_headers = ['header s','header b','header q','header qn','header datacol']	;	
 			
 (function($) { 
 // Private Variables and Functions 
@@ -113,8 +113,17 @@ function jpv_create_2Darray(len)
 		for (i=0;i<len;i++) a.push([]);
 		return a;
 		}		
-		
-			
+function jpv_keys_placeholder_update(event,ui)
+		{
+			var str;
+		$('li','#pv_colkeys_placeholder').each(
+				function () 
+					{ 
+					console.info($(this).attr('value')) 
+					}
+				)
+		}			
+					
 function jpv_pivotDrawData($this)
 		{
 			  //draw data
@@ -130,12 +139,22 @@ function jpv_pivotDrawData($this)
 				table_data_html.push("<tr>\n"); 				
 						for (c=0;c<len;c++)
 								{
-								if ((r==0) && (c==0)) table_data_html.push('<th colspan="'+pv.keys_rowspan.length+'" rowspan="'+pv.keys_colspan.length+'"></th>'); //top left td
+								if ((r==0) && (c==0)) 
+									{
+									table_data_html.push('<th colspan="'+pv.keys_rowspan.length+'" rowspan="'+pv.keys_colspan.length+'"></th>'); //top left td
+									//col keys dragable
+									table_data_html.push('<th style="min-width:40px;" rowspan="'+pv.keys_colspan.length+'"><ul class="pv_keys_placeholder" id="pv_colkeys_placeholder">');
+									for (i=0;i<opts.cols.length;i++) table_data_html.push('<li  value="'+opts.cols[i]+'"class="ui-state-highlight">'+opts.data_headers[opts.cols[i]] +'</li>');
+									table_data_html.push('</ul></th>');
+									}
 								table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
 							  }
 				table_data_html.push("</tr>\n"); 
 						}
-				
+				//row keys dragable
+				table_data_html.push('<tr><th colspan="'+pv.keys_rowspan.length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
+				for (i=0;i<opts.rows.length;i++) table_data_html.push('<li value="'+opts.rows[i]+'" class="ui-state-highlight">'+opts.data_headers[opts.rows[i]] +'</li>');
+				table_data_html.push("<td rowspan="+(1+pv.data_rows_count)+"></td><td colspan="+(pv.data_row_length-opts.rows.length)+"></td></ul></tr>\n"); 
 				//draw data
 				var ind_r=[]; for (r=0; r < pv.keys_rowspan.length;r++) {ind_r.push([0,0]);}
 				for (r=0;r< pv.data_rows_count;r++)
@@ -164,10 +183,22 @@ function jpv_pivotDrawData($this)
 				var str=table_data_html.join(' ');
 	
 				$($this).append(str);
+				$('#pv_rowkeys_placeholder, #pv_colkeys_placeholder',$this).sortable(
+						{ 
+						connectWith: '.pv_keys_placeholder'
+						,forcePlaceholderSize: true 
+						,forceHelperSize: true
+						,helper: 'clone'
+						,opacity: '0.6'
+						,placeholder: 'ui-state-default'
+						,tolerance: 'pointer'
+						,cursorAt:  'top,left' 
+						,cursor: 'default'
+						,stop: function(event, ui){jpv_keys_placeholder_update(event, ui)}
+						}).disableSelection();
 		
 		}
-			
-			
+
 // Public Variables and Methods declare
 
 
@@ -224,8 +255,6 @@ function jpv_pivotDrawData($this)
 		  			}
 
 	 	
-				console.dir(this.pv.cols_keys);
-				console.dir(this.pv.rows_keys);
   		 	this.pv.data_rows_count = rows_composite_index.length; 
   		 	this.pv.data_row_length = cols_composite_index.length+rows_length;
   		 	this.pv.data=jpv_create_2Darray(this.pv.data_row_length);
@@ -264,7 +293,8 @@ function jpv_pivotDrawData($this)
 		data:null
 		,rows:null
 		,cols:null
-		,data_col:null	
+		,data_col:null
+		,data_headers:null
 		}	
 
 
@@ -274,7 +304,7 @@ $(function() { });
 
 $(document).ready(function()
 	{
-	$('#pv').jPivot({data:data,rows:rows,cols:cols,data_col:data_col});  	
+	$('#pv').jPivot({data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers});  	
 	}
 	);
 
@@ -284,6 +314,10 @@ $(document).ready(function()
 			table.pv_table{border-collapse:collapse;border:1px solid red;}
 			.pv_table td{border:1px solid green;}
 			.pv_table th{border:1px solid silver;}
+			.pv_keys_placeholder {padding:0px;list-style-type: none;}
+			#pv_rowkeys_placeholder li {float:left;}	
+			#pv_rowkeys_placeholder{padding-bottom:8px;}
+			#pv_colkeys_placeholder{padding-bottom:8px;}
 		</style>
 	</head>
 	<body>
