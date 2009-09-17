@@ -1,0 +1,67 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+		<title>jQuery UI Example Page</title>
+		<link type="text/css" href="./css/swanky-purse/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		<script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
+		<script type="text/javascript" src="./js/jquery-ui-1.7.2.custom.min.js"></script>
+
+	<script type="text/javascript" type="text/css">
+// create closure
+
+(function($) { 
+// Private Variables and Functions 
+var privateVariable = {}; 
+function privateFunction() { 
+}; 
+
+// Public Variables and Methods 
+$.namespace = { 
+        options: {}, 
+        publicVariable: []; 
+        publicMethod: function() {} 
+}; 
+
+// Prototype Methods 
+$.fn.extend({ 
+                usernameMethod: function() { 
+                        return this.each(function() { 
+                                        // Persistent Context Variables 
+                                        this.contextVariable = 'foo'; 
+                        } 
+                }. 
+                unusernameMethod: function() { 
+                        return this.each(function() { 
+                                        delete this.contextVariable; 
+                        } 
+                } 
+}); 
+
+//Initialization Code 
+$(function() { 
+}); 
+})(jQuery);
+
+
+$(document).ready(function()
+	{
+	
+	$('#pv2').usernameMethod();
+	//$('#pv2').unusernameMethod();
+	$.namespace.publicMethod();
+	$.namespace.meth();
+ $('#pv2').PVV();
+	
+
+	}
+	);	
+console.profileEnd()				
+	</script>
+	</head>
+	<body>
+		<hr>
+		<div id='pv'>pv1 div</div>
+		<hr>
+		<div id='pv2'>pv2.div</div>
+	
+	</body>				
