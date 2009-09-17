@@ -3,9 +3,9 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 		<title>jQuery UI Example Page</title>
-		<link type="text/css" href="css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
-		<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
-		<script type="text/javascript" src="js/jquery-ui-1.7.2.custom.min.js"></script>
+		<link type="text/css" href="./css/cupertino/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		<script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
+		<script type="text/javascript" src="./js/jquery-ui-1.7.2.custom.min.js"></script>
 		<script type="text/javascript">
 /*
 (function($) { 
@@ -127,23 +127,23 @@ function jpv_pivotDrawData($this)
 				for (r=0;r < pv.keys_colspan.length;r++)
 						{
 						len=pv.keys_colspan[r].length;
-				table_data_html.push('<tr>'); 				
+				table_data_html.push("<tr>\n"); 				
 						for (c=0;c<len;c++)
 								{
 								if ((r==0) && (c==0)) table_data_html.push('<th colspan="'+pv.keys_rowspan.length+'" rowspan="'+pv.keys_colspan.length+'"></th>'); //top left td
 								table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
 							  }
-				table_data_html.push('</tr>'); 
+				table_data_html.push("</tr>\n"); 
 						}
 				
 				//draw data
-				var ind_r=[]; for (r=0; r < opts.rows_length;r++) {ind_r.push([0,0]);}
+				var ind_r=[]; for (r=0; r < pv.keys_rowspan.length;r++) {ind_r.push([0,0]);}
 				for (r=0;r< pv.data_rows_count;r++)
 			  		{
-			  		table_data_html.push('<tr>');
+			  		table_data_html.push("<tr>\n"); 
 			  		for (c=0;c< pv.data_row_length;c++)
 			  			{
-			  					if ( (c < opts.rows_length)  )
+			  					if  (c < pv.keys_rowspan.length)  
 			  						{//header
 			  						if (ind_r[c][0] == r)
 			  							{
@@ -157,7 +157,7 @@ function jpv_pivotDrawData($this)
 			  						table_data_html.push('<td>'+pv.data[r][c]+'</td>');
 			  						}
 			  			}
-			  		table_data_html.push('</tr>');
+			  		table_data_html.push("</tr>\n");
 			  		}
 				table_data_html.push('</table>');
 				//end draw data
@@ -180,6 +180,7 @@ function jpv_pivotDrawData($this)
         // Persistent Context Variables 
         this.contextVariable = 'foo'; 
     		this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
+				this.pv={}; //context pivot data
     		var tmp_1=0;
 				var data_length=this.opts.data.length;
 				var data_ptr=this.opts.data;   
@@ -194,8 +195,8 @@ function jpv_pivotDrawData($this)
     		//console.dir(data_ptr); 
     		
 				
-  			var rows_keys = jpv_create_2Darray(rows_length); //keep unique values for row keys
-  			var cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys
+  			this.pv.rows_keys = jpv_create_2Darray(rows_length); //keep unique values for row keys
+  			this.pv.cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys
   			var rows_composite_index=[]; //row key value unique composite indexes
   			var cols_composite_index=[]; //col kye value unique composite indexes			
   			var data_row2pv_row=[];  //map raw data rows to pivot rows		
@@ -208,7 +209,7 @@ function jpv_pivotDrawData($this)
 		  			for (j=0;j<cols_length;j++)	
 		  				{
 		  				composite_index += data_ptr[i][cols_ptr[j]]+'~~~';  							
-		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],cols_keys[j],true);
+		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],this.pv.cols_keys[j],true);
 		  			  }
 		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index,cols_composite_index,true);
 		  			
@@ -216,14 +217,15 @@ function jpv_pivotDrawData($this)
 		  			for (j=0;j<rows_length;j++) 
 				  			{
 				  			composite_index += data_ptr[i][rows_ptr[j]]+'~~~'; 
-				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],rows_keys[j],true);
+				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],this.pv.rows_keys[j],true);
 				  		  }
 		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index,rows_composite_index,true);
 		  			
 		  			}
 
 	 	
-  		 	this.pv={};
+				console.dir(this.pv.cols_keys);
+				console.dir(this.pv.rows_keys);
   		 	this.pv.data_rows_count = rows_composite_index.length; 
   		 	this.pv.data_row_length = cols_composite_index.length+rows_length;
   		 	this.pv.data=jpv_create_2Darray(this.pv.data_row_length);
