@@ -53,19 +53,20 @@ $.extend({
 //jQuery.myMethod();
 */
 var data=[];	
-rows = [1,2];	
-cols = [3,0];
-data_col=4;	
+var rows = [1,2];	
+var cols = [3,0];
+var data_col=4;	
 for (i=0;i<3;i++)
 	for (j=0;j<3;j++)
 		for (k=0;k<2;k++)
 			for (n=0;n<3;n++)
-			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,'r-s'+i+'-b'+j+'-q'+k+'-qn'+n]);
+			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,n]);
 			
 var data_headers = ['header s','header b','header q','header qn','header datacol']	;	
 			
 (function($) { 
-// Private Variables and Functions 
+// Private Variables and Functions
+var  jpv_keys_placeholder_update_list_cnt=0; 
 function jpv_initialSort(a,b,rows,cols)
 		{
 		 //Compare "a" and "b" in some fashion, and return -1, 0, or 1
@@ -113,15 +114,33 @@ function jpv_create_2Darray(len)
 		for (i=0;i<len;i++) a.push([]);
 		return a;
 		}		
-function jpv_keys_placeholder_update(event,ui)
+function jpv_keys_placeholder_update($this)
 		{
-			var str;
-		$('li','#pv_colkeys_placeholder').each(
-				function () 
-					{ 
-					console.info($(this).attr('value')) 
-					}
-				)
+		//this func called for each lists (we have 2) so wait until last 
+		if (jpv_keys_placeholder_update_list_cnt++ > 0) 
+			{
+			var rows=[]; var cols=[];
+			$('li','#pv_colkeys_placeholder').each(
+					function () 
+						{ 
+						cols.push($(this).attr('value')) 
+						}
+					);
+			$('li','#pv_rowkeys_placeholder').each(
+					function () 
+						{ 
+						rows.push($(this).attr('value')) 
+						}
+					)	;			
+			jpv_keys_placeholder_update_list_cnt=0;
+			$this.opts.cols=cols;
+			$this.opts.rows=rows;
+			//console.dir(rows);
+			//console.dir(cols);	
+			jQuery.fn.jPivot.preparePv($this);
+			jpv_pivotDrawData($this);
+			}
+
 		}			
 					
 function jpv_pivotDrawData($this)
@@ -136,7 +155,7 @@ function jpv_pivotDrawData($this)
 				for (r=0;r < pv.keys_colspan.length;r++)
 						{
 						len=pv.keys_colspan[r].length;
-				table_data_html.push("<tr>\n"); 				
+				table_data_html.push("<tr id=\"pv_tr_h_col"+r+"\">\n"); 				
 						for (c=0;c<len;c++)
 								{
 								if ((r==0) && (c==0)) 
@@ -152,7 +171,7 @@ function jpv_pivotDrawData($this)
 				table_data_html.push("</tr>\n"); 
 						}
 				//row keys dragable
-				table_data_html.push('<tr><th colspan="'+pv.keys_rowspan.length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
+				table_data_html.push('<tr><th style="min-width:40px;" colspan="'+pv.keys_rowspan.length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
 				for (i=0;i<opts.rows.length;i++) table_data_html.push('<li value="'+opts.rows[i]+'" class="ui-state-highlight">'+opts.data_headers[opts.rows[i]] +'</li>');
 				table_data_html.push("<td rowspan="+(1+pv.data_rows_count)+"></td><td colspan="+(pv.data_row_length-opts.rows.length)+"></td></ul></tr>\n"); 
 				//draw data
@@ -182,7 +201,7 @@ function jpv_pivotDrawData($this)
 				//end draw data
 				var str=table_data_html.join(' ');
 	
-				$($this).append(str);
+				$($this).empty().append(str);
 				$('#pv_rowkeys_placeholder, #pv_colkeys_placeholder',$this).sortable(
 						{ 
 						connectWith: '.pv_keys_placeholder'
@@ -194,9 +213,11 @@ function jpv_pivotDrawData($this)
 						,tolerance: 'pointer'
 						,cursorAt:  'top,left' 
 						,cursor: 'default'
-						,stop: function(event, ui){jpv_keys_placeholder_update(event, ui)}
+						,deactivate: function(event, ui){jpv_keys_placeholder_update($this)}
 						}).disableSelection();
-		
+				//set height of li
+				for (r=0;r < pv.keys_colspan.length;r++)
+				$('#pv_colkeys_placeholder li:eq('+r+')',$this).height($("#pv_tr_h_col"+r).height());
 		}
 
 // Public Variables and Methods declare
@@ -205,29 +226,46 @@ function jpv_pivotDrawData($this)
 // Prototype Methods 
 ;jQuery.fn.jPivot = function(options)
     {
-		var jpivot_opts = options; //pass options to each object
+    var jpivot_opts = options; //pass options to each pivot
     return this.each(function() { 
-				if (this.jpivot_opts) return; //this is me, next...
-        // Persistent Context Variables 
-        this.contextVariable = 'foo'; 
+				if (this.pv) return; //this is me, next...
     		this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
-				this.pv={}; //context pivot data
+				this.pv={}; //context pivot data			
+				jQuery.fn.jPivot.preparePv(this)
+				jpv_pivotDrawData(this);
+				
+				return this;                    
+    });    	
+
+		}
+;jQuery.fn.jPivotDraw =		function($this)
+		{
+
+		}		
+;jQuery.fn.jPivot.preparePv =		function($this)
+		{
+        // Persistent Context Variables 
+        var pv = $this.pv
     		var tmp_1=0;
-				var data_length=this.opts.data.length;
-				var data_ptr=this.opts.data;   
-				var rows_ptr=this.opts.rows;
-				var rows_length=this.opts.rows.length;
-				var cols_ptr=this.opts.cols;	
-				var cols_length = this.opts.cols.length;
+				var data_length=$this.opts.data.length;
+				var data_ptr=$this.opts.data;   
+				var rows_ptr=$this.opts.rows;
+				var rows_length=$this.opts.rows.length;
+				var cols_ptr=$this.opts.cols;	
+				var cols_length = $this.opts.cols.length;
+				
+  			pv.rows_keys = jpv_create_2Darray(rows_length); //keep unique values for row keys
+  			pv.cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys				
+
+
 				
     		//sort by rows-cols headers
-    		data_ptr.sort(function(a,b){return jpv_initialSort(a,b,rows,cols);});
+    		data_ptr.sort(function(a,b){return jpv_initialSort(a,b,rows_ptr,cols_ptr);});
     				
     		//console.dir(data_ptr); 
     		
 				
-  			this.pv.rows_keys = jpv_create_2Darray(rows_length); //keep unique values for row keys
-  			this.pv.cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys
+
   			var rows_composite_index=[]; //row key value unique composite indexes
   			var cols_composite_index=[]; //col kye value unique composite indexes			
   			var data_row2pv_row=[];  //map raw data rows to pivot rows		
@@ -240,7 +278,7 @@ function jpv_pivotDrawData($this)
 		  			for (j=0;j<cols_length;j++)	
 		  				{
 		  				composite_index += data_ptr[i][cols_ptr[j]]+'~~~';  							
-		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],this.pv.cols_keys[j],true);
+		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],pv.cols_keys[j],true);
 		  			  }
 		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index,cols_composite_index,true);
 		  			
@@ -248,16 +286,16 @@ function jpv_pivotDrawData($this)
 		  			for (j=0;j<rows_length;j++) 
 				  			{
 				  			composite_index += data_ptr[i][rows_ptr[j]]+'~~~'; 
-				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],this.pv.rows_keys[j],true);
+				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],pv.rows_keys[j],true);
 				  		  }
 		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index,rows_composite_index,true);
 		  			
 		  			}
 
 	 	
-  		 	this.pv.data_rows_count = rows_composite_index.length; 
-  		 	this.pv.data_row_length = cols_composite_index.length+rows_length;
-  		 	this.pv.data=jpv_create_2Darray(this.pv.data_row_length);
+  		 	pv.data_rows_count = rows_composite_index.length; 
+  		 	pv.data_row_length = cols_composite_index.length+rows_length;
+  		 	pv.data=jpv_create_2Darray(pv.data_rows_count);
   		 	//init pv_data
 
   		  var data_header=jpv_create_2Darray(cols_length);
@@ -265,27 +303,23 @@ function jpv_pivotDrawData($this)
   		  		{
   		  		for (j=0;j<rows_length;j++) 
   		  				{
-  		  				this.pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
+  		  				pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
   		  				}
-								this.pv.data[data_row2pv_row[i]][data_row2pv_col[i]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
+								pv.data[data_row2pv_row[i]][data_row2pv_col[i]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
 								if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][data_row2pv_col[i] + rows_length] = data_ptr[i][cols_ptr[c]];
   		  		}
   		 
 				//rows kyes span
-				this.pv.keys_rowspan=jpv_create_2Darray(rows_length);  
-				for (r=0;r<this.pv.data_rows_count;r++)	
-						for (i=0;i<rows_length;i++) 
-								jpv_count_keys_span(this.pv.keys_rowspan[i],this.pv.data[r][i])
+				pv.keys_rowspan=jpv_create_2Darray(rows_length);  
+				for (r=0;r < pv.data_rows_count;r++)	
+						for (i=0; i < rows_length; i++) 
+								jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
 				//cols keys span
-				this.pv.keys_colspan=jpv_create_2Darray(cols_length);
-				for (r=0;r<cols_length;r++)
-						for (c=rows_length;c<this.pv.data_row_length;c++)								
-								jpv_count_keys_span(this.pv.keys_colspan[r],data_header[r][c]);
-				//th_row_cnt.push(key,cnt)
-				jpv_pivotDrawData(this);
-				return this;                    
-    });    	
-
+				pv.keys_colspan=jpv_create_2Darray(cols_length);
+				for (r=0; r < cols_length; r++)
+						for (c=rows_length; c < pv.data_row_length; c++)								
+								jpv_count_keys_span(pv.keys_colspan[r],data_header[r][c]);
+				//th_row_cnt.push(key,cnt)			
 		}
 
 ;$.fn.jPivot.defaults=
@@ -314,10 +348,10 @@ $(document).ready(function()
 			table.pv_table{border-collapse:collapse;border:1px solid red;}
 			.pv_table td{border:1px solid green;}
 			.pv_table th{border:1px solid silver;}
-			.pv_keys_placeholder {padding:0px;list-style-type: none;}
+			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
 			#pv_rowkeys_placeholder li {float:left;}	
-			#pv_rowkeys_placeholder{padding-bottom:8px;}
-			#pv_colkeys_placeholder{padding-bottom:8px;}
+			#pv_rowkeys_placeholder{padding-bottom:0px;}
+			#pv_colkeys_placeholder{padding-bottom:0px;}
 		</style>
 	</head>
 	<body>
