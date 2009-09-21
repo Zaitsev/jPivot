@@ -53,14 +53,14 @@ $.extend({
 //jQuery.myMethod();
 */
 var data=[];	
-var rows = [1,2];	
-var cols = [3,0];
+var rows = [0,1];	
+var cols = [2,3];
 var data_col=4;	
 for (i=0;i<3;i++)
 	for (j=0;j<3;j++)
 		for (k=0;k<2;k++)
 			for (n=0;n<3;n++)
-			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,n]);
+			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,'s'+i+'-b'+j+'-q'+k+'-qn'+n]);
 			
 var data_headers = ['header s','header b','header q','header qn','header datacol']	;	
 			
@@ -141,7 +141,53 @@ function jpv_keys_placeholder_update($this)
 			jpv_pivotDrawData($this);
 			}
 
-		}			
+		}	
+function jpv_keys_placeholder_popup($this,place_id,filter_array)
+		{
+				var dialog='';
+				var dlg_opts={
+						autoOpen:false
+					 ,title:false
+					 ,dialogClass:'pv_dialog'
+					 ,buttons: {
+										Ok: function() {
+											jQuery.fn.jPivot.preparePv($this);
+											jpv_pivotDrawData($this);
+											$(this).dialog('close');
+										}
+										,Cancel: function() {
+											$(this).dialog('close');
+										}
+										
+									}					 
+					 };
+				for (k=0;k<filter_array.length;k++)					
+						{
+						var selector=place_id+k+'dlg';
+						dialog='<div id="'+selector+'" style="display:none">';
+						dialog +='asc<input type="radio" name="'+selector+'_order" value="A">dsc<input type="radio" name="'+selector+'_order" value="D"><hr>'
+						//selector ='#'+selector;
+						for (i=0;i<filter_array[k].length;i++)
+								{
+								dialog +=filter_array[k][i]+'<input type="checkbox" name="'+selector+'_flt[]" value="'+filter_array[k][i]+'"><br>'
+								}
+						dialog +='</div>';
+						$($this).append(dialog);
+						$('#'+selector).dialog(dlg_opts);
+						$('#'+place_id+' li:eq('+k+')',$this).bind
+									(
+									"click"
+									,{selector:'#'+selector}
+									,function(e) 
+											{
+													$(e.data.selector)
+															.dialog('option', 'position', [e.pageX,e.pageY])
+															.dialog("open")
+											}
+									 );
+						}
+		
+		}		
 					
 function jpv_pivotDrawData($this)
 		{
@@ -172,7 +218,10 @@ function jpv_pivotDrawData($this)
 						}
 				//row keys dragable
 				table_data_html.push('<tr><th style="min-width:40px;" colspan="'+pv.keys_rowspan.length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
-				for (i=0;i<opts.rows.length;i++) table_data_html.push('<li value="'+opts.rows[i]+'" class="ui-state-highlight">'+opts.data_headers[opts.rows[i]] +'</li>');
+				for (i=0;i<opts.rows.length;i++) 
+						{
+						table_data_html.push('<li value="'+opts.rows[i]+'" class="ui-state-highlight">'+opts.data_headers[opts.rows[i]] +'</li>');
+					  }
 				table_data_html.push("<td rowspan="+(1+pv.data_rows_count)+"></td><td colspan="+(pv.data_row_length-opts.rows.length)+"></td></ul></tr>\n"); 
 				//draw data
 				var ind_r=[]; for (r=0; r < pv.keys_rowspan.length;r++) {ind_r.push([0,0]);}
@@ -200,8 +249,11 @@ function jpv_pivotDrawData($this)
 				table_data_html.push('</table>');
 				//end draw data
 				var str=table_data_html.join(' ');
-	
+				
+				//draw table
 				$($this).empty().append(str);
+				
+				//create sortable headers
 				$('#pv_rowkeys_placeholder, #pv_colkeys_placeholder',$this).sortable(
 						{ 
 						connectWith: '.pv_keys_placeholder'
@@ -215,9 +267,14 @@ function jpv_pivotDrawData($this)
 						,cursor: 'default'
 						,deactivate: function(event, ui){jpv_keys_placeholder_update($this)}
 						}).disableSelection();
+						
 				//set height of li
 				for (r=0;r < pv.keys_colspan.length;r++)
 				$('#pv_colkeys_placeholder li:eq('+r+')',$this).height($("#pv_tr_h_col"+r).height());
+				
+				//create popup filters
+				jpv_keys_placeholder_popup($this,'pv_rowkeys_placeholder',pv.rows_keys);
+				jpv_keys_placeholder_popup($this,'pv_colkeys_placeholder',pv.cols_keys)
 		}
 
 // Public Variables and Methods declare
@@ -270,25 +327,59 @@ function jpv_pivotDrawData($this)
   			var cols_composite_index=[]; //col kye value unique composite indexes			
   			var data_row2pv_row=[];  //map raw data rows to pivot rows		
   			var data_row2pv_col=[];  //map raw data cols to pivot cols	
- 			
+  			
+ 				//create filters
+ 				var cols_data_filter = jpv_create_2Darray(cols_length);
+ 				for(i=0;i < cols_length; i++ )
+ 						{
+ 						$('#pv_colkeys_placeholder'+i+'dlg input:checkbox[checked]').each(function(){cols_data_filter[i].push($(this).val())})
+ 						}
+ 				var rows_data_filter = jpv_create_2Darray(rows_length);
+ 				for(i=0;i < rows_length; i++ )
+ 						{
+ 						$('#pv_rowkeys_placeholder'+i+'dlg input:checkbox[checked]').each(function(){rows_data_filter[i].push($(this).val())})
+ 						} 						
 				for (i=0; i < data_length ; i++)
 						{
-						
-						composite_index='';
+						filtered=false;
+						composite_index_col='';
 		  			for (j=0;j<cols_length;j++)	
 		  				{
-		  				composite_index += data_ptr[i][cols_ptr[j]]+'~~~';  							
-		  				jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],pv.cols_keys[j],true);
+		  				//filter by popup dialog
+		  				if(jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],cols_data_filter[j],false) == null)
+		  					{
+		  						composite_index_col += data_ptr[i][cols_ptr[j]]+'~~~';  							
+		  					}
+		  				else
+		  					{
+		  					filtered=true;
+		  					}
+							jpv_getIndexOfElementInArray(data_ptr[i][cols_ptr[j]],pv.cols_keys[j],true);
 		  			  }
-		  			data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index,cols_composite_index,true);
 		  			
-						composite_index='';
+						composite_index_row='';
 		  			for (j=0;j<rows_length;j++) 
 				  			{
-				  			composite_index += data_ptr[i][rows_ptr[j]]+'~~~'; 
-				  			jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],pv.rows_keys[j],true);
+				  			if(jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],rows_data_filter[j],false) == null)
+				  				{
+				  				composite_index_row += data_ptr[i][rows_ptr[j]]+'~~~'; 
+				  				}
+				  			else
+				  				{
+				  				filtered=true;
+				  				}
+						    jpv_getIndexOfElementInArray(data_ptr[i][rows_ptr[j]],pv.rows_keys[j],true);
 				  		  }
-		  			data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index,rows_composite_index,true);
+				  	if (! filtered)
+				  		{
+		  				data_row2pv_row[i]=jpv_getIndexOfElementInArray(composite_index_row,rows_composite_index,true);
+							data_row2pv_col[i]=jpv_getIndexOfElementInArray(composite_index_col,cols_composite_index,true);
+		  				}
+		  			else
+		  				{
+		  				data_row2pv_row[i]=null;
+		  				data_row2pv_col[i]=null;
+		  				}
 		  			
 		  			}
 
@@ -301,6 +392,7 @@ function jpv_pivotDrawData($this)
   		  var data_header=jpv_create_2Darray(cols_length);
   		  for (i=0;i<data_length;i++)
   		  		{
+  		  		if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
   		  		for (j=0;j<rows_length;j++) 
   		  				{
   		  				pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
@@ -345,13 +437,14 @@ $(document).ready(function()
 			
 		</script>
 		<style>
+			.pv_dialog {font-size:10px;}
 			table.pv_table{border-collapse:collapse;border:1px solid red;}
 			.pv_table td{border:1px solid green;}
 			.pv_table th{border:1px solid silver;}
 			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
 			#pv_rowkeys_placeholder li {float:left;}	
-			#pv_rowkeys_placeholder{padding-bottom:0px;}
-			#pv_colkeys_placeholder{padding-bottom:0px;}
+			#pv_rowkeys_placeholder{padding-bottom:5px;}
+			#pv_colkeys_placeholder{padding-bottom:1px;}
 		</style>
 	</head>
 	<body>
