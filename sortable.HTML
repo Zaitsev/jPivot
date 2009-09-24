@@ -14,8 +14,46 @@
 		<script type="text/javascript">
 
 $(function() {
-
-
+var data=[];	
+var rows = [0,1];	
+var cols = [2,3];
+var data_col=4;	
+for (i=2;i>0;i--)
+	for (j=0;j<2;j++)
+		for (k=2;k>0;k--)
+			for (n=0;n<2;n++)
+			data.push(['s'+i,'b'+j,'q'+k,'qn'+n,'s'+i+'-b'+j+'-q'+k+'-qn'+n]);
+			
+function jpv_initialSort(a,b)
+		{
+		 //Compare "a" and "b" in some fashion, and return -1, 0, or 1
+		 //Less than 0: Sort "a" to be a lower index than "b"
+		 //Zero: "a" and "b" should be considered equal, and no sorting performed.
+		 //Greater than 0: Sort "b" to be a lower index than "a".
+		 // rows keep idexes of row keys 
+		 // cols keep idexes of col keys 
+		 //compare by rows order then cols order
+		 //rows=$this.opts.rows;
+		 //cols=$this.opts.cols;
+		 order=[-1,1,1,-1];
+		 
+		 for (i=0;i < rows.length;i++)
+		 		{
+		 		if (a[rows[i]] < b[rows[i]] ) return  1*order[i]; 
+		 		if (a[rows[i]] > b[rows[i]] ) return -1*order[i]; 
+		 		}
+			 		
+		 for (i=0;i < cols.length;i++)
+		 		{
+		 		if (a[cols[i]] < b[cols[i]] ) return  1*order[i+rows.length]; 
+		 		if (a[cols[i]] > b[cols[i]] ) return -1*order[i+rows.length]; 
+		 		}			 
+		 return 0;
+		}	
+	console.dir(data)	
+   data.sort(function(a,b) {return jpv_initialSort(a,b)}  );
+   console.dir(data)
+/*   
 $("#row div").draggable({		
 			helper: 'clone'
 			,cursor: 'move'
@@ -30,9 +68,10 @@ $("#col").droppable({
 			}
 		})
 
-	});
-			
-		</script>
+
+*/			
+	});		
+	</script>
 
 	</head>
 	<div class="elm">
