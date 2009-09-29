@@ -104,8 +104,6 @@ function jpv_keys_placeholder_update($this)
 			$this.opts.cols=cols;
 			$this.opts.rows=rows;
 			$this.opts.filter=filter;
-			//console.dir(rows);
-			//console.dir(cols);	
 			jQuery.fn.jPivot.preparePv($this);
 			jpv_pivotDrawData($this);
 			}
@@ -113,27 +111,39 @@ function jpv_keys_placeholder_update($this)
 		}	
 function jpv_keys_placeholder_popup($this)
 		{
-				var dialog='';
-				var dlg_opts={
-						autoOpen:false
-					 ,title:false
-					 ,dialogClass:'pv_dialog'
-					 ,buttons: {
-										Ok: function() {
-											jQuery.fn.jPivot.preparePv($this);
-											jpv_pivotDrawData($this);
-											$(this).dialog('close');
-										}
-										,Cancel: function() {
-											$(this).dialog('close');
-										}
-										
-									}					 
-					 };
-				for (k=0;k<$this.pv.unique_keys.length;k++)					
+				var keys_index=$this.pv.keys_index;
+				var keys_index_length=$this.pv.keys_index.length;
+				var tstr='';
+				for (k=0;k<keys_index_length;k++)
 						{
-						if ($this.opts.filter[k] != null) 
+						unique_keys=$this.pv.unique_keys[k];
+					  unique_keys_length=$this.pv.unique_keys[k].length;
+						if ( (unique_keys == null) ||  (unique_keys.length == 0) )
 								{
+
+								$('#pv_dlg_plh'+k).remove(); //remove placeholder
+								continue;	
+								}
+						if (keys_index[k] == 3)
+								{//is a filter
+								tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight"> <select> ';
+								for (j=0;j < unique_keys_length; j++)
+										{
+											tstr +='<option>'+unique_keys[j]+'</option>';
+										}
+								tstr +='</select></li>';
+								$('#pv_filter',$this).append(tstr);
+									//bind click event
+									$('#pv_dlg_plh'+k+' select',$this).bind
+												(
+												"change"
+												,function(e) 
+														{
+																		jQuery.fn.jPivot.preparePv($this);
+																		jpv_pivotDrawData($this);
+														}
+												 );								
+
 								//this is filter, bind new behavior
 								$('#pv_key_header'+k,$this).unbind('click');
 								$('#pv_key_header'+k+' select',$this).bind('change'
@@ -143,15 +153,41 @@ function jpv_keys_placeholder_popup($this)
 											jpv_pivotDrawData($this);										
 										});
 								continue;
+
 								}
-						filter=$this.pv.unique_keys[k];
-						if ($this.pv.dialog_filter[k].length > 0) 
-								$('#pv_key_header'+k,$this).addClass('pv_key_header_filtered');//we have filtered keys - show this
-						if ((filter != null) && (filter.length > 0) )
-							{
-							if ($('#pv_dlg_plh'+k).length > 0)
-									{ 
-									//we have dialog,but header was redrawed - just rebind click event
+						else
+								{//is a dialog for col and row headers
+								if ($this.pv.dialog_filter[k].length > 0) $('#pv_key_header'+k,$this).addClass('pv_key_header_filtered');//we have filtered keys - show this
+									if ($('#pv_dlg_plh'+k).length == 0)
+											{ 
+											//we have no dialog,create
+											tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
+											tstr +='asc<input type="radio" name="pv_dlg_plh'+k+'_order" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order" value="D"><hr>'
+											for (i=0; i < unique_keys_length; i++)
+													tstr +=unique_keys[i]+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+unique_keys[i]+'"><br>'
+											tstr +='</div>';
+											$($this).append(tstr);
+											$('#pv_dlg_plh'+k).dialog
+													({
+													autoOpen:false
+												 ,title:false
+												 ,dialogClass:'pv_dialog'
+												 ,buttons: {
+																	Ok: function() 
+																		{
+																		jQuery.fn.jPivot.preparePv($this);
+																		jpv_pivotDrawData($this);
+																		$(this).dialog('close');
+																		}
+																	,Cancel: function() 
+																		{
+																		$(this).dialog('close');
+																		}
+																	}
+																	
+													});
+											}
+									//bind click event
 									$('#pv_key_header'+k,$this).bind
 												(
 												"click"
@@ -163,38 +199,8 @@ function jpv_keys_placeholder_popup($this)
 																		.dialog("open")
 														}
 												 );
-									continue;//we already have dialog
-									}
-							//create dialog
-							dialog='<div id="pv_dlg_plh'+k+'" style="display:none">';
-							dialog +='asc<input type="radio" name="pv_dlg_plh'+k+'_order" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order" value="D"><hr>'
-							//selector ='#'+selector;
-							for (i=0;i<filter.length;i++)
-									dialog +=filter[i]+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+filter[i]+'"><br>'
-							dialog +='</div>';
-							$($this).append(dialog);
-							$('#pv_dlg_plh'+k).dialog(dlg_opts);
-							$('#pv_key_header'+k,$this).bind
-										(
-										"click"
-										,{selector:'#pv_dlg_plh'+k}
-										,function(e) 
-												{
-														$(e.data.selector)
-																.dialog('option', 'position', [e.pageX,e.pageY])
-																.dialog("open")
-												}
-										 );
-							
-							
-							}							
-						else
-							{
-							$('#pv_dlg_plh'+k).remove(); //remove placeholder
-							}
+								}
 						}
-
-		
 		}		
 					
 function jpv_pivotDrawData($this)
@@ -206,22 +212,7 @@ function jpv_pivotDrawData($this)
 				var opts=$this.opts;
 				var pv=$this.pv;
 				var filter_length= opts.filter.length;
-				table_data_html.push('<div >flt<ul style="padding-bottom:5px;" class="pv_keys_placeholder" id="pv_filter">');
-				tstr='';
-				for(i=0;i< filter_length; i++) 
-						{
-						tstr +='<li id="pv_key_header'+opts.filter[i]+'" value="'+opts.filter[i]+'"class="ui-state-highlight">';
-							var uk=pv.unique_keys[opts.filter[i]]
-							tstr +='<select>';
-							for (j=0;j < uk.length; j++)
-									{
-										tstr +='<option>'+uk[j]+'</option>';
-									}
-							tstr +='</select></li>';
-							tstr +='';
-						}
-				tstr +='</ul></div>';
-				table_data_html.push(tstr);
+				table_data_html.push('<div>flt<ul class="pv_keys_placeholder" id="pv_filter"></ul></div><br><br>');
 				table_data_html.push('<table class="pv_table">');
 
 				keys_colspan_length=pv.keys_colspan.length;
@@ -337,8 +328,8 @@ function jpv_pivotDrawData($this)
 				//$('#pv_rowkeys_placeholder li:eq('+r+')',$this).width($("#pv_tr_h_row"+r).width());
 				
 				//create popup filters
-				jpv_keys_placeholder_popup($this,'pv_rowkeys_placeholder',pv.rows_keys);
-				jpv_keys_placeholder_popup($this,'pv_colkeys_placeholder',pv.cols_keys);
+				jpv_keys_placeholder_popup($this);
+				//jpv_keys_placeholder_popup($this,'pv_colkeys_placeholder',pv.cols_keys);
 		}
 
 // Public Variables and Methods declare
@@ -392,10 +383,10 @@ function jpv_pivotDrawData($this)
 				
 				pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
 				pv.dialog_filter=jpv_create_2Darray(data_row_length); //hold apply_filter values for each key
-				var keys_index=[];//jpv_create_2Darray(data_row_length);
-				for (i=0;i<rows_length;i++) keys_index[rows_ptr[i]]=1; 
-				for (i=0;i<cols_length;i++) keys_index[cols_ptr[i]]=2; 
-				for (i=0;i<filter_length;i++) keys_index[filter_ptr[i]]=3;
+				pv.keys_index=[];//jpv_create_2Darray(data_row_length);
+				for (i=0;i<rows_length;i++) pv.keys_index[rows_ptr[i]]=1; 
+				for (i=0;i<cols_length;i++) pv.keys_index[cols_ptr[i]]=2; 
+				for (i=0;i<filter_length;i++) pv.keys_index[filter_ptr[i]]=3;
 				
   			var rows_composite_index=[]; //row key value unique composite indexes
   			var cols_composite_index=[]; //col kye value unique composite indexes			
@@ -412,13 +403,13 @@ function jpv_pivotDrawData($this)
 						composite_row_key='';composite_col_key='';is_filtered=false;
 						for (dc=0; dc < data_row_length; dc ++)
 								{
-								if (keys_index[dc]==null) continue; //no row or col
+								if (pv.keys_index[dc]==null) continue; //no row or col
 								key=data_ptr[dr][dc];
 								in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters
 								if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
-								if (keys_index[dc]==1) //is row
+								if (pv.keys_index[dc]==1) //is row
 										composite_row_key += key;
-								else if (keys_index[dc]==2)//is col
+								else if (pv.keys_index[dc]==2)//is col
 										composite_col_key += key
 								
 								}
@@ -490,9 +481,10 @@ $(document).ready(function()
 			.pv_table th{border:1px solid silver;}
 			.pv_key_header_filtered {color:green;}
 			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
-			#pv_filte li, #pv_rowkeys_placeholder li {float:left;}	
+			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
 			#pv_rowkeys_placeholder{padding-bottom:5px;}
 			#pv_colkeys_placeholder{padding-bottom:1px;}
+			#pv_filter {padding-bottom:5px;}
 		</style>
 	</head>
 	<body>
