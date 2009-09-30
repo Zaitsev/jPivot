@@ -1,15 +1,17 @@
 (function($) { 
 // Private Variables and Functions
 var  jpv_keys_placeholder_update_list_cnt=0; 
-
+var debug=0;
 //debug functions
 function emsgd(obj)
 		{
 		if ($.browser.mozilla) 
 			{
-				if (typeof obj == 'object')				console.dir(obj);
-				else console.info(obj);
-				console.trace()}
+			if (!debug) return;
+			if (typeof obj == 'object')				console.dir(obj);
+			else console.info(obj);
+			console.trace()
+			}
 		}
 function jpv_initialSort(a,b,$this)
 		{
@@ -396,9 +398,9 @@ function jpv_pivotDrawData($this)
 								if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
 								if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
 								if (pv.keys_index[dc]==1) //is row
-										composite_row_key += key;
+										composite_row_key += '~~~~'+key;
 								else if (pv.keys_index[dc]==2)//is col
-										composite_col_key += key
+										composite_col_key += '~~~~'+key
 								
 								}
 						if (!is_filtered)
