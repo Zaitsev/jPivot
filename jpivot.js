@@ -71,7 +71,7 @@ function in_array(element, array, addIfAbsent)
       var len =array.length
       for (var i = 0; i < len; i++) 
           {
-        if (element == array[i])       return i;
+          if (element == array[i])       return i;
           }
       if (addIfAbsent) 
           {
@@ -387,10 +387,10 @@ function jpv_pivotDrawData($this)
 	      pv.dialog_sort=[];
 	      for(i=0;i < data_row_length; i++ )
 	          pv.dialog_sort[i] = $('#pv_dlg_plh'+i+' :radio:checked[name="pv_dlg_plh'+i+'_order"]').val() == 'D' ? 1 : -1;
-				console.profile('sort');
+				//console.profile('sort');
         //sort by rows-cols headers
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
-				console.profileEnd('sort');
+				//console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
@@ -406,13 +406,48 @@ function jpv_pivotDrawData($this)
         var data_row2pv_row=[];  //map raw data rows to pivot rows        
         var data_row2pv_col=[];  //map raw data cols to pivot cols    
               
-                 //create filters
-        for(i=0;i < data_row_length; i++ )
+        //create filters indexes
+        for(i=0;i < data_row_length; i++ ) //dialog filter
                  $('#pv_dlg_plh'+i+' :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
-        for(i=0;i < data_row_length; i++ )
+        for(i=0;i < data_row_length; i++ ) //head filter
                  pv.head_filter[i] = $('#pv_dlg_plh'+i+' select').length > 0 ? $('#pv_dlg_plh'+i+' select').val() : null ;
         
-        var composite_row_key,composite_col_key, dc,dc;
+        /*
+        HOW IT WORKS
+        	example data
+        		data_rows 
+        			['rk1','rk2','cc1','cc2',v0] is row0
+        			['rk1','rk2','cc1','cc3',v1] is row1
+        			['rk1','rk3','cc1','cc2',v2] is row2
+        			
+          create maps for data_rows to pivot table rows, find place for data in pivot table row (by cols key)
+  
+		          find map to pivot_row by its rows kews ,we will hold this map in  data_row2pv_row
+		          in each data_row create composite_index by concatenate rows keys 
+		            (
+		            row0 and row1  have equal row_composite_index ('rk1~~rk2') and so both mapped to pivot table row 0 
+		            row2 have  row_composite_index ('rk1~~rk3') and  so  mapped to pivot table row 1 
+		            )
+		          by columns composite index we determine position of data_row value in pivot row ,we will hold this map in data_row2pv_col
+		            (
+		            row0 has col_composite_index = 'cc1~~~cc2'  and mapped to column  0 of pivot row 0
+		            row1 has col_composite_index = 'cc1~~~cc3'  and mapped to column  1 of pivot row 0
+		            row2 has col_composite_index = 'cc1~~~cc2' (same as row0) so mapped to column 0 of pivot row 1	
+		            rows indexes obtained above in row_composite_index creation
+		            )
+
+          after this we will had this pivot table
+                    | cc1 | cc1 |
+                    | cc2 | cc3 |
+          rk1 | rk2 |  v0 |  v2 |
+          rk1 | rk3 |  v2 |     |
+          
+          as seen in table we have gap (no data) for rk1-rk3-cc1-cc3 keys.
+          For those gaps we can't sort data_rows "at once" and must separate sort col_composite_index and create remapping of data_row2pv_col
+          
+        */
+        console.profile('mainLoop');   
+        var composite_row_key,composite_col_key, dc,dr;
         for (dr=0; dr < data_length ; dr++)
             {
             is_filtered=false;
@@ -420,7 +455,7 @@ function jpv_pivotDrawData($this)
             composite_row_key=[]; idx=0;
             for (i=0;i<rows_length;i++)
             		{
-            		dc=rows[i];
+            		dc=rows_ptr[i];
 								key=data_ptr[dr][dc];
                 in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters            		
                 if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
@@ -431,7 +466,7 @@ function jpv_pivotDrawData($this)
             composite_col_key=[];idx=0;
             for (i=0;i<cols_length;i++)
             		{
-            		dc=cols[i];
+            		dc=cols_ptr[i];
 								key=data_ptr[dr][dc];
                 in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters            		
                 if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
@@ -439,38 +474,23 @@ function jpv_pivotDrawData($this)
                 composite_col_key[idx++]=key;
             		}
 
-/*            
-            for (dc=0; dc < data_row_length; dc ++)
-                    {
-                    if (pv.keys_index[dc]==null) continue; //no row or col
-                    key=data_ptr[dr][dc];
-                    in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters
-                    if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
-                    if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
-                    if (pv.keys_index[dc]==1) //is row
-                            composite_row_key += '~~~~'+key;
-                    else if (pv.keys_index[dc]==2)//is col
-                            composite_col_key += '~~~~'+key
-                    
-                    }
-*/                    
-
             if (!is_filtered)
                     {   //create mapping data to pvtable
                     data_row2pv_row[dr]=in_array(composite_row_key.join('~~~'),rows_composite_index,true);
                     data_row2pv_col[dr]=in_array(composite_col_key.join('~~~'),cols_composite_index,true);
                     }
             }
-			console.profile('sortCol');                        
+        console.profileEnd('mainLoop');   
+				//console.profile('sortCol');                        
 				//sort cols and create remapping 
-			var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
-			for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
-			cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
-			for (i=0; i < len ; i++)
-						{
-						cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
-						}
-			console.profileEnd('sortCol');    
+				var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
+				for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
+				cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
+				for (i=0; i < len ; i++)
+							{
+							cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
+							}
+			//console.profileEnd('sortCol');    
 			
 			 //sort unique keys for filters
        len = pv.unique_keys.length;
