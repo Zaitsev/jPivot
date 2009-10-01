@@ -23,11 +23,11 @@ function jpv_rowsSort(a,b,$this)
          // rows keep idexes of row keys 
          // cols keep idexes of col keys 
          //compare by rows order then cols order
-         rows=$this.opts.rows;
-         cols=$this.opts.cols;
-         order=$this.pv.dialog_sort;
-         
-         for (i=0;i < rows.length;i++)
+         var rows=$this.opts.rows;
+         var cols=$this.opts.cols;
+         var order=$this.pv.dialog_sort;
+         var len = rows.length
+         for (i=0;i < len;i++)
                  {
                  if (a[rows[i]] < b[rows[i]] ) return  1*order[rows[i]]; 
                  if (a[rows[i]] > b[rows[i]] ) return -1*order[rows[i]]; 
@@ -42,7 +42,7 @@ cols we sort later, because problems wehd data has gaps
 */                 
          return 0;
         }
-function jpv_colsSort(a,b)
+function jpv_colsSort(a,b,$this)
         {
          //Compare "a" and "b" in some fashion, and return -1, 0, or 1
          //Less than 0: Sort "a" to be a lower index than "b"
@@ -54,19 +54,22 @@ function jpv_colsSort(a,b)
          var colsa=a.split('~~~');
          var colsb=b.split('~~~');
          var len =  colsa.length;
-         var i;
+         var i,k;
+         var order=$this.pv.dialog_sort;
+         var cols=$this.opts.cols;
          for (i=0; i< len; i++)
          		{
-             if (colsa[i] < colsb[i] ) return  1;
-             if (colsa[i] > colsb[i] ) return -1; 
+         		 k = order[cols[i]]
+             if (colsa[i] < colsb[i] ) return  1*k;
+             if (colsa[i] > colsb[i] ) return -1*k; 
          		}
                
          return 0;
         }
-
 function in_array(element, array, addIfAbsent) 
         {
-      for (var i = 0; i < array.length; i++) 
+      var len =array.length
+      for (var i = 0; i < len; i++) 
           {
         if (element == array[i])       return i;
           }
@@ -384,9 +387,10 @@ function jpv_pivotDrawData($this)
 	      pv.dialog_sort=[];
 	      for(i=0;i < data_row_length; i++ )
 	          pv.dialog_sort[i] = $('#pv_dlg_plh'+i+' :radio:checked[name="pv_dlg_plh'+i+'_order"]').val() == 'D' ? 1 : -1;
-
+				console.profile('sort');
         //sort by rows-cols headers
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
+				console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
@@ -457,17 +461,21 @@ function jpv_pivotDrawData($this)
                     data_row2pv_col[dr]=in_array(composite_col_key.join('~~~'),cols_composite_index,true);
                     }
             }
-                        
+			console.profile('sortCol');                        
 				//sort cols and create remapping 
-				var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
-				for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
-				cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b);});
-				for (i=0; i < len ; i++)
+			var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
+			for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
+			cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
+			for (i=0; i < len ; i++)
 						{
 						cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
 						}
-                      
-                         
+			console.profileEnd('sortCol');    
+			
+			 //sort unique keys for filters
+       len = pv.unique_keys.length;
+       for (i=0;i<len;i++)pv.unique_keys[i].sort();
+                        
        pv.data_rows_count = rows_composite_index.length; 
        pv.data_row_length = cols_composite_index.length+rows_length;
        pv.data=jpv_create_2Darray(pv.data_rows_count);
