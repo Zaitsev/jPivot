@@ -446,7 +446,7 @@ function jpv_pivotDrawData($this)
           For those gaps we can't sort data_rows "at once" and must separate sort col_composite_index and create remapping of data_row2pv_col
           
         */
-        console.profile('mainLoop');   
+        //console.profile('mainLoop');   
         var composite_row_key,composite_col_key, dc,dr;
         for (dr=0; dr < data_length ; dr++)
             {
@@ -480,7 +480,7 @@ function jpv_pivotDrawData($this)
                     data_row2pv_col[dr]=in_array(composite_col_key.join('~~~'),cols_composite_index,true);
                     }
             }
-        console.profileEnd('mainLoop');   
+        //console.profileEnd('mainLoop');   
 				//console.profile('sortCol');                        
 				//sort cols and create remapping 
 				var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
