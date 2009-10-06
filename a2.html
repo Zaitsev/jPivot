@@ -245,7 +245,17 @@ var data =[
 
 $(document).ready(function()
 	{
-	$('#pv').jPivot({data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,filter:filter});  	
+	$('#pv').jPivot({
+			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers
+			,filter:filter
+			,printValue:function(val)
+					{
+					if (val==undefined) 
+							return '--'; 
+					else 
+							return val;
+					}
+			});  	
 	}
 	);
 

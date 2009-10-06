@@ -302,7 +302,10 @@ function jpv_pivotDrawData($this)
                               }
                           else
                               {//data
-                              table_data_html.push('<td>'+pv.data[r][c]+'</td>');
+                              if ($.isFunction(opts.printValue))
+                              	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
+                              else 
+                              	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
                               }
                   }
               table_data_html.push("</tr>\n");
@@ -534,6 +537,7 @@ function jpv_pivotDrawData($this)
         ,filter:[]
         ,data_col:null
         ,data_headers:null
+        ,printValue:null
         }    
 
 
