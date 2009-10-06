@@ -292,7 +292,7 @@ function jpv_pivotDrawData($this)
         
         //draw data
         var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);} 
-        var use_printVal = $.isFunction(opts.printValue), print_val='';
+        var use_printVal = $.isFunction(opts.printValue);
         for (r=0;r< pv.data_rows_count;r++)
               {
               table_data_html.push("<tr>\n"); 
@@ -341,17 +341,8 @@ function jpv_pivotDrawData($this)
                 ,snap:true
                 ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
                 }).disableSelection();
-                
-        //set height for cols key headerli
-        //for (r=0;r < pv.keys_colspan.length;r++)
-        //$('#pv_colkeys_placeholder li:eq('+r+')',$this).height($("#pv_tr_h_col"+r).height());
-        //set width for rows key header li
-        //for (r=0;r < pv.keys_rowspan.length;r++)
-        //$('#pv_rowkeys_placeholder li:eq('+r+')',$this).width($("#pv_tr_h_row"+r).width());
-        
         //create popup filters
         jpv_keys_placeholder_popup($this);
-        //jpv_keys_placeholder_popup($this,'pv_colkeys_placeholder',pv.cols_keys);
         }
 
 // Public Variables and Methods declare
