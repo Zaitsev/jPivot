@@ -58,11 +58,11 @@ function jpv_colsSort(a,b,$this)
          var order=$this.pv.dialog_sort;
          var cols=$this.opts.cols;
          for (i=0; i< len; i++)
-         		{
-         		 k = order[cols[i]]
+               {
+                k = order[cols[i]]
              if (colsa[i] < colsb[i] ) return  1*k;
              if (colsa[i] > colsb[i] ) return -1*k; 
-         		}
+               }
                
          return 0;
         }
@@ -129,11 +129,12 @@ function jpv_keys_placeholder_popup($this)
         {
         var keys_index=$this.pv.keys_index;
         var keys_index_length=$this.pv.keys_index.length;
+        var data_headers = $this.opts.data_headers;
         var tstr='';
         for (k=0;k<keys_index_length;k++)
             {
             unique_keys=$this.pv.unique_keys[k];
-          	unique_keys_length=$this.pv.unique_keys[k].length;
+             unique_keys_length=$this.pv.unique_keys[k].length;
             if ( (unique_keys == null) ||  (unique_keys.length == 0) )
                 {
                 $('#pv_dlg_plh'+k).remove(); //remove placeholder
@@ -141,7 +142,7 @@ function jpv_keys_placeholder_popup($this)
                 }
             if (keys_index[k] == 3)
                 {//is a filter
-                tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight"> <select> ';
+                tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
                             tstr +='<option>'+unique_keys[j]+'</option>';
@@ -149,7 +150,7 @@ function jpv_keys_placeholder_popup($this)
                 tstr +='</select></li>';
                 $('#pv_filter',$this).append(tstr);
                 //set current
-                $('#pv_dlg_plh'+k+' select',$this).val( ($this.pv.head_filter[k]==null) ? 0 : $this.pv.head_filter[k] )
+                $('#pv_dlg_plh'+k+' select',$this).val( ($this.pv.head_filter[k]==null) ? unique_keys[0] : $this.pv.head_filter[k] )
                 //bind click event
                 $('#pv_dlg_plh'+k+' select',$this).bind
                             (
@@ -197,19 +198,19 @@ function jpv_keys_placeholder_popup($this)
                                             
                             });
                     }
-		            //bind click event
-		            $('#pv_key_header'+k,$this).bind
-		                        (
-		                        "click"
-		                        ,{selector:'#pv_dlg_plh'+k}
-		                        ,function(e) 
-		                            {
-		                            $(e.data.selector)
-		                                    .dialog('option', 'position', [e.pageX,e.pageY])
-		                                    .dialog("open")
-		                            }
-		                         );
-            		}
+                  //bind click event
+                  $('#pv_key_header'+k,$this).bind
+                              (
+                              "click"
+                              ,{selector:'#pv_dlg_plh'+k}
+                              ,function(e) 
+                                  {
+                                  $(e.data.selector)
+                                          .dialog('option', 'position', [e.pageX,e.pageY])
+                                          .dialog("open")
+                                  }
+                               );
+                  }
             }
         }        
                     
@@ -217,7 +218,7 @@ function jpv_pivotDrawData($this)
         {
       //draw data
       //start header draw
-     		var tstr='';
+           var tstr='';
         var table_data_html=[];
         var opts=$this.opts;
         var pv=$this.pv;
@@ -238,27 +239,27 @@ function jpv_pivotDrawData($this)
                 len=pv.keys_colspan[r].length;
                 table_data_html.push("<tr id=\"pv_tr_h_col"+r+"\">\n");                 
                 for (c=0;c<len;c++)
-		                {
-		                if ((r==0) && (c==0)) 
-		                    {
-		                    table_data_html.push('<th colspan="'+keys_rowspan_length+'" rowspan="'+keys_colspan_length+'"></th>'); //top left td
-		                    //col keys dragable
-		                    table_data_html.push(
-		                        '<th style="min-width:40px;" rowspan="'+pv.keys_colspan.length+'">'
-		                        +'<ul class="pv_keys_placeholder" id="pv_colkeys_placeholder">');
-		                    for (i=0;i<opts.cols.length;i++) 
-		                        {
-		                        icon = 
-		                        table_data_html.push(
-		                            '<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'"class="ui-state-highlight">'
-		                            +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-		                            +opts.data_headers[opts.cols[i]] 
-		                            +'</li>');
-		                        }
-		                    table_data_html.push('</ul></th>');
-		                    }
-		                table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
-		              	}
+                      {
+                      if ((r==0) && (c==0)) 
+                          {
+                          table_data_html.push('<th colspan="'+keys_rowspan_length+'" rowspan="'+keys_colspan_length+'"></th>'); //top left td
+                          //col keys dragable
+                          table_data_html.push(
+                              '<th style="min-width:40px;" rowspan="'+pv.keys_colspan.length+'">'
+                              +'<ul class="pv_keys_placeholder" id="pv_colkeys_placeholder">');
+                          for (i=0;i<opts.cols.length;i++) 
+                              {
+                              icon = 
+                              table_data_html.push(
+                                  '<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'"class="ui-state-highlight">'
+                                  +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                                  +opts.data_headers[opts.cols[i]] 
+                                  +'</li>');
+                              }
+                          table_data_html.push('</ul></th>');
+                          }
+                      table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
+                       }
                 table_data_html.push("</tr>\n"); 
                 }
                 
@@ -383,14 +384,14 @@ function jpv_pivotDrawData($this)
         pv.cols_keys = jpv_create_2Darray(cols_length);//keep unique values for col keys                
 
   
-				//create sort
-	      pv.dialog_sort=[];
-	      for(i=0;i < data_row_length; i++ )
-	          pv.dialog_sort[i] = $('#pv_dlg_plh'+i+' :radio:checked[name="pv_dlg_plh'+i+'_order"]').val() == 'D' ? 1 : -1;
-				//console.profile('sort');
+            //create sort
+         pv.dialog_sort=[];
+         for(i=0;i < data_row_length; i++ )
+             pv.dialog_sort[i] = $('#pv_dlg_plh'+i+' :radio:checked[name="pv_dlg_plh'+i+'_order"]').val() == 'D' ? 1 : -1;
+            //console.profile('sort');
         //sort by rows-cols headers
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
-				//console.profileEnd('sort');
+            //console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
@@ -411,30 +412,29 @@ function jpv_pivotDrawData($this)
                  $('#pv_dlg_plh'+i+' :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
         for(i=0;i < data_row_length; i++ ) //head filter
                  pv.head_filter[i] = $('#pv_dlg_plh'+i+' select').length > 0 ? $('#pv_dlg_plh'+i+' select').val() : null ;
-        
         /*
         HOW IT WORKS
-        	example data
-        		data_rows 
-        			['rk1','rk2','cc1','cc2',v0] is row0
-        			['rk1','rk2','cc1','cc3',v1] is row1
-        			['rk1','rk3','cc1','cc2',v2] is row2
-        			
+           example data
+              data_rows 
+                 ['rk1','rk2','cc1','cc2',v0] is row0
+                 ['rk1','rk2','cc1','cc3',v1] is row1
+                 ['rk1','rk3','cc1','cc2',v2] is row2
+                 
           create maps for data_rows to pivot table rows, find place for data in pivot table row (by cols key)
   
-		          find map to pivot_row by its rows kews ,we will hold this map in  data_row2pv_row
-		          in each data_row create composite_index by concatenate rows keys 
-		            (
-		            row0 and row1  have equal row_composite_index ('rk1~~rk2') and so both mapped to pivot table row 0 
-		            row2 have  row_composite_index ('rk1~~rk3') and  so  mapped to pivot table row 1 
-		            )
-		          by columns composite index we determine position of data_row value in pivot row ,we will hold this map in data_row2pv_col
-		            (
-		            row0 has col_composite_index = 'cc1~~~cc2'  and mapped to column  0 of pivot row 0
-		            row1 has col_composite_index = 'cc1~~~cc3'  and mapped to column  1 of pivot row 0
-		            row2 has col_composite_index = 'cc1~~~cc2' (same as row0) so mapped to column 0 of pivot row 1	
-		            rows indexes obtained above in row_composite_index creation
-		            )
+                find map to pivot_row by its rows kews ,we will hold this map in  data_row2pv_row
+                in each data_row create composite_index by concatenate rows keys 
+                  (
+                  row0 and row1  have equal row_composite_index ('rk1~~rk2') and so both mapped to pivot table row 0 
+                  row2 have  row_composite_index ('rk1~~rk3') and  so  mapped to pivot table row 1 
+                  )
+                by columns composite index we determine position of data_row value in pivot row ,we will hold this map in data_row2pv_col
+                  (
+                  row0 has col_composite_index = 'cc1~~~cc2'  and mapped to column  0 of pivot row 0
+                  row1 has col_composite_index = 'cc1~~~cc3'  and mapped to column  1 of pivot row 0
+                  row2 has col_composite_index = 'cc1~~~cc2' (same as row0) so mapped to column 0 of pivot row 1   
+                  rows indexes obtained above in row_composite_index creation
+                  )
 
           after this we will had this pivot table
                     | cc1 | cc1 |
@@ -451,28 +451,38 @@ function jpv_pivotDrawData($this)
         for (dr=0; dr < data_length ; dr++)
             {
             is_filtered=false;
-            
+						//head filter unique keys
+            for (i=0;i<filter_length;i++)
+                  {
+                  //when we first add key to head_fiter we dont have values of this filter (they are creting here)
+                  // and <select> is not drawed yet, so we need take first value and use it as filter
+                  dc=filter_ptr[i];
+                  key=data_ptr[dr][dc];
+                  if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
+                  in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
+									if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
+                  }                
             composite_row_key=[]; idx=0;
             for (i=0;i<rows_length;i++)
-            		{
-            		dc=rows_ptr[i];
-								key=data_ptr[dr][dc];
-                in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters            		
-                if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
-                if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
-                composite_row_key[idx++]=key;
-            		}
-            		
+                  {
+                  dc=rows_ptr[i];
+                  key=data_ptr[dr][dc];
+                  in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
+                  if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
+                  composite_row_key[idx++]=key;
+                  }
+                  
             composite_col_key=[];idx=0;
             for (i=0;i<cols_length;i++)
-            		{
-            		dc=cols_ptr[i];
-								key=data_ptr[dr][dc];
-                in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters            		
-                if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter
-                if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
-                composite_col_key[idx++]=key;
-            		}
+                  {
+                  dc=cols_ptr[i];
+                  key=data_ptr[dr][dc];
+                  in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
+                  if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
+                  composite_col_key[idx++]=key;
+                  }
+
+              
 
             if (!is_filtered)
                     {   //create mapping data to pvtable
@@ -481,18 +491,18 @@ function jpv_pivotDrawData($this)
                     }
             }
         //console.profileEnd('mainLoop');   
-				//console.profile('sortCol');                        
-				//sort cols and create remapping 
-				var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
-				for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
-				cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
-				for (i=0; i < len ; i++)
-							{
-							cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
-							}
-			//console.profileEnd('sortCol');    
-			
-			 //sort unique keys for filters
+            //console.profile('sortCol');                        
+            //sort cols and create remapping 
+            var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
+            for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
+            cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
+            for (i=0; i < len ; i++)
+                     {
+                     cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
+                     }
+         //console.profileEnd('sortCol');    
+         
+          //sort unique keys for filters
        len = pv.unique_keys.length;
        for (i=0;i<len;i++)pv.unique_keys[i].sort();
                         
@@ -501,17 +511,17 @@ function jpv_pivotDrawData($this)
        pv.data=jpv_create_2Darray(pv.data_rows_count);
        //init pv_data
 
-			 var data_header=jpv_create_2Darray(cols_length);
-			 for (i=0;i<data_length;i++)
-		        {
-		        if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
-		        for (j=0;j<rows_length;j++) 
-		                {
-		                pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
-		                }
+          var data_header=jpv_create_2Darray(cols_length);
+          for (i=0;i<data_length;i++)
+              {
+              if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
+              for (j=0;j<rows_length;j++) 
+                      {
+                      pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
+                      }
             pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
             if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
-		        }
+              }
          
         //rows kyes span
         pv.keys_rowspan=jpv_create_2Darray(rows_length);  
