@@ -292,7 +292,7 @@ function jpv_pivotDrawData($this)
         
         //draw data
         var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);} 
-        var key_value='';
+        var use_printVal = $.isFunction(opts.printValue), print_val='';
         for (r=0;r< pv.data_rows_count;r++)
               {
               table_data_html.push("<tr>\n"); 
@@ -311,7 +311,7 @@ function jpv_pivotDrawData($this)
                       }
                   else
                       {//data
-                      if ($.isFunction(opts.printValue))
+                     if (use_printVal) 
                       	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
                       else 
                       	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
