@@ -131,6 +131,7 @@ function jpv_keys_placeholder_popup($this)
         var keys_index_length=$this.pv.keys_index.length;
         var data_headers = $this.opts.data_headers;
         var tstr='';
+        var use_printKey = $.isFunction($this.opts.printKey),printed_key='';
         for (k=0;k<keys_index_length;k++)
             {
             unique_keys=$this.pv.unique_keys[k];
@@ -145,7 +146,8 @@ function jpv_keys_placeholder_popup($this)
                 tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
-                            tstr +='<option>'+unique_keys[j]+'</option>';
+											  printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j]) :  unique_keys[j];
+                        tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
                         }
                 tstr +='</select></li>';
                 $('#pv_filter',$this).append(tstr);
@@ -175,7 +177,10 @@ function jpv_keys_placeholder_popup($this)
                     tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
                     tstr +='asc<input type="radio" name="pv_dlg_plh'+k+'_order" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order" value="D"><hr>'
                     for (i=0; i < unique_keys_length; i++)
-                            tstr +=unique_keys[i]+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+unique_keys[i]+'"><br>'
+                    		{
+  									    printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i]) : unique_keys[i];
+                        tstr +=printed_key+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+unique_keys[i]+'"><br>'
+                        }
                     tstr +='</div>';
                     $($this).append(tstr);
                     $('#pv_dlg_plh'+k).dialog
@@ -234,6 +239,7 @@ function jpv_pivotDrawData($this)
                 //place placeholder only
                 table_data_html.push('<tr id="pv_tr_h_col0"><th colspan="'+keys_rowspan_length+'" ></th><th class="ui-state-default"><ul style="width:20px;height:20px;" class="pv_keys_placeholder" id="pv_colkeys_placeholder"></ul></th><th></th>');                 
                 }
+        var use_printKey = $.isFunction(opts.printKey),printed_key='';
         for (r=0;r < keys_colspan_length;r++)
                 {
                 len=pv.keys_colspan[r].length;
@@ -249,22 +255,22 @@ function jpv_pivotDrawData($this)
                               +'<ul class="pv_keys_placeholder" id="pv_colkeys_placeholder">');
                           for (i=0;i<opts.cols.length;i++) 
                               {
-                              icon = 
                               table_data_html.push(
-                                  '<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'"class="ui-state-highlight">'
+                                  '<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
                                   +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
                                   +opts.data_headers[opts.cols[i]] 
                                   +'</li>');
                               }
                           table_data_html.push('</ul></th>');
                           }
-                      table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+pv.keys_colspan[r][c][0]+'</th>');
+											 printed_key = (use_printKey) ? opts.printKey(opts.cols[r],pv.keys_colspan[r][c][0]) : pv.keys_colspan[r][c][0];
+                       table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+printed_key+'</th>');
                        }
                 table_data_html.push("</tr>\n"); 
                 }
                 
         //row keys dragable
-      
+
       if (keys_rowspan_length==0)
           {
           //place placeholder only
@@ -274,8 +280,8 @@ function jpv_pivotDrawData($this)
           {
             table_data_html.push('<tr><th style="min-width:40px;" colspan="'+keys_rowspan_length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
             for (i=0;i< keys_rowspan_length ;i++) 
-                    {
-                    table_data_html.push(
+                  {
+                  table_data_html.push(
                         '<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
                         +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
                          +opts.data_headers[opts.rows[i]]
@@ -285,29 +291,31 @@ function jpv_pivotDrawData($this)
             }
         
         //draw data
-        var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);}
+        var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);} 
+        var key_value='';
         for (r=0;r< pv.data_rows_count;r++)
               {
               table_data_html.push("<tr>\n"); 
               for (c=0;c< pv.data_row_length;c++)
                   {
-                          if ((c==0) && (keys_rowspan_length==0)) table_data_html.push('<td></td><td></td>'); //we have placeholder only, reserve area below it
-                          if  (c < keys_rowspan_length)  
-                              {//header
-                              if (ind_r[c][0] == r)
-                                  {
-                                  table_data_html.push('<th  rowspan = "'+pv.keys_rowspan[c][ind_r[c][1]][1]+'" class="ui-state-default">'+pv.keys_rowspan[c][ind_r[c][1]][0]+'</th>');
-                                  ind_r[c][0] += pv.keys_rowspan[c][ind_r[c][1]][1]; //set when next th will be needed by row
-                                  ind_r[c][1]++ ; //set for which section we see
-                                  }
-                              }
-                          else
-                              {//data
-                              if ($.isFunction(opts.printValue))
-                              	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
-                              else 
-                              	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
-                              }
+                   if ((c==0) && (keys_rowspan_length==0)) table_data_html.push('<td></td><td></td>'); //we have placeholder only, reserve area below it
+                   if  (c < keys_rowspan_length)  
+                      {//row key header
+                      if (ind_r[c][0] == r)
+                          {
+												  printed_key =(use_printKey) ? opts.printKey(opts.rows[c],pv.keys_rowspan[c][ind_r[c][1]][0]) : pv.keys_rowspan[c][ind_r[c][1]][0]; 
+                          table_data_html.push('<th  rowspan = "'+pv.keys_rowspan[c][ind_r[c][1]][1]+'" class="ui-state-default">'+printed_key+'</th>');
+                          ind_r[c][0] += pv.keys_rowspan[c][ind_r[c][1]][1]; //set when next th will be needed by row
+                          ind_r[c][1]++ ; //set for which section we see
+                          }
+                      }
+                  else
+                      {//data
+                      if ($.isFunction(opts.printValue))
+                      	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
+                      else 
+                      	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
+                      }
                   }
               table_data_html.push("</tr>\n");
               }
@@ -548,6 +556,7 @@ function jpv_pivotDrawData($this)
         ,data_col:null
         ,data_headers:null
         ,printValue:null
+        ,printKey:null
         }    
 
 
