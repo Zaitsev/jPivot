@@ -80,6 +80,17 @@ function in_array(element, array, addIfAbsent)
           }
       return null;
         }
+function jpv_count_keys_span2(span_array,key_num,key)    
+        {
+        //create array of [key,count] like  [ [key1,1],[key2,2],[key1,1] ]
+        var last_element=span_array[key_num].length-1
+        //create new row for this key and for all at "right" from it by duplicate key
+        var i,len=span_array.length;
+        span_array[key_num].push([key,1]);
+        for (i=key_num+1; i< len; i++)
+        span_array[i].push([span_array[i][span_array[i].length-1][0],1]);
+        
+        }         
 function jpv_count_keys_span(span_array,key)    
         {
         //create array of [key,count] like  [ [key1,1],[key2,2],[key1,1] ]
@@ -89,7 +100,7 @@ function jpv_count_keys_span(span_array,key)
         }    
 function jpv_create_2Darray(len)
         {
-        var a=[];
+        var a=[],i;
         for (i=0;i<len;i++) a.push([]);
         return a;
         }        
@@ -146,7 +157,7 @@ function jpv_keys_placeholder_popup($this)
                 tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
-											  printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j]) :  unique_keys[j];
+                                   printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j]) :  unique_keys[j];
                         tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
                         }
                 tstr +='</select></li>';
@@ -177,8 +188,8 @@ function jpv_keys_placeholder_popup($this)
                     tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
                     tstr +='asc<input type="radio" name="pv_dlg_plh'+k+'_order" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order" value="D"><hr>'
                     for (i=0; i < unique_keys_length; i++)
-                    		{
-  									    printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i]) : unique_keys[i];
+                          {
+                                 printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i]) : unique_keys[i];
                         tstr +=printed_key+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+unique_keys[i]+'"><br>'
                         }
                     tstr +='</div>';
@@ -263,7 +274,7 @@ function jpv_pivotDrawData($this)
                               }
                           table_data_html.push('</ul></th>');
                           }
-											 printed_key = (use_printKey) ? opts.printKey(opts.cols[r],pv.keys_colspan[r][c][0]) : pv.keys_colspan[r][c][0];
+                                  printed_key = (use_printKey) ? opts.printKey(opts.cols[r],pv.keys_colspan[r][c][0]) : pv.keys_colspan[r][c][0];
                        table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+printed_key+'</th>');
                        }
                 table_data_html.push("</tr>\n"); 
@@ -291,33 +302,51 @@ function jpv_pivotDrawData($this)
             }
         
         //draw data
-        var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);} 
+        var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0,0]);} 
         var use_printVal = $.isFunction(opts.printValue);
+        
         for (r=0;r< pv.data_rows_count;r++)
               {
               table_data_html.push("<tr>\n"); 
               for (c=0;c< pv.data_row_length;c++)
                   {
+                   need_total=-1;
                    if ((c==0) && (keys_rowspan_length==0)) table_data_html.push('<td></td><td></td>'); //we have placeholder only, reserve area below it
                    if  (c < keys_rowspan_length)  
                       {//row key header
+                      ind_r[c][2]=0;
                       if (ind_r[c][0] == r)
                           {
-												  printed_key =(use_printKey) ? opts.printKey(opts.rows[c],pv.keys_rowspan[c][ind_r[c][1]][0]) : pv.keys_rowspan[c][ind_r[c][1]][0]; 
-                          table_data_html.push('<th  rowspan = "'+pv.keys_rowspan[c][ind_r[c][1]][1]+'" class="ui-state-default">'+printed_key+'</th>');
+                          printed_key =(use_printKey) ? opts.printKey(opts.rows[c],pv.keys_rowspan[c][ind_r[c][1]][0]) : pv.keys_rowspan[c][ind_r[c][1]][0]; 
+                          table_data_html.push('<th  rowspan = "'+(pv.keys_rowspan[c][ind_r[c][1]][1])+'" class="ui-state-default">'+printed_key+'</th>');
                           ind_r[c][0] += pv.keys_rowspan[c][ind_r[c][1]][1]; //set when next th will be needed by row
                           ind_r[c][1]++ ; //set for which section we see
+                          ind_r[c][2]=1; //we need total after this row;
                           }
                       }
                   else
                       {//data
-                     if (use_printVal) 
-                      	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
+                      if (use_printVal) 
+                         table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
                       else 
-                      	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
+                         table_data_html.push('<td>'+pv.data[r][c]+'</td>');
                       }
                   }
               table_data_html.push("</tr>\n");
+							//print total
+							for (c=0;c< keys_rowspan_length;c++)
+								 if (ind_r[c][2])
+								 		{
+								 		//total here
+								 		table_data_html.push("<tr><td>"+c+"</td><td>2</td><td></td></tr>");
+								 		/*
+								 		 table_data_html.push("<tr>");
+								 		 for (i=0;i< pv.data_row_length;i++)
+								 		  table_data_html.push("<td cols> for key="+c+"</td>\n");
+								 		table_data_html.push("</tr>");
+								 		*/
+								 		}
+								 		
               }
         table_data_html.push('</table>');
         //end draw data
@@ -453,7 +482,7 @@ function jpv_pivotDrawData($this)
         for (dr=0; dr < data_length ; dr++)
             {
             is_filtered=false;
-						//head filter unique keys
+                  //head filter unique keys
             for (i=0;i<filter_length;i++)
                   {
                   //when we first add key to head_fiter we dont have values of this filter (they are creting here)
@@ -462,7 +491,7 @@ function jpv_pivotDrawData($this)
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-									if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
+                           if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
                   }                
             composite_row_key=[]; idx=0;
             for (i=0;i<rows_length;i++)
@@ -522,11 +551,11 @@ function jpv_pivotDrawData($this)
                       {
                       pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
                       }
-							/*                      
+                     /*                      
               if (use_getData)
                  pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = $this.opts.getData(i,data_col,data_ptr); //inset data in its place in row
               else
-              	 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
+                  pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
               */
               //store data_ptr index instead of actual value
               //this will be needede on totals an data display functions
@@ -537,9 +566,56 @@ function jpv_pivotDrawData($this)
          
         //rows kyes span
         pv.keys_rowspan=jpv_create_2Darray(rows_length);  
+/*        
         for (r=0;r < pv.data_rows_count;r++)    
-                for (i=0; i < rows_length; i++) 
-                        jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
+                for (i=0; i < rows_length; i++)
+                   if (r==0) pv.keys_rowspan[i].push(pv.data[r][i]);
+                   else jpv_count_keys_span2(pv.keys_rowspan,i,pv.data[r][i]);
+                   //jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
+*/
+        var cur_state=jpv_create_2Darray(rows_length);
+        var nr=rows_length;
+        for (r=0;r < pv.data_rows_count;r++)  
+            {
+            nr=rows_length;
+            for (i=0; i <  rows_length; i++)
+                {
+                if(cur_state[i] == pv.data[r][i] )
+                   pv.keys_rowspan[i][pv.keys_rowspan[i].length-1][1]++;  //increase rowspan for this key
+                else
+                  {
+                  nr=i; //stop rowspan for this key and all those "right"
+                  break;
+                  }
+                }  
+            for (i=nr;i<rows_length;i++)
+                {
+                cur_state[i]=pv.data[r][i];
+                pv.keys_rowspan[i].push([pv.data[r][i],1]);
+                }  
+            }                   
+        //create totals
+        
+        pv.rows_totals=jpv_create_2Darray(rows_length);
+        for(cur_rowkey=0;cur_rowkey<rows_length;cur_rowkey++)
+              {
+              start_row=0;
+              pv.rows_totals[cur_rowkey]=[];
+              for (cur_pv_rowspan=0; cur_pv_rowspan < pv.keys_rowspan[cur_rowkey].length; cur_pv_rowspan++)
+                    {
+                    pv.rows_totals[cur_rowkey][cur_pv_rowspan]=jpv_create_2Darray(pv.data_row_length);
+                    for (cur_pv_col=rows_length; cur_pv_col < pv.data_row_length; cur_pv_col++)
+                         {
+                         //pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col]=[];
+                         for (cur_pv_row = start_row; cur_pv_row < start_row+pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1]; cur_pv_row++)
+	                          {
+	                          pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col] = pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col].concat(pv.data[cur_pv_row][cur_pv_col])
+	                          }
+                         start_row +=pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1];
+                         }
+                    }
+              }
+              
         //cols keys span
         pv.keys_colspan=jpv_create_2Darray(cols_length);
         for (r=0; r < cols_length; r++)
@@ -559,6 +635,7 @@ function jpv_pivotDrawData($this)
         ,printValue:null
         ,printKey:null
         ,getData:null
+        ,getTotals:null
         }    
 
 
