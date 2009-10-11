@@ -514,6 +514,7 @@ function jpv_pivotDrawData($this)
        //init pv_data
 
           var data_header=jpv_create_2Darray(cols_length);
+          var use_getData=$.isFunction($this.opts.getData); 
           for (i=0;i<data_length;i++)
               {
               if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
@@ -521,8 +522,11 @@ function jpv_pivotDrawData($this)
                       {
                       pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
                       }
-            pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
-            if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
+              if (use_getData)
+                 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = $this.opts.getData(i,data_col,data_ptr); //inset data in its place in row
+              else
+              	 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
+              if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
               }
          
         //rows kyes span
@@ -548,6 +552,7 @@ function jpv_pivotDrawData($this)
         ,data_headers:null
         ,printValue:null
         ,printKey:null
+        ,getData:null
         }    
 
 
