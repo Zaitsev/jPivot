@@ -10,7 +10,7 @@
          //If it's our required chart
          if (DOMId=="chart1Id"){
             //Simply alert 
-            window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
+           // window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
             return;
          }
       }
@@ -22,7 +22,7 @@
    </div>
    <script language="JavaScript"> 
       var chart1 = new FusionCharts("./FusionCharts/Column3D.swf", "chart1Id", "400", "300", "0", 1); 
-      chart1.setDataXML("<chart><set label='A' value='10' /><set label='B' value='11' /></chart>");
+      chart1.setDataXML("<chart palette='5'><set label='A' value='10' /><set label='B' value='11' /></chart>");
       chart1.render("chart1div");
    </script>
 </BODY>

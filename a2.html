@@ -1,8 +1,3 @@
-<?
-//!!!!!!!!!!!!!!!!!!!!!!!!!
-////  http://www.fusioncharts.com/forum/Topic5009-47-1.aspx#bm8077
-//!!!!!!!!!!!!!!!!!!!!!!
-?>
 <!DOCTYPE html>
 <html>
 	<head>
@@ -13,7 +8,16 @@
 		<script type="text/javascript" src="./jpivot.js"></script>
 		<script type="text/javascript" src="./FusionCharts/fusioncharts.js"></script>
 		<link type="text/css" href="./css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		
+<!--
+//!!!!!!!!!!!!!!!!!!!!!!!!!
+////  http://www.fusioncharts.com/forum/Topic5009-47-1.aspx#bm8077
+//!!!!!!!!!!!!!!!!!!!!!!
+-->
+		
 		<script type="text/javascript">
+		  
+		  
 var month_subst = ['янв','фев','мрт','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
 
 			
@@ -85,26 +89,25 @@ $(document).ready(function()
 						  */
 					return val;
 					}	
-					
-			,afterDraw:function()
-					{
-					var strXML = graph();
-					if (strXML != null) chart1.setDataXML("chart1div",strXML);					
-					}
+
 			});  	
 	pv=pivots[0].pv;
-	chart1 = new FusionCharts("./FusionCharts/MSColumn3D.swf", "chart1div", "800", "400","0",1);
-	chart1.setDataXML(graph());
-	chart1.setTransparent (true);
-	chart1.render("chart1div");		
-
-	chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0",1);
-	chart2.setDataXML(graph());
-	chart2.setTransparent (true);
-	chart2.render("chart2div");			
+	$("#resize_chart_1").resizable({
+	 
+	 stop:function(){redraw()}
+	 ,handles: 'all' 
+	});
 	}
 	);
-	
+      function FC_Rendered(DOMId){
+         //If it's our required chart
+         if (DOMId=="chart1div"){
+            //Simply alert 
+            var chartObj = getChartFromId('chart1div');
+            //window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
+            return;
+         }	
+        }
 function graph()
 		{
 		if (pv==undefined) return null;
@@ -126,13 +129,14 @@ function graph()
     if (set=='Stagger2') {ads+=" labelDisplay='Stagger' staggerLines='4' "}
 
     set = $('#FS_settindgs  [name=val_ins]:checked').val();
-    if (set=='val_ins') {ads+=" placeValuesInside='1' "}
+    if (set=='val_ins') {ads+=" placeValuesInside='1' showValues='1'  "}
+    if (set=='val_non') {ads+=" showValues='0' "}
     set = $('#FS_settindgs  [name=val_norm]:checked').val();
     if (set=='val_rot') {ads+=" rotateValues='1' "}
     
-		 strXML +="<graph "+ads+"  legendPosition='bottom' showLegend='1' xAxisName='"+data_headers[rows[0]]
-		 +"'  legendCaption='"+data_headers[cols[0]]+"' numberSuffix='%' decimalPrecision='0' animation='1' " 
-		 + "showValues='1'  rotateXAxisName='90' showYAxisValues='1' showDivLineValues='1' yaxismaxvalue='100'>"; 
+		 strXML +="<graph  palette='3' "+ads+"   baseFontSize='9' legendPosition='bottom' showLegend='1' xAxisName='"+data_headers[rows[0]]
+		 +"'  legendCaption='"+data_headers[cols[0]]+"' numberSuffix='%' decimalPrecision='0' animation='0' " 
+		 + "  rotateXAxisName='90' showYAxisValues='1' showDivLineValues='1' yaxismaxvalue='100' bgAngle='270'  bgAlpha='10,10' chartOrder='area,column,  line'>"; 
 		
 		strXML += "<categories>";
 		for (var i=0; i< row_len;i++)
@@ -142,18 +146,35 @@ function graph()
 		strXML +="</categories>";
 		set = $('#FS_settindgs  [name=val_color]:checked').val();
 		var use_color = (set == 'val_set' );
+		var line=[];
+		for (var row = 0 ; row < pv.data_rows_count; row++) line[row]=[0,0];
+		var avrg=0;
+		var val;
 		for (var col=0;col < col_len ; col++)
 				{
-				strXML += "<dataset seriesName='" + col_keys[col][0] + "' "+(use_color ? " color='"+colors[col]+"' ":'' )+" >";
-				for (var row = 0 ; row < pv.data_rows_count; row++)
+				avrg=0;
+				strXML += "<dataset  renderAs='bar' alpha='100' seriesName='" + col_keys[col][0] + "' "+(use_color ? " color='"+colors[col]+"' ":'' )+" >";
+				for (row = 0 ; row < pv.data_rows_count; row++)
 						{
 						if (pvdata[row][data_start+col] == undefined)
-							strXML +="<set />"
+						  {
+							strXML +="<set />";
+						  }
 						else
-							strXML +="<set value='" + data[pvdata[row][data_start+col]][2+2] + "' />"
+						  {
+						  val=data[pvdata[row][data_start+col]][2+2];
+							strXML +="<set value='" + val + "' />";
+							line[row][0] += parseFloat(val);line[row][1]++
+						  }
 						}
-				strXML +="</dataset>"
+				strXML +="</dataset>";
 				} 
+      strXML += "<dataset renderAs='AREA' seriesName='AVG' alpha='5' showValues='0' >";				
+      for (row = 0 ; row < pv.data_rows_count; row++)  
+          strXML += (line[row][1]) ? "<set value='" + (line[row][0] /  line[row][1]) + "' />" : "<set />";
+
+          
+      	strXML +="</dataset>";
 			strXML +="<trendlines>"
 			strXML +="<line  alpha='20' startValue='90' endValue='100' color='F7C42A'  isTrendZone='1' displayValue='GOOD' showOnTop='1'/>"
 			strXML +="<line  alpha='20' startValue='0'  endValue='25' color='F70000'  isTrendZone='1' displayValue='BAD' showOnTop='0'/>"
@@ -172,20 +193,28 @@ var chart2;
 function redraw()
     {
 					var strXML = graph();
+	
 					//var chartObj = getChartFromId('chart1div');
-					chart1.setDataXML(strXML);		 
-	chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0",1);
-	chart2.setDataXML(graph());
+	    //var chart1 = new FusionCharts("./FusionCharts/MSCombi2D.swf", "chart1div"
+	    //var chart1 = new FusionCharts("./FusionCharts/MSCombi3D.swf", "chart1div"
+      var chart1 = new FusionCharts("./FusionCharts/MSColumnLine3D.swf", "chart1div"
+      , $("#resize_chart_1").width(), $("#resize_chart_1").height()
+      , "0", 1); 
+      chart1.setDataXML(strXML);
+      chart1.setTransparent (true);
+      chart1.render("chart1div");	
+	/*
+	var chart1 = new FusionCharts("./FusionCharts/Column3D.swf", "chart1div", "800", "400","0",1);
+	chart1.setDataXML(strXML);
+	//chart1.setTransparent (true);
+	chart1.render("chart1div");		
+*/
+	var chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0","1");
+	chart2.setDataXML(strXML);
 	chart2.setTransparent (true);
 	chart2.render("chart2div");		     
     }	
-      function viewAs2D()
-      {
-         //Get chart from its ID
-         var chartToView2D = getChartFromId("chart1div");
-         chartToView2D.view2D();
-         
-      }    
+
 			
 		</script>
 		<style>
@@ -199,6 +228,8 @@ function redraw()
 			#pv_rowkeys_placeholder{padding-bottom:5px;}
 			#pv_colkeys_placeholder{padding-bottom:1px;}
 			#pv_filter {padding-bottom:5px;}
+			
+			#chart2div, #resize_chart_1 { width: 800px; height: 400px;}
 		</style>
 	</head>
 	<body>
@@ -213,11 +244,12 @@ function redraw()
 	    Rs<input type="radio" name="longlabels" value="ROTATE slang">
 	    S<input type="radio" name="longlabels" value="Stagger">
 	    S2<input type="radio" name="longlabels" value="Stagger2">
-	    | vals: [in<input type="radio" name="val_ins" value="val_ins">top<input type="radio" name="val_ins" value="val_top">]
-	     [norm<input type="radio" name="val_norm" value="val_norm">rotate<input type="radio" name="val_norm" value="val_rot">]
+	    | DIsp vals: [in<input type="radio" name="val_ins" value="val_ins">top<input type="radio" name="val_ins" value="val_top">
+	     non<input type="radio" name="val_ins" value="val_non">]
+	     [retate val: Y<input type="radio" name="val_norm" value="val_rot">N<input type="radio" name="val_norm" value="val_norm">]
 	    |color  [auto<input type="radio" name="val_color" value="val_auto"> set<input type="radio" name="val_color" value="val_set">]
 	  </div>	
-	  <div><input onclick="redraw()" type="button" name="refresh" value="Refresh"> <input type='button' value='2D View' onClick='viewAs2D();'></div>	
-		<div id='chart1div'></div>
+	  <div><input onclick="redraw()" type="button" name="refresh" value="Refresh"></div>
+		<div style="z-index:500" id="resize_chart_1" class="ui-widget-content"><div id='chart1div'></div></div>
 		<div id='chart2div'></div>
 	</body>
