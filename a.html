@@ -1,136 +1,29 @@
-<html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-		<title>jQuery UI Example Page</title>
-		<link type="text/css" href="./css/swanky-purse/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
-		<script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
-		<script type="text/javascript" src="./js/jquery-ui-1.7.2.custom.min.js"></script>
-
-	<style type="text/css">
-	#sortable1, #sortable2 { list-style-type: none; margin: 0; padding: 0; float: left; margin-right: 10px; }
-	#sortable1 li, #sortable2 li { margin: 2px; padding: 2px; font-size: 1em; width: 120px; }
-	 #sortable2 li { float:left }
-	</style>
-	<script type="text/javascript">
-/*		
-$.fn.extend({  
-    myMethod: function(){...}  
-});  
-//jQuery("div").myMethod();  
-  
-$.extend({  
-    myMethod2: function(){...}  
-});  
-*/
-//jQuery.myMethod(); 		
-var data=[
-	 ['s1','b1','q1','r1']
-	,['s1','b1','q2','r2']
-	,['s1','b1','q3','r3']
-	,['s1','b2','q1','r4']
-	,['s1','b2','q2','r5']
-	,['s1','b2','q3','r6']
-	,['s2','b1','q1','r7']
-	,['s2','b1','q2','r8']
-	,['s2','b1','q3','r9']
-	,['s2','b2','q1','r10']
-	,['s2','b2','q2','r11']
-	,['s2','b2','q3','r12']
-];
-var header=['s','b','q'];
-var cols = [2];
-var rows=[0,1];
-var v = [3];
-$.fn.extend({  
-    pivot: function(settings)
-    	{
-    	var options= $.extend(
-    		{
-    		color:'green'
-    		,div:$(this)
-    		,table_data:[]
-    		,tree:{}
-    		}
-    		,settings);
-    	var r1=null;var r2=null; var c1=null;
-    	var row=[];
-    	for (i=0;i<3;i++)
-    		$.extend(options.tree,{'s2'+i:i});
-    	options.tree.q=5;
-    	options.tree.q=5;
-    	/*
-    	$.each(options.data
-    				,function(i,v)
-    						{
-    						if ((v[rows[1]] != r2) || (v[rows[0]] != r1) )
-    								{
-    								if ( (r1!= null) &&( r2 !=null ) )options.table_data.push(row);
-    								row=[];
-    								r1=v[rows[0]];
-    								r2=v[rows[1]];
-    								row.push(r1);
-    								row.push(r2);
-    								}
-    						row.push(v[options.vals]);
-    						}
-    				)
-    		*/				
-    	
-/*    	
-    	for (r=0;r < options.data.length;r++)
-    			{
-    			for (c=0; c< options.cols.length; c++)
-		    			{
-							row.push(options.data[c][options.vals]);	    			
-		    			} 
-		    	options.table_data.push(row);
-		    	row=[];
-		    	}
-*/		    	
-		  table_data=[];
-    	}  
-});  
-	$(document).ready(function() {
-		$('#pv').pivot({color:'red',data:data,header:header,cols:cols,rows:rows,vals:v});
-		$("#sortable1, #sortable2").sortable({
-			connectWith: '.connectedSortable'
-		}).disableSelection();
-	}
-	);
-
-	</script>		
-</head>
-<body>
-<div class="demo">
-
-<ul id="sortable1" class="connectedSortable">
-	<li class="ui-state-default">Item 1</li>
-	<li class="ui-state-default">Item 2</li>
-	<li class="ui-state-default">Item 3</li>
-	<li class="ui-state-default">Item 4</li>
-	<li class="ui-state-default">Item 5</li>
-</ul>
-
-<ul id="sortable2" class="connectedSortable">
-	<li class="ui-state-highlight">Item 1</li>
-	<li class="ui-state-highlight">Item 2</li>
-	<li class="ui-state-highlight">Item 3</li>
-	<li class="ui-state-highlight">Item 4</li>
-	<li class="ui-state-highlight">Item 5</li>
-</ul>
-
-</div><!-- End demo -->
-
-<div class="demo-description">
-
-<p>
-	Sort items from one list into another and vice versa, by passing a selector into
-	the <code>connectWith</code> option. The simplest way to do this is to
-	group all related lists with a CSS class, and then pass that class into the
-	sortable function (i.e., <code>connectWith: '.myclass'</code>).
-</p>
-
-</div><!-- End demo-description -->
-<div id="pv">blue</div>
-</body>
-</html>
+<HTML>
+<HEAD>
+   <TITLE>FusionCharts & JavaScript - Basic Example</TITLE> 
+   <SCRIPT LANGUAGE="Javascript" SRC="./FusionCharts/FusionCharts.js"></SCRIPT>
+   <SCRIPT LANGUAGE="JavaScript">
+      //FC_Rendered method is called whenever a FusionCharts chart on the page
+      //has finished initial rendering. To this function, the chart passes its 
+      //own DOM Id.
+      function FC_Rendered(DOMId){
+         //If it's our required chart
+         if (DOMId=="chart1Id"){
+            //Simply alert 
+            window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
+            return;
+         }
+      }
+   </SCRIPT>
+</HEAD>
+<BODY>
+   <div id="chart1div">
+      FusionCharts
+   </div>
+   <script language="JavaScript"> 
+      var chart1 = new FusionCharts("./FusionCharts/Column3D.swf", "chart1Id", "400", "300", "0", 1); 
+      chart1.setDataXML("<chart><set label='A' value='10' /><set label='B' value='11' /></chart>");
+      chart1.render("chart1div");
+   </script>
+</BODY>
+</HTML>

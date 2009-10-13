@@ -1,3 +1,8 @@
+<?
+//!!!!!!!!!!!!!!!!!!!!!!!!!
+////  http://www.fusioncharts.com/forum/Topic5009-47-1.aspx#bm8077
+//!!!!!!!!!!!!!!!!!!!!!!
+?>
 <!DOCTYPE html>
 <html>
 	<head>
@@ -6,37 +11,47 @@
 		<script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
 		<script type="text/javascript" src="./js/jquery-ui-1.7.2.custom.min.js"></script>
 		<script type="text/javascript" src="./jpivot.js"></script>
+		<script type="text/javascript" src="./FusionCharts/fusioncharts.js"></script>
 		<link type="text/css" href="./css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
 		<script type="text/javascript">
 var month_subst = ['янв','фев','мрт','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-var data=[];
-for (i=0;i<3;i++)
-	for (j=0;j<3;j++)
-		for (k=10;k<15;k++)
-			for (n=1;n<15;n++)
-					{
-						rnd=Math.random()*100;
-					if ( rnd > 50) continue;
-					if (rnd > 60 )continue;
-					 data.push(['s'+i,'b'+j,k,n,'s'+i+'-b'+j+'-q'+k+'-qn'+n]);
-					}
+
 			
 
 	var data =[
 	
-["КИЕВ","КИЕВ Драйзера ул, 21","A","320.00","450.00","71.11"],
-["КИЕВ","КИЕВ Драйзера ул, 8","A","327.00","450.00","72.67"],
-["БОРИСПОЛЬ","БОРИСПОЛЬ Киевская тр, 76","A","371.00","450.00","82.44"],
-["КИЕВ","КИЕВ Закревского ул, 61/2","B","308.00","450.00","68.44"],
-["КИЕВ","КИЕВ Маяковского пр, 75/2","A","308.00","450.00","68.44"],
-["КИЕВ","КИЕВ Радужная ул, 8","A","392.00","450.00","87.11"],
-["КИЕВ","КИЕВ Стальского ул, 22/1","B","338.00","450.00","75.11"],
-["СЛАВУТИЧ","СЛАВУТИЧ Привокзальная ул, 5","B","419.00","525.00","79.81"],
-["КИЕВ","КИЕВ Карельский пер, 3","A","332.00","450.00","73.78"],
-["КИЕВ","КИЕВ Лесной пр, 39","B","339.00","450.00","75.33"]
+["БОРИСПОЛЬ Киевская тр, 76","10","105.00","150.00","70.00"],
+["БОРИСПОЛЬ Киевская тр, 76","11","137.00","150.00","91.33"],
+["БОРИСПОЛЬ Киевская тр, 76","12","129.00","150.00","86.00"],
+["КИЕВ Драйзера ул, 21","10","112.00","150.00","74.67"],
+["КИЕВ Драйзера ул, 21","11","122.00","150.00","81.33"],
+["КИЕВ Драйзера ул, 21","12","86.00","150.00","57.33"],
+["КИЕВ Драйзера ул, 8","10","136.00","150.00","90.67"],
+["КИЕВ Драйзера ул, 8","11","111.00","150.00","74.00"],
+["КИЕВ Драйзера ул, 8","12","80.00","150.00","53.33"],
+["КИЕВ Закревского ул, 61/2","10","116.00","150.00","77.33"],
+["КИЕВ Закревского ул, 61/2","11","112.00","150.00","74.67"],
+["КИЕВ Закревского ул, 61/2","12","80.00","150.00","53.33"],
+["КИЕВ Карельский пер, 3","10","122.00","150.00","81.33"],
+["КИЕВ Карельский пер, 3","11","107.00","150.00","71.33"],
+["КИЕВ Карельский пер, 3","12","103.00","150.00","68.67"],
+["КИЕВ Лесной пр, 39","10","110.00","150.00","73.33"],
+["КИЕВ Лесной пр, 39","11","123.00","150.00","82.00"],
+["КИЕВ Лесной пр, 39","12","106.00","150.00","70.67"],
+["КИЕВ Маяковского пр, 75/2","10","120.00","150.00","80.00"],
+["КИЕВ Маяковского пр, 75/2","11","101.00","150.00","67.33"],
+["КИЕВ Маяковского пр, 75/2","12","87.00","150.00","58.00"],
+["КИЕВ Радужная ул, 8","10","116.00","150.00","77.33"],
+["КИЕВ Радужная ул, 8","11","134.00","150.00","89.33"],
+["КИЕВ Радужная ул, 8","12","142.00","150.00","94.67"],
+["КИЕВ Стальского ул, 22/1","10","126.00","150.00","84.00"],
+["КИЕВ Стальского ул, 22/1","11","108.00","150.00","72.00"],
+["КИЕВ Стальского ул, 22/1","12","104.00","150.00","69.33"],
+["СЛАВУТИЧ Привокзальная ул, 5","11","105.00","150.00","70.00"],
+["СЛАВУТИЧ Привокзальная ул, 5","12","314.00","375.00","83.73"]
 ];	
-var rows = [0,2];	
-var cols = [];
+var rows = [0];	
+var cols = [1];
 var data_col=3;	
 var filter = []
 var data_headers=["город","объект","TAG"]
@@ -44,18 +59,19 @@ var data_headers=["город","объект","TAG"]
 
 $(document).ready(function()
 	{
-	$('#pv').jPivot({
+	var pivots=$('#pv').jPivot({
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers
 			,filter:filter
 			,printValue:function(data_indexes)
 					{
+					if (data_indexes==undefined) return '--';
 					var len =data_indexes.length 
-					if (len==1) return this.data[data_indexes[0]][5]+'='+this.data[data_indexes[0]][3]+'/'+this.data[data_indexes[0]][4];
+					if (len==1) return this.data[data_indexes[0]][2+2];
 					var ball=0, max_ball=0;
 					for (i=0;i < len; i++) 
 							{
-							ball += parseFloat(this.data[data_indexes[i]][3]);
-							max_ball += parseFloat(this.data[data_indexes[i]][4]);
+							ball += parseFloat(this.data[data_indexes[i]][2]);
+							max_ball += parseFloat(this.data[data_indexes[i]][2+1]);
 						  }
 					return ball+'/'+max_ball;
 					}
@@ -69,15 +85,107 @@ $(document).ready(function()
 						  */
 					return val;
 					}	
-			,getData:function(row,col,data_ptr)				
-						{
-						return data_ptr[row][4]+'='+data_ptr[row][2]+'/'+data_ptr[row][3]
-						}
+					
+			,afterDraw:function()
+					{
+					var strXML = graph();
+					if (strXML != null) chart1.setDataXML("chart1div",strXML);					
+					}
 			});  	
-		
+	pv=pivots[0].pv;
+	chart1 = new FusionCharts("./FusionCharts/MSColumn3D.swf", "chart1div", "800", "400","0",1);
+	chart1.setDataXML(graph());
+	chart1.setTransparent (true);
+	chart1.render("chart1div");		
+
+	chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0",1);
+	chart2.setDataXML(graph());
+	chart2.setTransparent (true);
+	chart2.render("chart2div");			
 	}
 	);
+	
+function graph()
+		{
+		if (pv==undefined) return null;
+		var pvdata = pv.data;
+		var strXML = '';
+		var row_keys = pv.keys_rowspan[pv.keys_rowspan.length-1];
+		var row_len=row_keys.length; //last row key is category
+		var col_keys= pv.keys_colspan[pv.keys_colspan.length-1];
+		var col_len = col_keys.length; 
+		var data_start = pv.keys_rowspan.length;
+		
+		var ads='';
+    var set = $('#FS_settindgs  [name=longlabels]:checked').val();
+    //alert (set);
+    if (set=='WRAP') {ads +=" labelDisplay='WRAP' "}
+    if (set=='ROTATE') {ads+=" labelDisplay='ROTATE' "}
+    if (set=='ROTATE slang') {ads+=" labelDisplay='ROTATE' slantLabels='1' "}
+    if (set=='Stagger') {ads+=" labelDisplay='Stagger' "}
+    if (set=='Stagger2') {ads+=" labelDisplay='Stagger' staggerLines='4' "}
 
+    set = $('#FS_settindgs  [name=val_ins]:checked').val();
+    if (set=='val_ins') {ads+=" placeValuesInside='1' "}
+    set = $('#FS_settindgs  [name=val_norm]:checked').val();
+    if (set=='val_rot') {ads+=" rotateValues='1' "}
+    
+		 strXML +="<graph "+ads+"  legendPosition='bottom' showLegend='1' xAxisName='"+data_headers[rows[0]]
+		 +"'  legendCaption='"+data_headers[cols[0]]+"' numberSuffix='%' decimalPrecision='0' animation='1' " 
+		 + "showValues='1'  rotateXAxisName='90' showYAxisValues='1' showDivLineValues='1' yaxismaxvalue='100'>"; 
+		
+		strXML += "<categories>";
+		for (var i=0; i< row_len;i++)
+			{
+			strXML +="<category showLabel='1' toolText='"+row_keys[i][0]+"' name='"+row_keys[i][0]+"' /><vLine color='FF5904' thickness='2' />";
+			}
+		strXML +="</categories>";
+		set = $('#FS_settindgs  [name=val_color]:checked').val();
+		var use_color = (set == 'val_set' );
+		for (var col=0;col < col_len ; col++)
+				{
+				strXML += "<dataset seriesName='" + col_keys[col][0] + "' "+(use_color ? " color='"+colors[col]+"' ":'' )+" >";
+				for (var row = 0 ; row < pv.data_rows_count; row++)
+						{
+						if (pvdata[row][data_start+col] == undefined)
+							strXML +="<set />"
+						else
+							strXML +="<set value='" + data[pvdata[row][data_start+col]][2+2] + "' />"
+						}
+				strXML +="</dataset>"
+				} 
+			strXML +="<trendlines>"
+			strXML +="<line  alpha='20' startValue='90' endValue='100' color='F7C42A'  isTrendZone='1' displayValue='GOOD' showOnTop='1'/>"
+			strXML +="<line  alpha='20' startValue='0'  endValue='25' color='F70000'  isTrendZone='1' displayValue='BAD' showOnTop='0'/>"
+			strXML +="</trendlines>";
+			strXML +="</graph>"
+			return strXML;
+      //chart1.render("chart1div");
+			//updateChartXML('chart',strXML);
+			
+		}	
+	
+var pv;
+var chart1;
+var chart2;
+   var colors=new Array("AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46");	
+function redraw()
+    {
+					var strXML = graph();
+					//var chartObj = getChartFromId('chart1div');
+					chart1.setDataXML(strXML);		 
+	chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0",1);
+	chart2.setDataXML(graph());
+	chart2.setTransparent (true);
+	chart2.render("chart2div");		     
+    }	
+      function viewAs2D()
+      {
+         //Get chart from its ID
+         var chartToView2D = getChartFromId("chart1div");
+         chartToView2D.view2D();
+         
+      }    
 			
 		</script>
 		<style>
@@ -94,8 +202,22 @@ $(document).ready(function()
 		</style>
 	</head>
 	<body>
+
 		<hr>
 		<div id='pv'></div>
 		<hr>
-		<div id='pv2'></div>
+	  <div id="FS_settindgs">
+	    | LAbel: N<input type="radio" name="longlabels" value="normal">
+	    W<input type="radio" name="longlabels" value="WRAP">
+	    R<input type="radio" name="longlabels" value="ROTATE">
+	    Rs<input type="radio" name="longlabels" value="ROTATE slang">
+	    S<input type="radio" name="longlabels" value="Stagger">
+	    S2<input type="radio" name="longlabels" value="Stagger2">
+	    | vals: [in<input type="radio" name="val_ins" value="val_ins">top<input type="radio" name="val_ins" value="val_top">]
+	     [norm<input type="radio" name="val_norm" value="val_norm">rotate<input type="radio" name="val_norm" value="val_rot">]
+	    |color  [auto<input type="radio" name="val_color" value="val_auto"> set<input type="radio" name="val_color" value="val_set">]
+	  </div>	
+	  <div><input onclick="redraw()" type="button" name="refresh" value="Refresh"> <input type='button' value='2D View' onClick='viewAs2D();'></div>	
+		<div id='chart1div'></div>
+		<div id='chart2div'></div>
 	</body>
