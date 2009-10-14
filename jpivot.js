@@ -334,19 +334,18 @@ function jpv_pivotDrawData($this)
                   }
               table_data_html.push("</tr>\n");
 							//print total
+							/*
 							for (c=0;c< keys_rowspan_length;c++)
 								 if (ind_r[c][2])
 								 		{
 								 		//total here
 								 		table_data_html.push("<tr><td>"+c+"</td><td>2</td><td></td></tr>");
-								 		/*
 								 		 table_data_html.push("<tr>");
 								 		 for (i=0;i< pv.data_row_length;i++)
 								 		  table_data_html.push("<td cols> for key="+c+"</td>\n");
 								 		table_data_html.push("</tr>");
-								 		*/
 								 		}
-								 		
+							*/	 		
               }
         table_data_html.push('</table>');
         //end draw data
@@ -566,13 +565,11 @@ function jpv_pivotDrawData($this)
          
         //rows kyes span
         pv.keys_rowspan=jpv_create_2Darray(rows_length);  
-/*        
+        
         for (r=0;r < pv.data_rows_count;r++)    
                 for (i=0; i < rows_length; i++)
-                   if (r==0) pv.keys_rowspan[i].push(pv.data[r][i]);
-                   else jpv_count_keys_span2(pv.keys_rowspan,i,pv.data[r][i]);
-                   //jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
-*/
+                   jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
+/*
         var cur_state=jpv_create_2Darray(rows_length);
         var nr=rows_length;
         for (r=0;r < pv.data_rows_count;r++)  
@@ -615,7 +612,7 @@ function jpv_pivotDrawData($this)
                          }
                     }
               }
-              
+*/              
         //cols keys span
         pv.keys_colspan=jpv_create_2Darray(cols_length);
         for (r=0; r < cols_length; r++)

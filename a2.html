@@ -36,7 +36,7 @@ for (i=0;i<3;i++)
 ["КИЕВ","КИЕВ Лесной пр, 39","B","339.00","450.00","75.33"]
 ];	
 var rows = [0,2];	
-var cols = [];
+var cols = [1];
 var data_col=3;	
 var filter = []
 var data_headers=["город","объект","TAG"]
@@ -49,6 +49,7 @@ $(document).ready(function()
 			,filter:filter
 			,printValue:function(data_indexes)
 					{
+					if (data_indexes==undefined) return '--';
 					var len =data_indexes.length 
 					if (len==1) return this.data[data_indexes[0]][5]+'='+this.data[data_indexes[0]][3]+'/'+this.data[data_indexes[0]][4];
 					var ball=0, max_ball=0;
