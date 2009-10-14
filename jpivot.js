@@ -371,6 +371,7 @@ function jpv_pivotDrawData($this)
                 }).disableSelection();
         //create popup filters
         jpv_keys_placeholder_popup($this);
+        if ($.isFunction(opts.afterDraw)) opts.afterDraw();
         }
 
 // Public Variables and Methods declare
@@ -391,10 +392,7 @@ function jpv_pivotDrawData($this)
     });        
 
         }
-;jQuery.fn.jPivotDraw =        function($this)
-        {
-
-        }        
+       
 ;jQuery.fn.jPivot.preparePv =        function($this)
         {
         // Persistent Context Variables 
@@ -633,6 +631,7 @@ function jpv_pivotDrawData($this)
         ,printKey:null
         ,getData:null
         ,getTotals:null
+        ,afterDraw:null
         }    
 
 
