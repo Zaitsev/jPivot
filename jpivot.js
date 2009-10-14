@@ -100,8 +100,8 @@ function jpv_count_keys_span(span_array,key)
         }    
 function jpv_create_2Darray(len)
         {
-        var a=[],i;
-        for (i=0;i<len;i++) a.push([]);
+        var a=[];
+        for (var i=0;i<len;i++) a[i]=[];
         return a;
         }        
 function jpv_keys_placeholder_update($this, event, ui)
@@ -134,6 +134,7 @@ function jpv_keys_placeholder_update($this, event, ui)
             $this.opts.filter=filter;
             jQuery.fn.jPivot.preparePv($this);
             jpv_pivotDrawData($this);
+            jpv_pivotDrawData_new($this);
             }
         }    
 function jpv_keys_placeholder_popup($this)
@@ -172,6 +173,7 @@ function jpv_keys_placeholder_popup($this)
                                 {
                                 jQuery.fn.jPivot.preparePv($this);
                                 jpv_pivotDrawData($this);
+                                jpv_pivotDrawData_new($this);
                                 }
                              );                                
         
@@ -204,6 +206,7 @@ function jpv_keys_placeholder_popup($this)
                                         {
                                         jQuery.fn.jPivot.preparePv($this);
                                         jpv_pivotDrawData($this);
+                                        jpv_pivotDrawData_new($this);
                                         $(this).dialog('close');
                                         }
                                     ,Cancel: function() 
@@ -229,7 +232,54 @@ function jpv_keys_placeholder_popup($this)
                   }
             }
         }        
-                    
+function jpv_pivotDrawData_new($this)
+        {
+      //draw data
+      //start header draw
+        var table_data=[];
+        var opts=$this.opts;
+        var pv=$this.pv;
+        var filter_length= opts.filter.length;
+        var row_keys_length=pv.keys_rowspan.length
+        var col_keys_length=pv.data_header.length;
+				
+        //temp vars
+				var r;var c;        var tstr='';
+        //create array for table_data
+        var td_data_rows_start = 1+col_keys_length;//actual data start 1(row headers here and delimiter) +[rows keys count]
+        var td_rows_count=td_data_rows_start+pv.data_rows_count;//+ [number of rows with data]; 
+
+        var td_data_cols_start=row_keys_length+1; //  actual data start [rows keys count]+1(cols headers here)
+        var td_cols_count=td_data_cols_start+pv.data_row_length-row_keys_length;// + [number of cols with data]; 
+
+        //fill rows
+        for (r=0;r < td_rows_count; r++) 
+        		{
+        		table_data[r]=[];
+        		for (c=0;c < td_cols_count; c++) table_data[r][c]=null;
+        		}
+        //put top left td
+        table_data[0][0]='<td>0-0</td>';
+        
+        
+        //fill cols header
+        for (r=0;r<col_keys_length;r++)
+        	for (c=row_keys_length; c < td_cols_count; c++)  
+                			 table_data[r][c+td_data_cols_start]='<td>'+pv.data_header[r][c]+'</td>';
+        
+        			 
+        //fill rows header
+        for (r=0;r<pv.data_rows_count;r++)
+        	{
+        	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]='<td>'+pv.data[r][c]+'</td>';
+        	for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+1]=(pv.data[r][c]==undefined) ? null: pv.data[r][c]; //fill with array of indexes of actual data rows (opts.data)
+        	}
+        			 
+        			 
+        console.dir(table_data);
+        return;
+      
+ }                
 function jpv_pivotDrawData($this)
         {
       //draw data
@@ -387,6 +437,7 @@ function jpv_pivotDrawData($this)
                 this.pv={}; //context pivot data            
                 jQuery.fn.jPivot.preparePv(this)
                 jpv_pivotDrawData(this);
+                jpv_pivotDrawData_new(this);
                 
                 return this;                    
     });        
@@ -612,11 +663,14 @@ function jpv_pivotDrawData($this)
               }
 */              
         //cols keys span
+        
         pv.keys_colspan=jpv_create_2Darray(cols_length);
         for (r=0; r < cols_length; r++)
                 for (c=rows_length; c < pv.data_row_length; c++)                                
                         jpv_count_keys_span(pv.keys_colspan[r],data_header[r][c]);
         //th_row_cnt.push(key,cnt)            
+        
+        pv.data_header=data_header;
         }
 
 ;$.fn.jPivot.defaults=
