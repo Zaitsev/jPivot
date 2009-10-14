@@ -240,7 +240,8 @@ function jpv_pivotDrawData_new($this)
         var opts=$this.opts;
         var pv=$this.pv;
         var filter_length= opts.filter.length;
-        var row_keys_length=pv.keys_rowspan.length
+        var row_keys_length=pv.keys_rowspan.length;
+            row_keys_length= (!row_keys_length) ? 1 : row_keys_length; //fix when no row keys, reserve place for key header placeholder
         var col_keys_length=pv.data_header.length;
 				
         //temp vars
@@ -251,7 +252,7 @@ function jpv_pivotDrawData_new($this)
 
         var td_data_cols_start=row_keys_length+1; //  actual data start [rows keys count]+1(cols headers here)
         var td_cols_count=td_data_cols_start+pv.data_row_length-row_keys_length;// + [number of cols with data]; 
-
+        var pv2td_data_col_diff= -row_keys_length+td_data_cols_start
         //fill rows
         for (r=0;r < td_rows_count; r++) 
         		{
@@ -259,24 +260,72 @@ function jpv_pivotDrawData_new($this)
         		for (c=0;c < td_cols_count; c++) table_data[r][c]=null;
         		}
         //put top left td
-        table_data[0][0]='<td>0-0</td>';
+        table_data[0][0]='0-0';
         
         
         //fill cols header
         for (r=0;r<col_keys_length;r++)
-        	for (c=row_keys_length; c < td_cols_count; c++)  
-                			 table_data[r][c+td_data_cols_start]='<td>'+pv.data_header[r][c]+'</td>';
+        	for (c=row_keys_length; c < pv.data_row_length; c++)  //loop by pv.data_header[r]
+                			 table_data[r][c+pv2td_data_col_diff]=''+pv.data_header[r][c]+'';
         
         			 
-        //fill rows header
+        //fill rows header and data
         for (r=0;r<pv.data_rows_count;r++)
         	{
-        	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]='<td>'+pv.data[r][c]+'</td>';
-        	for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+1]=(pv.data[r][c]==undefined) ? null: pv.data[r][c]; //fill with array of indexes of actual data rows (opts.data)
+        	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]=''+pv.data[r][c]+'';
+        	for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+pv2td_data_col_diff]=(pv.data[r][c]==undefined) ? null: pv.data[r][c]; //fill with array of indexes of actual data rows (opts.data)
         	}
-        			 
-        			 
+        //create colspans
+        if (col_keys_length > 0 )
+            {
+            //top row
+            r=0;
+            var old; var cnt=1;
+            for (r=0;r<col_keys_length;r++)
+                {
+                old=table_data[r][td_data_cols_start];
+                cnt=1;                  
+                for (c=td_data_cols_start+1; c < td_cols_count; c++)  
+                    {
+                    if ((old != table_data[r][c]) || (r>0) && (table_data[r-1][c-1]!= null)  )
+                        {
+                        old = table_data[r][c];
+                        if (cnt > 1 ) table_data[r][c-1] ='<td colspan="'+cnt+'">'+table_data[r][c-1]+'</td>' ;
+                        cnt=1;   
+                        continue                     
+                        }
+                     cnt++;
+                     table_data[r][c-1]=null;
+                     }
+                //last col
+                if (cnt > 1 ) table_data[r][c-1] ='<td colspan="'+cnt+'">'+table_data[r][c-1]+'</td>' ;                   
+                }
+            }
+        //create rowspans 
+        if (row_keys_length > 0)
+            {
+            for (c=0;c<row_keys_length;c++)
+                {
+                old=table_data[td_data_rows_start][c]; 
+                cnt=1;  
+                for (r=td_data_rows_start+1; r < td_rows_count; r++)
+                    {
+                    if ((old != table_data[r][c]) || (c>0) && (table_data[r-1][c-1]!= null)  )
+                        {
+                        old = table_data[r][c];
+                        table_data[r-1][c] ='<td rowspan="'+cnt+'">'+table_data[r-1][c]+'</td>' ;
+                        cnt=1;   
+                        continue                     
+                        }
+                     cnt++;
+                     table_data[r-1][c]=null;                     
+                    }
+                //last col
+                table_data[r-1][c] ='<td rowspan="'+cnt+'">'+table_data[r-1][c]+'</td>' ;                 
+                }
+            }  			 
         console.dir(table_data);
+        //console.info(table_data[2].join(' '));
         return;
       
  }                
