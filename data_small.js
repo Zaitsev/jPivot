@@ -32,6 +32,6 @@
 ];	
 var rows = [3,0];	
 var cols = [1];
-var data_col=4;	
+var data_col=3;	
 var filter = []
 var data_headers=["город","объект","","TAG"]

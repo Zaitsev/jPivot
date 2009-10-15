@@ -36,12 +36,15 @@ $(document).ready(function()
 					{
 					if (data_indexes==undefined) return '--';
 					var len =data_indexes.length 
-					if (len==1) return this.data[data_indexes[0]][8];
+					if (len==1) 
+							//return this.data[data_indexes[0]][data_col];
+							return 's_'+data_indexes;
 					var ball=0, max_ball=0;
 					for (i=0;i < len; i++) 
 							{
-							ball += parseFloat(this.data[data_indexes[i]][7]);
-							max_ball += parseFloat(this.data[data_indexes[i]][8]);
+							ball += "s+"+this.data[data_indexes[i]][data_col+1]+"<br>";	
+							//ball += parseFloat(this.data[data_indexes[i]][data_col+1]);
+							//max_ball += parseFloat(this.data[data_indexes[i]][data_col+2]);
 						  }
 					return ball+'/'+max_ball;
 					}

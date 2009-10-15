@@ -234,6 +234,7 @@ function jpv_keys_placeholder_popup($this)
         }        
 function jpv_pivotDrawData_new($this)
         {
+        	return;
       //draw data
       //start header draw
         var table_data=[];
@@ -325,6 +326,7 @@ function jpv_pivotDrawData_new($this)
                 }
             }  			 
         console.dir(table_data);
+        console.dir(pv.rows_totals);
         //console.info(table_data[2].join(' '));
         return;
       
@@ -667,50 +669,67 @@ function jpv_pivotDrawData($this)
         for (r=0;r < pv.data_rows_count;r++)    
                 for (i=0; i < rows_length; i++)
                    jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
-/*
-        var cur_state=jpv_create_2Darray(rows_length);
-        var nr=rows_length;
-        for (r=0;r < pv.data_rows_count;r++)  
-            {
-            nr=rows_length;
-            for (i=0; i <  rows_length; i++)
-                {
-                if(cur_state[i] == pv.data[r][i] )
-                   pv.keys_rowspan[i][pv.keys_rowspan[i].length-1][1]++;  //increase rowspan for this key
-                else
-                  {
-                  nr=i; //stop rowspan for this key and all those "right"
-                  break;
-                  }
-                }  
-            for (i=nr;i<rows_length;i++)
-                {
-                cur_state[i]=pv.data[r][i];
-                pv.keys_rowspan[i].push([pv.data[r][i],1]);
-                }  
-            }                   
-        //create totals
-        
+      
+       //create totals
+        /* BAD
         pv.rows_totals=jpv_create_2Darray(rows_length);
-        for(cur_rowkey=0;cur_rowkey<rows_length;cur_rowkey++)
+        for(var cur_rowkey=0;cur_rowkey<rows_length;cur_rowkey++)
               {
               start_row=0;
               pv.rows_totals[cur_rowkey]=[];
-              for (cur_pv_rowspan=0; cur_pv_rowspan < pv.keys_rowspan[cur_rowkey].length; cur_pv_rowspan++)
+              for (var cur_pv_rowspan=0; cur_pv_rowspan < pv.keys_rowspan[cur_rowkey].length; cur_pv_rowspan++)
                     {
                     pv.rows_totals[cur_rowkey][cur_pv_rowspan]=jpv_create_2Darray(pv.data_row_length);
-                    for (cur_pv_col=rows_length; cur_pv_col < pv.data_row_length; cur_pv_col++)
+                    for (var cur_pv_col=rows_length; cur_pv_col < pv.data_row_length; cur_pv_col++)
                          {
                          //pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col]=[];
                          for (cur_pv_row = start_row; cur_pv_row < start_row+pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1]; cur_pv_row++)
 	                          {
-	                          pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col] = pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col].concat(pv.data[cur_pv_row][cur_pv_col])
+	                          if ( (pv.data[cur_pv_row] != undefined) && (pv.data[cur_pv_row][cur_pv_col]!= undefined) ) 
+	                          		pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col] = pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col].concat(pv.data[cur_pv_row][cur_pv_col])
 	                          }
                          start_row +=pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1];
                          }
                     }
               }
-*/              
+         */     
+         function fill_cnt (rw)
+         		{
+         		for(i = rows_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
+         		}
+         console.dir(pv.data);
+         pv.rows_totals=[];//jpv_create_2Darray(rows_length-1); 
+         var cur_rowkey;
+        //create rows totals
+        if (rows_length > 0)
+            {
+            for (c=0;c<rows_length-1;c++)
+                {
+                pv.rows_totals[c]=[];cur_rowkey=0
+                old=pv.data[0][c]; 
+                var cnt=jpv_create_2Darray(pv.data_row_length); 
+                fill_cnt(0);
+                pv.rows_totals[c][cur_rowkey] =cnt;                
+                for (r=1; r < pv.data_rows_count; r++)
+                    {
+                    if ((old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
+                        {
+                        old = pv.data[r][c];
+                        pv.rows_totals[c][cur_rowkey] =cnt;
+                        pv.rows_totals[c][++cur_rowkey]=[]
+                        var cnt=jpv_create_2Darray(pv.data_row_length);     
+                        fill_cnt(r)
+                        pv.rows_totals[c][cur_rowkey] =cnt;
+                        continue                     
+                        }
+                     
+                    fill_cnt(r)
+                    pv.data[r][c]=null;                     
+                    }
+                }
+            }  
+         console.dir(pv.rows_totals);
+         console.dir(pv.data);
         //cols keys span
         
         pv.keys_colspan=jpv_create_2Darray(cols_length);
