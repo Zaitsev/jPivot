@@ -1,14 +1,14 @@
 (function($) { 
 // Private Variables and Functions
 var  jpv_keys_placeholder_update_list_cnt=0; 
-var debug=0;
+var debug=1;
 //debug functions
 function emsgd(obj)
         {
         if ($.browser.mozilla) 
             {
             if (!debug) return;
-            if (typeof obj == 'object')                console.dir(obj);
+            if (typeof obj == 'object') console.dir(obj);
             else console.info(obj);
             console.trace()
             }
@@ -234,7 +234,7 @@ function jpv_keys_placeholder_popup($this)
         }        
 function jpv_pivotDrawData_new($this)
         {
-        	return;
+        	//return;
       //draw data
       //start header draw
         var table_data=[];
@@ -273,7 +273,7 @@ function jpv_pivotDrawData_new($this)
         //fill rows header and data
         for (r=0;r<pv.data_rows_count;r++)
         	{
-        	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]=''+pv.data[r][c]+'';
+        	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]=pv.data[r][c],0;
         	for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+pv2td_data_col_diff]=(pv.data[r][c]==undefined) ? null: pv.data[r][c]; //fill with array of indexes of actual data rows (opts.data)
         	}
         //create colspans
@@ -302,6 +302,30 @@ function jpv_pivotDrawData_new($this)
                 if (cnt > 1 ) table_data[r][c-1] ='<td colspan="'+cnt+'">'+table_data[r][c-1]+'</td>' ;                   
                 }
             }
+
+/*        
+        var span=0; var ind=0; var val='';
+        if (row_keys_length > 0)
+            {
+            for (c=0;c<row_keys_length-1;c++)
+                {
+                //span=0; ind=0; val=table_data[td_data_rows_start][c];
+                for (r=td_data_rows_start; r < td_rows_count; r++)
+                    {
+                    if (table_data[r][c] != null)
+                      {
+                      ind=r;val=table_data[r][c];
+                      if (r > 0) table_data[ind][c] =  '<td colspan='+span+'>'+val+'</td>';
+                      }
+                    else
+                      {
+                      span++;
+                      }
+                    }                 
+                }
+            }      
+*/                  
+        /*            
         //create rowspans 
         if (row_keys_length > 0)
             {
@@ -324,10 +348,8 @@ function jpv_pivotDrawData_new($this)
                 //last col
                 table_data[r-1][c] ='<td rowspan="'+cnt+'">'+table_data[r-1][c]+'</td>' ;                 
                 }
-            }  			 
-        console.dir(table_data);
-        console.dir(pv.rows_totals);
-        //console.info(table_data[2].join(' '));
+            }  
+            */			 
         return;
       
  }                
@@ -498,7 +520,6 @@ function jpv_pivotDrawData($this)
 ;jQuery.fn.jPivot.preparePv =        function($this)
         {
         // Persistent Context Variables 
-                emsgd('preparePv');      
         var pv = $this.pv
         var data_length=$this.opts.data.length;
         var data_row_length=$this.opts.data[0].length;
@@ -697,10 +718,10 @@ function jpv_pivotDrawData($this)
          		{
          		for(i = rows_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
          		}
-         console.dir(pv.data);
          pv.rows_totals=[];//jpv_create_2Darray(rows_length-1); 
          var cur_rowkey;
-        //create rows totals
+        //create rows totals and spans
+        var span;
         if (rows_length > 0)
             {
             for (c=0;c<rows_length-1;c++)
@@ -709,27 +730,51 @@ function jpv_pivotDrawData($this)
                 old=pv.data[0][c]; 
                 var cnt=jpv_create_2Darray(pv.data_row_length); 
                 fill_cnt(0);
-                pv.rows_totals[c][cur_rowkey] =cnt;                
+                pv.rows_totals[c][cur_rowkey] =cnt;    
+                pv.rows_totals[c][cur_rowkey][0] = span;span=1            
                 for (r=1; r < pv.data_rows_count; r++)
                     {
                     if ((old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
                         {
-                        old = pv.data[r][c];
+                        //save current
+                        pv.rows_totals[c][cur_rowkey][0] = span;
                         pv.rows_totals[c][cur_rowkey] =cnt;
+                        //prepare new
+                        old = pv.data[r][c];
                         pv.rows_totals[c][++cur_rowkey]=[]
                         var cnt=jpv_create_2Darray(pv.data_row_length);     
                         fill_cnt(r)
                         pv.rows_totals[c][cur_rowkey] =cnt;
+                        span=1;pv.rows_totals[c][cur_rowkey][0] = span;    
                         continue                     
                         }
-                     
+                    span++;
                     fill_cnt(r)
                     pv.data[r][c]=null;                     
                     }
                 }
             }  
-         console.dir(pv.rows_totals);
          console.dir(pv.data);
+         console.dir(pv.rows_totals);
+         var ct;
+         //increase rowspans for totlas rows
+         //rows_length-1 - do not look at last key - the have not totals
+         totals_index = []; for (c=0;c < rows_length-1;c++) totals_index[c]=0;
+         for (r=0;r<pv.data_rows_count;r++)
+            {
+            for (c=rows_length-1-1;c > 0 ;c--) //do not see for first and last -they not add spans for totals
+                {
+                //if  key is not null, all top (lying left from tis) keys for it total row
+                if (pv.data[r][c] != null)
+                    {
+                    for (ct=c-1 ;ct >=0 ;ct--)
+                        pv.rows_totals[c][totals_index[ct]][0]++
+                    //next total
+                    totals_index[c]++
+                    }
+                }
+            }
+        console.dir(pv.rows_totals);
         //cols keys span
         
         pv.keys_colspan=jpv_create_2Darray(cols_length);
