@@ -717,6 +717,13 @@ function jpv_pivotDrawData($this)
          function fill_cnt (rw)
          		{
          		for(i = rows_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
+         		cnt[0]++;
+         		}
+         function init_cnt(rw)
+         		{
+         		cnt=jpv_create_2Darray(pv.data_row_length); 
+         		cnt[0]=0; 
+         		fill_cnt (rw);
          		}
          pv.rows_totals=[];//jpv_create_2Darray(rows_length-1); 
          var cur_rowkey;
@@ -728,52 +735,66 @@ function jpv_pivotDrawData($this)
                 {
                 pv.rows_totals[c]=[];cur_rowkey=0
                 old=pv.data[0][c]; 
-                var cnt=jpv_create_2Darray(pv.data_row_length); 
-                fill_cnt(0);
+                var cnt; init_cnt(0);
                 pv.rows_totals[c][cur_rowkey] =cnt;    
-                pv.rows_totals[c][cur_rowkey][0] = span;span=1            
                 for (r=1; r < pv.data_rows_count; r++)
                     {
-                    if ((old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
+                    if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
                         {
                         //save current
-                        pv.rows_totals[c][cur_rowkey][0] = span;
                         pv.rows_totals[c][cur_rowkey] =cnt;
                         //prepare new
-                        old = pv.data[r][c];
-                        pv.rows_totals[c][++cur_rowkey]=[]
-                        var cnt=jpv_create_2Darray(pv.data_row_length);     
-                        fill_cnt(r)
-                        pv.rows_totals[c][cur_rowkey] =cnt;
-                        span=1;pv.rows_totals[c][cur_rowkey][0] = span;    
+		                        old = pv.data[r][c];
+		                        var cnt; init_cnt(r); 
+		                        pv.rows_totals[c][++cur_rowkey] =cnt;
                         continue                     
                         }
-                    span++;
-                    fill_cnt(r)
+                    fill_cnt(r);
                     pv.data[r][c]=null;                     
                     }
+                //last row
+                
                 }
             }  
-         console.dir(pv.data);
-         console.dir(pv.rows_totals);
-         var ct;
+         //console.dir(pv.data);
+        // console.dir(pv.rows_totals);
          //increase rowspans for totlas rows
-         //rows_length-1 - do not look at last key - the have not totals
-         totals_index = []; for (c=0;c < rows_length-1;c++) totals_index[c]=0;
-         for (r=0;r<pv.data_rows_count;r++)
-            {
-            for (c=rows_length-1-1;c > 0 ;c--) //do not see for first and last -they not add spans for totals
-                {
-                //if  key is not null, all top (lying left from tis) keys for it total row
-                if (pv.data[r][c] != null)
-                    {
-                    for (ct=c-1 ;ct >=0 ;ct--)
-                        pv.rows_totals[c][totals_index[ct]][0]++
-                    //next total
-                    totals_index[c]++
-                    }
-                }
-            }
+         /* 
+         how this work :
+         we had pv.rows_totals[0,1,2, ... ,n-1, n][0... key_n_group] 
+         			where 0...n - is the index of column that hold key, 0... key_n_group - index of grouped keys
+         row_key_index[n][0... key_n_group] - keys for rows with data - they don't holds totals so we don't need to increase rowspans of n-1 key
+         row_key_index[i][0...key_i_group] | (i in [1...n-1] ) :  each key i hold additioanl 1 row for totals 
+         										this key not need to increase its own rowspan
+         										but it propogate increasing of rowspan for row_key_index[j][key_j_i_group] | (j in 1...i-1)  - all keys that lay in right with i  
+         										  where  key_j_i_group is index of group that hold row_key_index[i][0...key_i_group].
+         row_key_index[0][0... key_0_group] only receive incriasing and dont propogate any  - its last key, ...
+         
+         row_key_index[n-1] only  propogating increasings, 
+         row_key_index[1...n-2] receiving  an propogating increasings, 
+         row_key_index[0] only receiving  increasings,
+         thre is spasial key when n =2 . n-2 will propogate to self  in this case we dont need increasind spans (one group key and one key key for rows with data)
+         */
+         if (true || rows_length > 2)
+         {
+         var i; var j;
+         var key_i_group = []; 
+	        for (i=rows_length-1-1;i > 0 ;i--) 
+	            {
+	            for (c=0;c < rows_length-1;c++) key_i_group[c]=0; //holds key_j_i_group index for each key
+							for (r=0;r<pv.data_rows_count;r++)
+							  {
+							      if (pv.data[r][i] != null) //propogate increase for 
+							          {                	
+							          for (j=i-1 ;j >=0 ;j--) 
+							          		{
+							          		if( (r > 0) && (pv.data[r][j]!= null ) )key_i_group[j]++;//next key_j_i_group
+							          		pv.rows_totals[j][key_i_group[j]][0]++
+							              }
+							          }
+							  		}
+							  }
+         }
         console.dir(pv.rows_totals);
         //cols keys span
         
