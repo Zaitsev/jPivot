@@ -246,7 +246,7 @@ function jpv_pivotDrawData_new($this)
         var col_keys_length=pv.data_header.length;
 				
         //temp vars
-				var r;var c;        var tstr='';
+				var r;var c;
         //create array for table_data
         var td_data_rows_start = 1+col_keys_length;//actual data start 1(row headers here and delimiter) +[rows keys count]
         var td_rows_count=td_data_rows_start+pv.data_rows_count;//+ [number of rows with data]; 
@@ -261,7 +261,7 @@ function jpv_pivotDrawData_new($this)
         		for (c=0;c < td_cols_count; c++) table_data[r][c]=null;
         		}
         //put top left td
-        table_data[0][0]='0-0';
+        //table_data[0][0]=null;
         
         
         //fill cols header
@@ -276,80 +276,68 @@ function jpv_pivotDrawData_new($this)
         	for (c=0; c < row_keys_length; c++)                table_data[r+td_data_rows_start][c]=pv.data[r][c],0;
         	for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+pv2td_data_col_diff]=(pv.data[r][c]==undefined) ? null: pv.data[r][c]; //fill with array of indexes of actual data rows (opts.data)
         	}
-        //create colspans
-        if (col_keys_length > 0 )
-            {
-            //top row
-            r=0;
-            var old; var cnt=1;
-            for (r=0;r<col_keys_length;r++)
-                {
-                old=table_data[r][td_data_cols_start];
-                cnt=1;                  
-                for (c=td_data_cols_start+1; c < td_cols_count; c++)  
-                    {
-                    if ((old != table_data[r][c]) || (r>0) && (table_data[r-1][c-1]!= null)  )
-                        {
-                        old = table_data[r][c];
-                        if (cnt > 1 ) table_data[r][c-1] ='<td colspan="'+cnt+'">'+table_data[r][c-1]+'</td>' ;
-                        cnt=1;   
-                        continue                     
-                        }
-                     cnt++;
-                     table_data[r][c-1]=null;
-                     }
-                //last col
-                if (cnt > 1 ) table_data[r][c-1] ='<td colspan="'+cnt+'">'+table_data[r][c-1]+'</td>' ;                   
-                }
-            }
 
-/*        
-        var span=0; var ind=0; var val='';
-        if (row_keys_length > 0)
-            {
-            for (c=0;c<row_keys_length-1;c++)
-                {
-                //span=0; ind=0; val=table_data[td_data_rows_start][c];
-                for (r=td_data_rows_start; r < td_rows_count; r++)
-                    {
-                    if (table_data[r][c] != null)
-                      {
-                      ind=r;val=table_data[r][c];
-                      if (r > 0) table_data[ind][c] =  '<td colspan='+span+'>'+val+'</td>';
-                      }
-                    else
-                      {
-                      span++;
-                      }
-                    }                 
-                }
-            }      
-*/                  
-        /*            
-        //create rowspans 
-        if (row_keys_length > 0)
-            {
-            for (c=0;c<row_keys_length;c++)
-                {
-                old=table_data[td_data_rows_start][c]; 
-                cnt=1;  
-                for (r=td_data_rows_start+1; r < td_rows_count; r++)
-                    {
-                    if ((old != table_data[r][c]) || (c>0) && (table_data[r-1][c-1]!= null)  )
-                        {
-                        old = table_data[r][c];
-                        table_data[r-1][c] ='<td rowspan="'+cnt+'">'+table_data[r-1][c]+'</td>' ;
-                        cnt=1;   
-                        continue                     
-                        }
-                     cnt++;
-                     table_data[r-1][c]=null;                     
-                    }
-                //last col
-                table_data[r-1][c] ='<td rowspan="'+cnt+'">'+table_data[r-1][c]+'</td>' ;                 
-                }
-            }  
-            */			 
+				console.clear();
+				console.dir(pv.rows_totals);
+				
+				//PRINT 
+				//create mappings to insert totals into table, 
+				//process spans;
+				//wrap first key headers  TD
+				function append_total_row(col,key_ind)
+						{
+						var a = jpv_create_2Darray(td_cols_count);
+						a[0]= '<TD colspan="'+(row_keys_length-col)+'">total</td>'; 
+						for (var c=row_keys_length; c < pv.data_row_length; c++)  a[c+pv2td_data_col_diff]=pv.rows_totals[col][key_ind][c];
+					    table_data = table_data.concat([a]);
+						}
+				var td_rows_map=[];// = jpv_create_2Darray(td_rows_count+pv.rows_totals.length); //hold maps of rows with data and totals rows;
+				for (c=0;c < td_data_rows_start+1; c++) td_rows_map[c]=c; //skip headers and first rows;
+				var ind=td_data_rows_start;//current map index;
+				var add = 0; //number of added rows
+				var key_i_group=[]; for (c=0;c < row_keys_length-1;c++) key_i_group[c]=0 //current totals index
+				
+				for (r=td_data_rows_start; r < td_rows_count; r++)
+						{
+						for (c=row_keys_length-1-1; c >=0 ; c--)
+								{
+								if (table_data[r][c] != null)
+										{
+										if (r != td_data_rows_start) 
+												{
+												append_total_row(c,key_i_group[c]++)
+												td_rows_map[ind++] = td_rows_count+(add++) //map new row
+												}
+										table_data[r][c] = '<td rowspan="'+pv.rows_totals[c][key_i_group[c]][0]+'">'+table_data[r][c]+'</td>';
+										}
+								}
+						td_rows_map[ind++]=r;
+						}
+			  //last row is last totals
+			  for (c=row_keys_length-1-1; c >=0 ; c--) 
+			  		{
+						append_total_row(c,key_i_group[c])
+						td_rows_map[ind++] = td_rows_count+(add++) //map new row			  		
+			  		}	
+
+			  //wrap others TDs
+			  var td_rows_count_with_totals=table_data.length;
+
+			  table_data[0][0]='<td colspan="'+row_keys_length+'" rowspan="'+col_keys_length+'">00</td>';
+			  table_data[0][1]='<td>col headers</td>';
+			  table_data[0][2]='<td colspan="'+(td_rows_count_with_totals-1)+'">vd</td>';
+			  table_data[1][1]='<td rowspan="'+td_cols_count+'">hd</td>';
+			 	var i=0;var td_print=[];
+			  for (r=0;r < td_rows_count_with_totals; r++)
+			  		{
+		  			for (c=row_keys_length-1; c < td_cols_count  ; c++)
+		  					if (table_data[r][c] != null)table_data[r][c] = '<td>'+table_data[r][c]+'</td>';
+		  			td_print[i++]='<tr>'+table_data[r].join(' ')+'<tr>';
+			  		}
+			  var str = '<table  class="pv_table">'+td_print.join(' ')+'</table>';
+			  $($this).append(str);	
+				console.dir(table_data);
+				//console.dir(td_print);
         return;
       
  }                
@@ -605,7 +593,7 @@ function jpv_pivotDrawData($this)
                   //head filter unique keys
             for (i=0;i<filter_length;i++)
                   {
-                  //when we first add key to head_fiter we dont have values of this filter (they are creting here)
+                  //when we first add key to head_fiter (just drag it into hoder) we dont have values of this filter (they are creting here)
                   // and <select> is not drawed yet, so we need take first value and use it as filter
                   dc=filter_ptr[i];
                   key=data_ptr[dr][dc];
@@ -641,8 +629,6 @@ function jpv_pivotDrawData($this)
                     data_row2pv_col[dr]=in_array(composite_col_key.join('~~~'),cols_composite_index,true);
                     }
             }
-        //console.profileEnd('mainLoop');   
-            //console.profile('sortCol');                        
             //sort cols and create remapping 
             var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
             for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
@@ -671,14 +657,8 @@ function jpv_pivotDrawData($this)
                       {
                       pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
                       }
-                     /*                      
-              if (use_getData)
-                 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = $this.opts.getData(i,data_col,data_ptr); //inset data in its place in row
-              else
-                  pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
-              */
               //store data_ptr index instead of actual value
-              //this will be needede on totals an data display functions
+              //this will be needed on totals an data display functions
               if (pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length]==undefined) pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length]=[];
               pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length].push(i);
               if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
@@ -692,28 +672,7 @@ function jpv_pivotDrawData($this)
                    jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
       
        //create totals
-        /* BAD
-        pv.rows_totals=jpv_create_2Darray(rows_length);
-        for(var cur_rowkey=0;cur_rowkey<rows_length;cur_rowkey++)
-              {
-              start_row=0;
-              pv.rows_totals[cur_rowkey]=[];
-              for (var cur_pv_rowspan=0; cur_pv_rowspan < pv.keys_rowspan[cur_rowkey].length; cur_pv_rowspan++)
-                    {
-                    pv.rows_totals[cur_rowkey][cur_pv_rowspan]=jpv_create_2Darray(pv.data_row_length);
-                    for (var cur_pv_col=rows_length; cur_pv_col < pv.data_row_length; cur_pv_col++)
-                         {
-                         //pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col]=[];
-                         for (cur_pv_row = start_row; cur_pv_row < start_row+pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1]; cur_pv_row++)
-	                          {
-	                          if ( (pv.data[cur_pv_row] != undefined) && (pv.data[cur_pv_row][cur_pv_col]!= undefined) ) 
-	                          		pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col] = pv.rows_totals[cur_rowkey][cur_pv_rowspan][cur_pv_col].concat(pv.data[cur_pv_row][cur_pv_col])
-	                          }
-                         start_row +=pv.keys_rowspan[cur_rowkey][cur_pv_rowspan][1];
-                         }
-                    }
-              }
-         */     
+   
          function fill_cnt (rw)
          		{
          		for(i = rows_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
@@ -773,9 +732,9 @@ function jpv_pivotDrawData($this)
          row_key_index[n-1] only  propogating increasings, 
          row_key_index[1...n-2] receiving  an propogating increasings, 
          row_key_index[0] only receiving  increasings,
-         thre is spasial key when n =2 . n-2 will propogate to self  in this case we dont need increasind spans (one group key and one key key for rows with data)
+         thre is spacial case when n =2 .in this case we dont need to increase spans (one group key and one key  for rows with data)
          */
-         if (true || rows_length > 2)
+         if (rows_length > 2)
          {
          var i; var j;
          var key_i_group = []; 
