@@ -15,7 +15,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!
 -->
 
-<script type="text/javascript" src="./data_small.js"></script>
+<script type="text/javascript" src="./math.js"></script>
 		
 		<script type="text/javascript">
 		  
@@ -24,7 +24,7 @@ var month_subst = ['янв','фев','мрт','апр','май','июн','июл
 
 			
 
-
+var debug=0;
 	
 
 $(document).ready(function()
@@ -32,21 +32,41 @@ $(document).ready(function()
 	var pivots=$('#pv').jPivot({
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers
 			,filter:filter
-			,printValue:function(data_indexes)
+			,printTotalColValue:function(data_indexes)
+			      {
+    				if (debug) return 'ct';			       
+  					if (data_indexes==undefined) return '--';
+  					var len =data_indexes.length 
+  					if (len==1) 
+  							return this.data[data_indexes[0]][data_col];
+  					var ball='Tot<br>';
+  					for (i=0;i < len; i++) 
+  							ball += "+ "+this.data[data_indexes[i]][data_col]+"<br>";	
+  					return ball;
+			      }
+			,printTotalRowValue:function(data_indexes)
 					{
+					if (debug) return 'rt';
 					if (data_indexes==undefined) return '--';
 					var len =data_indexes.length 
 					if (len==1) 
-							//return this.data[data_indexes[0]][data_col];
-							return 's_'+data_indexes;
-					var ball=0, max_ball=0;
+							return this.data[data_indexes[0]][data_col];
+					var ball='Tot<br>';
 					for (i=0;i < len; i++) 
-							{
-							ball += "s+"+this.data[data_indexes[i]][data_col+1]+"<br>";	
-							//ball += parseFloat(this.data[data_indexes[i]][data_col+1]);
-							//max_ball += parseFloat(this.data[data_indexes[i]][data_col+2]);
-						  }
-					return ball+'/'+max_ball;
+							ball += "+ "+this.data[data_indexes[i]][data_col]+"<br>";	
+					return ball;
+					}
+			,printValue:function(data_indexes)
+					{
+					if (debug) return 'v';
+					if (data_indexes==undefined) return '--';
+					var len =data_indexes.length 
+					if (len==1) 
+							return this.data[data_indexes[0]][data_col];
+					var ball='';
+					for (i=0;i < len; i++) 
+							ball += "+ "+this.data[data_indexes[i]][data_col]+"<br>";	
+					return ball;
 					}
 			,printKey:function(col,val)
 					{
@@ -187,9 +207,10 @@ function redraw()
 			
 		</script>
 		<style>
+		  td.pv_table_total {background-color:silver;}
 			.pv_dialog {font-size:10px;}
 			table.pv_table{border-collapse:collapse;border:1px solid red;}
-			.pv_table td{border:1px solid green;}
+			.pv_table td{border:1px solid green; vertical-align:top;}
 			.pv_table th{border:1px solid silver;}
 			.pv_key_header_filtered {color:green;}
 			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
