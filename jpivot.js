@@ -763,6 +763,7 @@ function jpv_pivotDrawData_new($this)
                      else  
                           {
                           if (table_data[rn][cn][0] == null) continue; //skip  empty cell
+                          
  													if (td_rows_map[r][0]== null) 
                               val = opts.printTotalRowKey(table_data[rn][cn][0]); 
                           else                         
@@ -806,6 +807,7 @@ function jpv_pivotDrawData_new($this)
         ,data_col:null
         ,data_headers:null
         ,printValue:null
+        ,printTotalRowKey:null
         ,printKey:null
         ,getData:null
         ,getTotals:null
