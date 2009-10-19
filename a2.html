@@ -15,7 +15,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!
 -->
 
-<script type="text/javascript" src="./math.js"></script>
+<script type="text/javascript" src="./data_big.js"></script>
 		
 		<script type="text/javascript">
 		  
@@ -30,10 +30,9 @@ var debug=0;
 $(document).ready(function()
 	{
 	var pivots=$('#pv').jPivot({
-			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers
+			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
 			,filter:filter
-	
-
+	    ,styles:{Key:'class="ui-state-default"'}
 			});  	
 	pv=pivots[0].pv;
 	$("#resize_chart_1").resizable({
@@ -162,20 +161,22 @@ function redraw()
 			
 		</script>
 		<style>
-      .pv_TotalIntersect {background-color:#ECECEC;}
-		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
-		  .pv_TotalColKey {background-color:green;}
-		  .pv_TotalRowKey {background-color:maroon;}
-			.pv_dialog {font-size:10px;}
 			table.pv_table{border-collapse:collapse;}
 			.pv_table td{border:1px solid green; vertical-align:top;}
-			.pv_table th{border:1px solid silver;}
-			.pv_key_header_filtered {color:green;}
-			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
-			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
+      .pv_TotalIntersect {background-color:#ECECEC;}
+		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;;}
+		  .pv_TotalColKey  ,.pv_TotalRowKey  {padding:0; background-color:gold;}
+		  .pv_Key{background-color:#FEF0D8;}
+		  .pv_Value{padding:3px;}
+			.pv_dialog {font-size:10px;}
+			.pv_KeyHeaderFiltered {color:green; font-weight:bold;}
+			div.pv_FliterPlaceholder{padding-bottom:2em;}
+			.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder,.pv_KeysColsPlaceholder {padding:0px;list-style-type: none; margin:0;}
+			.pv_FliterPlaceholder {border:1px solid red; height:2em;}
+			.pv_FliterPlaceholder li, #pv_rowkeys_placeholder li {float:left; padding:3px 5px 3px 5px ;}	
 			#pv_rowkeys_placeholder{padding-bottom:5px;}
 			#pv_colkeys_placeholder{padding-bottom:0px;}
-			#pv_filter {padding-bottom:5px;}
+			#pv_filter,#pv_agregate {padding-bottom:5px;}
 			
 			#chart2div, #resize_chart_1 { width: 800px; height: 400px;}
 		</style>

@@ -55,7 +55,7 @@ function jpv_colsSort(a,b,$this)
         }
 function in_array(element, array, addIfAbsent) 
         {
-      var len =array.length
+len =array.length
       for (var i = 0; i < len; i++) 
           {
           if (element == array[i])       return i;
@@ -93,10 +93,10 @@ function jpv_create_2Darray(len)
         }        
 function jpv_keys_placeholder_update($this, event, ui)
         {
-        //this func called for each lists (we have 3) so wait until last 
-        if (jpv_keys_placeholder_update_list_cnt++ > 1) 
+        //this func called for each lists (we have 4) so wait until last 
+        if (jpv_keys_placeholder_update_list_cnt++ > 2) 
             {
-            var rows=[]; var cols=[]; var filter=[];
+            var rows=[]; var cols=[]; var filter=[]; var agregate=[];
             $('li','#pv_colkeys_placeholder').each(
                     function () 
                         { 
@@ -114,11 +114,18 @@ function jpv_keys_placeholder_update($this, event, ui)
                         { 
                         filter.push($(this).attr('value')) 
                         }
-                    )    ;                            
+                    )    ;                 
+            $('li','#pv_agregate').each(
+                    function () 
+                        { 
+                        agregate.push($(this).attr('value')) 
+                        }
+                    )    ;                                                
             jpv_keys_placeholder_update_list_cnt=0;
             $this.opts.cols=cols;
             $this.opts.rows=rows;
             $this.opts.filter=filter;
+            $this.opts.agregate=agregate;
             jQuery.fn.jPivot.preparePv($this);
             //jpv_pivotDrawData($this);
             jpv_pivotDrawData_new($this);
@@ -131,6 +138,13 @@ function jpv_keys_placeholder_popup($this)
         var data_headers = $this.opts.data_headers;
         var tstr='';
         var use_printKey = $.isFunction($this.opts.printKey),printed_key='';
+        tstr = '';
+        for (k=0;k<$this.opts.agregate.length;k++)
+            {
+            tstr +='<li  value="'+$this.opts.agregate[k]+'" class="ui-state-default">'+data_headers[$this.opts.agregate[k]]+'</li> ';
+            }
+        $('#pv_agregate',$this).append(tstr);
+        tstr = '';
         for (k=0;k<keys_index_length;k++)
             {
             unique_keys=$this.pv.unique_keys[k];
@@ -145,7 +159,7 @@ function jpv_keys_placeholder_popup($this)
                 tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
-                                   printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j])[0] :  unique_keys[j];
+                        printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j])[0] :  unique_keys[j];
                         tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
                         }
                 tstr +='</select></li>';
@@ -170,7 +184,7 @@ function jpv_keys_placeholder_popup($this)
                 }
             else
                 {//is a dialog for col and row headers
-                if ($this.pv.dialog_filter[k].length > 0) $('#pv_key_header'+k,$this).addClass('pv_key_header_filtered');//we have filtered keys - show this
+                if ($this.pv.dialog_filter[k].length > 0) $('#pv_key_header'+k,$this).addClass($this.opts.styles.class_add_KeyHeaderFiltered);//we have filtered keys - show this
                 if ($('#pv_dlg_plh'+k).length == 0)
                     { 
                     //we have no dialog,create
@@ -626,7 +640,7 @@ function jpv_pivotDrawData_new($this)
                     if (r < td_data_rows_start )
                       {
                       if (r == tc) 
-                          table_data[rn][add]=['&Sigma','rowspan="'+(col_keys_length-tc)+'"' ];
+                          table_data[rn][add]=['&Sigma;','rowspan="'+(col_keys_length-tc)+'"' ];
                       else
                           table_data[rn][add]=[null,null]
                       }
@@ -764,13 +778,17 @@ function jpv_pivotDrawData_new($this)
                      }
                  td_print[r]='<tr>'+tr.join(' ')+'</tr>';
                  }
-           var str  = '<div>flt<ul class="pv_keys_placeholder" id="pv_filter"></ul></div><br><br>';
+           var str='';
+               str += '<table><tr><td '+opts.styles.FliterPlaceholder+'>Argregate<ul id="pv_agregate"></ul></td>';
+               str += '<td '+opts.styles.FliterPlaceholder+'>flt<ul  id="pv_filter"></ul></td></tr></table>';
                str += '<table  class="pv_table">'+td_print.join(' ')+'</table>';
            $($this).empty().append(str);   
         //create sortable headers
-        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_filter',$this).sortable(
+        
+        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_agregate, #pv_filter',$this).addClass('pv_connectWith');
+        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_agregate, #pv_filter',$this).sortable(
                 { 
-                connectWith: '.pv_keys_placeholder'
+                connectWith: '.pv_connectWith'
                 ,forcePlaceholderSize: true 
                 ,forceHelperSize: true
                 ,helper: 'clone'
@@ -793,6 +811,7 @@ function jpv_pivotDrawData_new($this)
         ,rows:null
         ,cols:null
         ,filter:[]
+        ,agregate:[]
         ,data_col:null
         ,data_headers:null
         ,TableTitle:'Jpivot'
@@ -804,10 +823,12 @@ function jpv_pivotDrawData_new($this)
             ,TotalIntersect:'class="pv_TotalIntersect"'
             ,TotalRowKey:'class="pv_TotalRowKey"'
             ,TotalColKey:'class="pv_TotalColKey"'
-            ,Key:'class="ui-state-default"'
-            ,Value:''
-            ,KeysRowsPlaceholder:'class="pv_keys_placeholder"'
-            ,KeysColsPlaceholder:'class="pv_keys_placeholder"'
+            ,Key:'class="pv_Key"'
+            ,Value:'class="pv_Value"'
+            ,KeysRowsPlaceholder:'class="pv_KeysRowsPlaceholder"'
+            ,KeysColsPlaceholder:'class="pv_KeysColsPlaceholder"'
+            ,FliterPlaceholder:'class="pv_FliterPlaceholder"'
+            ,class_add_KeyHeaderFiltered:'pv_KeyHeaderFiltered'
             }
 /*
       .pv_TotalIntersect {background-color:#C0C0C0;}
