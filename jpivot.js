@@ -241,7 +241,6 @@ function jpv_restoreHeaderData($this)
         pv.data[r][c] = old;
         }
       }      
-      old=null;
 }	
 
 // Public Variables and Methods declare
@@ -843,8 +842,8 @@ function jpv_pivotDrawData($this)
 			,printTotalColValue:function(data_indexes)
 		      {
 		      var rclass = this.styles.TotalColValue
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
-    			if (data_indexes==undefined) ret='';
 					if (debug==1) ret='tcv'
 					if (debug==2) ret='tcv'+data_indexes.join(' +');
 					if (!debug)
@@ -859,8 +858,8 @@ function jpv_pivotDrawData($this)
 			,printTotalRowValue:function(data_indexes)
 					{
 		      var rclass = this.styles.TotalRowValue
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
-    			if (data_indexes==undefined) ret='';
 					if (debug==1) ret='trv'
 					if (debug==2) ret='trv'+data_indexes.join(' +');
 					if (!debug)
@@ -878,8 +877,8 @@ function jpv_pivotDrawData($this)
 		,printValue:function(data_indexes)
 					{
 		      var rclass = this.styles.Value
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
-    			if (data_indexes==undefined) ret='';
 					if (debug==1) ret='trv'
 					if (debug==2) ret='trv'+data_indexes.join(' +');
 					if (!debug)
@@ -893,6 +892,7 @@ function jpv_pivotDrawData($this)
 			,printTotalRowKey:function(data_col,val)
 					{
 					var rclass = this.styles.Value;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['TRK',rclass ];
 				  if (debug==2) return ['TRK'+data_col+val,rclass ];
 					return [val,rclass ];
@@ -900,6 +900,7 @@ function jpv_pivotDrawData($this)
 			,printTotalColKey:function(data_col,val)
 					{
 					var rclass = this.styles.TotalColKey;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['TCK',rclass ];
 				  if (debug==2) return ['TCK'+data_col+val,rclass ];
 					return [val,rclass ];
@@ -907,6 +908,7 @@ function jpv_pivotDrawData($this)
 			,printKey:function(data_col,val)
 					{
 					var rclass = this.styles.Key;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['K',rclass ];
 				  if (debug==2) return ['K'+data_col+val,rclass ];
 					return [val,rclass ];
