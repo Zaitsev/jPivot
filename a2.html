@@ -24,7 +24,7 @@ var month_subst = ['янв','фев','мрт','апр','май','июн','июл
 
 			
 
-var debug=2;
+var debug=0;
 	
 
 $(document).ready(function()
@@ -34,50 +34,56 @@ $(document).ready(function()
 			,filter:filter
 			,printTotalColValue:function(data_indexes)
 		      {
-					if (data_indexes==undefined) return '';
-					if (debug==1) return 'c';
-					if (debug==2) if (data_indexes.length >0) {return 'c'+data_indexes.join(' +')} else {return 'c-'};
-
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['r',null];
+					if (debug==2) if (data_indexes.length >0) return ['r'+data_indexes.join(' +'),''];
+					
 					var len =data_indexes.length 
-					if (len==1) 
-							return this.data[data_indexes[0]][data_col];
 				  var ret=0;
 					for (i=0;i < len; i++) 
 							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
-					return ret > 0 ? ret : '';
+					return ret > 0 ? [ret,'style="background-color:#E0E0E0"'] : ['',''];
 		      }
 			,printTotalIntersect:function()
 			    {
-					return '&nbsp;'
+					return ['&nbsp;','style="background-color:yellow"']
 			    }
 			,printTotalRowValue:function(data_indexes)
 					{
-					if (data_indexes==undefined) return '';
-					if (debug==1) return 'r';
-					if (debug==2) if (data_indexes.length >0) {return 'r'+data_indexes.join(' +')} else {return 'r-'};
-
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['r',null];
+					if (debug==2) if (data_indexes.length >0) return ['r'+data_indexes.join(' +'),''];
+					
 					var len =data_indexes.length 
-					if (len==1) 
-							return this.data[data_indexes[0]][data_col];
 				  var ret=0;
 					for (i=0;i < len; i++) 
 							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
-					return ret > 0 ? ret : '';
+					return ret > 0 ? [ret,'style="background-color:#E0E0E0"'] : ['',''];
 					}
 			,printValue:function(data_indexes)
 					{
-					if (data_indexes==undefined) return '';
-					if (debug==1) return 'v';
-					if (debug==2) if (data_indexes.length >0) {return 'v'+data_indexes.join(' +')} else {return 'v'+data_indexes[0]};
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['v',null];
+					if (debug==2) if (data_indexes.length >0) return ['v'+data_indexes.join(' +'),''];
 					
 					var len =data_indexes.length 
-					if (len==1) 
-							return this.data[data_indexes[0]][data_col];
 				  var ret=0;
 					for (i=0;i < len; i++) 
 							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
-					return ret > 0 ? ret : '';
+					return [ret,'style="background-color:gold"'] ;
 					}
+			,printTotalRowKey:function(data_col,val)
+					{
+						/*
+					if (col==2)
+							return month_subst[val-1]
+					else
+						  return val
+						  */
+				  if (debug==1) return ['K',''];
+				  if (debug==2) return ['K'+data_col+val,''];
+					return [val,'class="pv_table_total"'];
+					}						
 			,printKey:function(data_col,val)
 					{
 						/*
@@ -86,9 +92,9 @@ $(document).ready(function()
 					else
 						  return val
 						  */
-				  if (debug==1) return 'K';
-				  if (debug==2) return 'K'+data_col+val;
-					return val;
+				  if (debug==1) return ['K',''];
+				  if (debug==2) return ['K'+data_col+val,''];
+					return [val,'class="ui-state-default"'];
 					}	
 
 			});  	

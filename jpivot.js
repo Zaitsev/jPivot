@@ -158,7 +158,7 @@ function jpv_keys_placeholder_popup($this)
                 tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
-                                   printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j]) :  unique_keys[j];
+                                   printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j])[0] :  unique_keys[j];
                         tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
                         }
                 tstr +='</select></li>';
@@ -193,7 +193,7 @@ function jpv_keys_placeholder_popup($this)
                     tstr += '<div id="pv_dlg_plh'+k+'_filter">';
                     for (i=0; i < unique_keys_length; i++)
                           {
-                                 printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i]) : unique_keys[i];
+                                 printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i])[0] : unique_keys[i];
                         tstr +=printed_key+'<input type="checkbox" checked value="'+unique_keys[i]+'"><br>'
                         }
                     tstr +='</div></div>';
@@ -646,7 +646,7 @@ function jpv_pivotDrawData_new($this)
                     else
                       {
                       if(td_rows_map[r][0]==null) //totals intrsect
-                          table_data[rn][add]=[[],'style="background-color:yellow"']; // this is  total row - add empty                      
+                          table_data[rn][add]=[[],null]; // this is  total row - add empty                      
                       else
                           table_data[rn][add]=[pv.cols_totals[tc][key_ind][tot_index++],'class="pv_table_total" ' ];                          
                       }
@@ -746,6 +746,7 @@ function jpv_pivotDrawData_new($this)
                      {
                      rn=(td_rows_map[r][0]!= null) ? td_rows_map[r][0] : td_rows_map[r][1];
                      cn=(td_cols_map[c][0]!= null) ? td_cols_map[c][0] : td_cols_map[c][1];
+                     param='';
                      if ((r >= td_data_rows_start) && (c >= td_data_cols_start))
                           {// data
                           if ( (td_rows_map[r][0]!= null) && (td_cols_map[c][0]!= null) )
@@ -762,10 +763,13 @@ function jpv_pivotDrawData_new($this)
                      else  
                           {
                           if (table_data[rn][cn][0] == null) continue; //skip  empty cell
-                          val = opts.printKey(c,table_data[rn][cn][0]);
+ 													if (td_rows_map[r][0]== null) 
+                              val = opts.printTotalRowKey(table_data[rn][cn][0]); 
+                          else                         
+                          		val = opts.printKey(c,table_data[rn][cn][0]);
                           }
-
-                     param = table_data[rn][cn][1] != null ? table_data[rn][cn][1] : ''
+										 param = val[1];val = val[0];
+                     param += table_data[rn][cn][1] != null ? table_data[rn][cn][1] : ''
                      tr[col_index++] = '<td '+param+'>'+val+'</td>';
                      }
                  td_print[r]='<tr>'+tr.join(' ')+'</tr>';
