@@ -1,19 +1,6 @@
 (function($) { 
 // Private Variables and Functions
 var  jpv_keys_placeholder_update_list_cnt=0; 
-var debug=1;
-//debug functions
-function emsgd(obj)
-        {
-        if ($.browser.mozilla) 
-            {
-            if (!debug) return;
-            if (typeof obj == 'object') console.dir(obj);
-            else console.info(obj);
-            console.trace()
-            }
-        }
-
 function jpv_rowsSort(a,b,$this)
         {
          //Compare "a" and "b" in some fashion, and return -1, 0, or 1
@@ -578,7 +565,7 @@ function jpv_pivotDrawData_new($this)
                   {
                   table_data[add]=[];
                   for (var c=0; c < td_data_cols_start; c++) table_data[add][c]=[null,null];
-                  table_data[add][col]=['&Sigma;','colspan="'+(row_keys_length-col)+'" class="pv_table_total" ']; 
+                  table_data[add][col]=['&Sigma;','colspan="'+(row_keys_length-col)+'"']; 
                   for (var c=row_keys_length; c < pv.data_row_length; c++)     
                       table_data[add][c+pv2td_data_col_diff]=[pv.rows_totals[col][key_ind][c],'class="pv_table_total"'];
                   }
@@ -639,7 +626,7 @@ function jpv_pivotDrawData_new($this)
                     if (r < td_data_rows_start )
                       {
                       if (r == tc) 
-                          table_data[rn][add]=['&Sigma','rowspan="'+(col_keys_length-tc)+'"class="pv_table_total" ' ];
+                          table_data[rn][add]=['&Sigma','rowspan="'+(col_keys_length-tc)+'"' ];
                       else
                           table_data[rn][add]=[null,null]
                       }
@@ -648,7 +635,7 @@ function jpv_pivotDrawData_new($this)
                       if(td_rows_map[r][0]==null) //totals intrsect
                           table_data[rn][add]=[[],null]; // this is  total row - add empty                      
                       else
-                          table_data[rn][add]=[pv.cols_totals[tc][key_ind][tot_index++],'class="pv_table_total" ' ];                          
+                          table_data[rn][add]=[pv.cols_totals[tc][key_ind][tot_index++],''];                          
                       }
                     }
                 }
@@ -708,7 +695,7 @@ function jpv_pivotDrawData_new($this)
                }
            
         var col_drag = col_keys_length ? '' : 'style="padding-bottom:10px;"'; //fix for empty colheader
-        col_drag='<ul class="pv_keys_placeholder" '+col_drag+' id="pv_colkeys_placeholder">';
+        col_drag='<ul '+opts.styles.KeysColsPlaceholder+' '+col_drag+' id="pv_colkeys_placeholder">';
         for (i=0;i<col_keys_length;i++) 
             col_drag +='<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
                   +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
@@ -716,24 +703,24 @@ function jpv_pivotDrawData_new($this)
                   +'</li>';
         col_drag +='</ul>';
         //row dragables
-            var row_drag = '<ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">';
-            for (i=0;i< row_keys_length ;i++) 
-                  row_drag +='<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
-                            +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-                            +opts.data_headers[opts.rows[i]]
-                            +'</li>';
-            row_drag +='</ul>';
+        var row_drag = '<ul '+opts.styles.KeysRowsPlaceholder+' id="pv_rowkeys_placeholder">';
+        for (i=0;i< row_keys_length ;i++) 
+              row_drag +='<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
+                        +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                        +opts.data_headers[opts.rows[i]]
+                        +'</li>';
+        row_drag +='</ul>';
             
             
         //Actual print
            var  ck = col_keys_length ? col_keys_length : 1;
 
-           table_data[0][0]=['00','colspan="'+row_keys_length+'" rowspan="'+ck+'"'];
+           table_data[0][0]=[opts.TableTitle,'colspan="'+row_keys_length+'" rowspan="'+ck+'"'];
            table_data[0][1]=[col_drag,' rowspan="'+ck+'" class="ui-state-default" style="min-width:40px;"'];
            if (col_keys_length==0) table_data[0][2]=['55',null];
            table_data[ck][0]=[row_drag,' colspan="'+row_keys_length+'"'];
-           table_data[ck][1]=['vd','rowspan="'+(td_rows_count-col_keys_length)+'"'];
-           table_data[ck][2]=['hd','colspan="'+(td_cols_count-row_keys_length)+'"'];
+           table_data[ck][1]=['','rowspan="'+(td_rows_count-col_keys_length)+'"'];
+           table_data[ck][2]=['','colspan="'+(td_cols_count-row_keys_length)+'"'];
            
            
            var td_print=[]; var val; var param;
@@ -765,7 +752,9 @@ function jpv_pivotDrawData_new($this)
                           if (table_data[rn][cn][0] == null) continue; //skip  empty cell
                           
  													if (td_rows_map[r][0]== null) 
-                              val = opts.printTotalRowKey(table_data[rn][cn][0]); 
+                              val = opts.printTotalRowKey(c,table_data[rn][cn][0]); 
+                          else if (td_cols_map[c][0]== null) 
+                              val = opts.printTotalColKey(c,table_data[rn][cn][0]);
                           else                         
                           		val = opts.printKey(c,table_data[rn][cn][0]);
                           }
@@ -806,12 +795,103 @@ function jpv_pivotDrawData_new($this)
         ,filter:[]
         ,data_col:null
         ,data_headers:null
-        ,printValue:null
-        ,printTotalRowKey:null
-        ,printKey:null
-        ,getData:null
-        ,getTotals:null
-        ,afterDraw:null
+        ,TableTitle:'Jpivot'
+        ,styles:
+            {
+             Table:'class="pv_Table"' 
+            ,TotalColValue:'class="pv_TotalColValue"'
+            ,TotalRowValue: 'class="pv_TotalRowValue"'
+            ,TotalIntersect:'class="pv_TotalIntersect"'
+            ,TotalRowKey:'class="pv_TotalRowKey"'
+            ,TotalColKey:'class="pv_TotalColKey"'
+            ,Key:'class="ui-state-default"'
+            ,Value:''
+            ,KeysRowsPlaceholder:'class="pv_keys_placeholder"'
+            ,KeysColsPlaceholder:'class="pv_keys_placeholder"'
+            }
+/*
+      .pv_TotalIntersect {background-color:#C0C0C0;}
+		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
+		  .pv_TotalColKey {background-color:green;}
+		  .pv_TotalRowKey {background-color:maroon;}
+      .pv_TotalIntersect {background-color:#C0C0C0;}
+		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
+		  .pv_TotalColKey {background-color:green;}
+		  .pv_TotalRowKey {background-color:maroon;}
+			.pv_dialog {font-size:10px;}
+			table.pv_Table{border-collapse:collapse;border:1px solid red;}
+			.pv_Table td{border:1px solid green; vertical-align:top;}
+			.pv_key_header_filtered {color:green;}
+			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
+			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
+			#pv_rowkeys_placeholder{padding-bottom:5px;}
+			#pv_colkeys_placeholder{padding-bottom:0px;}
+			#pv_filter {padding-bottom:5px;}		  
+*/     
+      ,printTopLeft:function(data_indexes)       
+          {
+          return 'JPivot';
+          }
+			,printTotalColValue:function(data_indexes)
+		      {
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['r',null];
+					if (debug==2) if (data_indexes.length >0) return ['r'+data_indexes.join(' +'),''];
+					
+					var len =data_indexes.length 
+				  var ret=0;
+					for (i=0;i < len; i++) 
+							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+					return ret > 0 ? [ret,this.styles.TotalColValue] : ['',''];
+		      }
+
+			,printTotalRowValue:function(data_indexes)
+					{
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['r',null];
+					if (debug==2) if (data_indexes.length >0) return ['r'+data_indexes.join(' +'),''];
+					
+					var len =data_indexes.length 
+				  var ret=0;
+					for (i=0;i < len; i++) 
+							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+					return ret > 0 ? [ret,this.styles.TotalRowValue] : ['',''];
+					}
+			,printTotalIntersect:function()
+			    {
+					return ['&nbsp;',this.styles.TotalIntersect]
+			    }			
+		,printValue:function(data_indexes)
+					{
+					if (data_indexes==undefined) return ['',''];
+					if (debug==1) return ['v',null];
+					if (debug==2) if (data_indexes.length >0) return ['v'+data_indexes.join(' +'),''];
+					
+					var len =data_indexes.length 
+				  var ret=0;
+					for (i=0;i < len; i++) 
+							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+					return [ret,this.styles.Value] ;
+					}
+			,printTotalRowKey:function(data_col,val)
+					{
+				  if (debug==1) return ['K',''];
+				  if (debug==2) return ['K'+data_col+val,''];
+					return [val,this.styles.TotalRowKey];
+					}						
+			,printTotalColKey:function(data_col,val)
+					{
+				  if (debug==1) return ['K',''];
+				  if (debug==2) return ['K'+data_col+val,''];
+					return [val,this.styles.TotalColKey];
+					}						
+			,printKey:function(data_col,val)
+					{
+				  if (debug==1) return ['K',''];
+				  if (debug==2) return ['K'+data_col+val,''];
+					return [val,this.styles.Key];
+					}	
+        
         }    
 
 
