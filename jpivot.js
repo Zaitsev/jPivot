@@ -219,7 +219,30 @@ function jpv_keys_placeholder_popup($this)
             }
         }        
                
-
+function jpv_restoreHeaderData($this)
+    {
+    var pv = $this.pv;
+    var old;
+    for (var c=0;c<pv.row_keys_length;c++)
+      {
+      old=null;
+      for (var r=pv.col_keys_length; r < pv.data_rows_count; r++)
+        {
+        if (pv.data[r][c] != null) old=pv.data[r][c];
+        pv.data[r][c] = old;
+        }
+      }
+    for (var r=0;r<pv.col_keys_length;r++)
+      {
+      old=null;
+      for (var c=pv.row_keys_length; c < pv.data_row_length; c++)
+        {
+        if (pv.data[r][c] != null) old=pv.data[r][c];
+        pv.data[r][c] = old;
+        }
+      }      
+      old=null;
+}	
 
 // Public Variables and Methods declare
 
@@ -240,7 +263,7 @@ function jpv_keys_placeholder_popup($this)
     });        
 
         }
-       
+
 ;jQuery.fn.jPivot.preparePv =        function($this)
         {
         // Persistent Context Variables 
@@ -381,7 +404,7 @@ function jpv_keys_placeholder_popup($this)
        for (i=0;i<len;i++)pv.unique_keys[i].sort();
                         
        pv.data_rows_count = rows_composite_index.length+col_keys_length; //rows count+col headers rows
-       pv.data_rows_start = col_keys_length;
+       //pv.data_rows_start = col_keys_length;
        pv.data_row_length = cols_composite_index.length+row_keys_length;
        pv.data=jpv_create_2Darray(pv.data_rows_count);
        //init pv_data
@@ -428,10 +451,10 @@ function jpv_keys_placeholder_popup($this)
             for (c=0;c<row_keys_length-1;c++)
                 {
                 pv.rows_totals[c]=[];cur_rowkey=0
-                old=pv.data[pv.data_rows_start][c]; 
-                var cnt; init_cnt(pv.data_rows_start);
+                old=pv.data[col_keys_length][c]; 
+                var cnt; init_cnt(col_keys_length);
                 pv.rows_totals[c][cur_rowkey] =cnt;    
-                for (r=pv.data_rows_start+1; r < pv.data_rows_count; r++)
+                for (r=col_keys_length+1; r < pv.data_rows_count; r++)
                     {
                     if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
                         {
@@ -451,7 +474,7 @@ function jpv_keys_placeholder_popup($this)
 
          function fill_cnt_col (col)
                {
-               for(var r=pv.data_rows_start; r < pv.data_rows_count; r++) 
+               for(var r=col_keys_length; r < pv.data_rows_count; r++) 
                    if (pv.data[r][col]!= undefined) cnt[r]=cnt[r].concat(pv.data[r][col]);
                }            
          function init_cnt_col(col)
@@ -763,11 +786,13 @@ function jpv_pivotDrawData($this)
                 ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
                 }).disableSelection();
         //create popup filters
-        jpv_keys_placeholder_popup($this);           
+        jpv_keys_placeholder_popup($this);  
+        jpv_restoreHeaderData($this);         
     //console.dir (pv.cols_totals)
             
 }
-;$.fn.jPivot.defaults=
+
+;jQuery.fn.jPivot.defaults=
         {
         data:null
         ,rows:null
@@ -792,25 +817,25 @@ function jpv_pivotDrawData($this)
             ,FliterPlaceholder:'class="pv_FliterPlaceholder"'
             ,class_add_KeyHeaderFiltered:'pv_KeyHeaderFiltered'
             }
-/*
-      .pv_TotalIntersect {background-color:#C0C0C0;}
-		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
-		  .pv_TotalColKey {background-color:green;}
-		  .pv_TotalRowKey {background-color:maroon;}
-      .pv_TotalIntersect {background-color:#C0C0C0;}
-		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
-		  .pv_TotalColKey {background-color:green;}
-		  .pv_TotalRowKey {background-color:maroon;}
-			.pv_dialog {font-size:10px;}
-			table.pv_Table{border-collapse:collapse;border:1px solid red;}
-			.pv_Table td{border:1px solid green; vertical-align:top;}
-			.pv_key_header_filtered {color:green;}
-			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
-			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
-			#pv_rowkeys_placeholder{padding-bottom:5px;}
-			#pv_colkeys_placeholder{padding-bottom:0px;}
-			#pv_filter {padding-bottom:5px;}		  
-*/     
+
+//      .pv_TotalIntersect {background-color:#C0C0C0;}
+//		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
+//		  .pv_TotalColKey {background-color:green;}
+//		  .pv_TotalRowKey {background-color:maroon;}
+//      .pv_TotalIntersect {background-color:#C0C0C0;}
+//		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
+//		  .pv_TotalColKey {background-color:green;}
+//		  .pv_TotalRowKey {background-color:maroon;}
+//			.pv_dialog {font-size:10px;}
+//			table.pv_Table{border-collapse:collapse;border:1px solid red;}
+//			.pv_Table td{border:1px solid green; vertical-align:top;}
+//			.pv_key_header_filtered {color:green;}
+//			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
+//			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
+//			#pv_rowkeys_placeholder{padding-bottom:5px;}
+//			#pv_colkeys_placeholder{padding-bottom:0px;}
+//			#pv_filter {padding-bottom:5px;}		  
+     
       ,printTopLeft:function(data_indexes)       
           {
           return 'JPivot';
@@ -888,6 +913,17 @@ function jpv_pivotDrawData($this)
 					}	
         
         }    
+      
+// Public Variables and Methods
+/*
+// Public Variables and Methods
+$.namespace = {
+        options: {},
+        publicVariable: [];
+        publicMethod: function() {}
+};
+*/
+
 
 
 //Initialization Code 

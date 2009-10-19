@@ -25,7 +25,31 @@ var month_subst = ['янв','фев','мрт','апр','май','июн','июл
 			
 
 var debug=0;
-	
+function jpv_restoreHeaderData($this)
+    {
+    var pv = $this.pv;
+    var old;
+    for (var c=0;c<pv.row_keys_length;c++)
+      {
+      old=null;
+      for (var r=pv.col_keys_length; r < pv.data_rows_count; r++)
+        {
+        if (pv.data[r][c] != null) old=pv.data[r][c];
+        pv.data[r][c] = old;
+        }
+      }
+    for (var r=0;r<pv.col_keys_length;r++)
+      {
+      old=null;
+      for (var c=pv.row_keys_length; c < pv.data_row_length; c++)
+        {
+        if (pv.data[r][c] != null) old=pv.data[r][c];
+        pv.data[r][c] = old;
+        }
+      }      
+      old=null;
+}	
+
 
 $(document).ready(function()
 	{
@@ -35,6 +59,7 @@ $(document).ready(function()
 	    ,styles:{Key:'class="ui-state-default"'}
 			});  	
 	pv=pivots[0].pv;
+
 	$("#resize_chart_1").resizable({
 	 
 	 stop:function(){redraw()}
