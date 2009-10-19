@@ -1,14 +1,14 @@
 (function($) { 
 // Private Variables and Functions
 var  jpv_keys_placeholder_update_list_cnt=0; 
-var debug=0;
+var debug=1;
 //debug functions
 function emsgd(obj)
         {
         if ($.browser.mozilla) 
             {
             if (!debug) return;
-            if (typeof obj == 'object')                console.dir(obj);
+            if (typeof obj == 'object') console.dir(obj);
             else console.info(obj);
             console.trace()
             }
@@ -80,6 +80,17 @@ function in_array(element, array, addIfAbsent)
           }
       return null;
         }
+function jpv_count_keys_span2(span_array,key_num,key)    
+        {
+        //create array of [key,count] like  [ [key1,1],[key2,2],[key1,1] ]
+        var last_element=span_array[key_num].length-1
+        //create new row for this key and for all at "right" from it by duplicate key
+        var i,len=span_array.length;
+        span_array[key_num].push([key,1]);
+        for (i=key_num+1; i< len; i++)
+        span_array[i].push([span_array[i][span_array[i].length-1][0],1]);
+        
+        }         
 function jpv_count_keys_span(span_array,key)    
         {
         //create array of [key,count] like  [ [key1,1],[key2,2],[key1,1] ]
@@ -90,7 +101,7 @@ function jpv_count_keys_span(span_array,key)
 function jpv_create_2Darray(len)
         {
         var a=[];
-        for (i=0;i<len;i++) a.push([]);
+        for (var i=0;i<len;i++) a[i]=[];
         return a;
         }        
 function jpv_keys_placeholder_update($this, event, ui)
@@ -122,7 +133,8 @@ function jpv_keys_placeholder_update($this, event, ui)
             $this.opts.rows=rows;
             $this.opts.filter=filter;
             jQuery.fn.jPivot.preparePv($this);
-            jpv_pivotDrawData($this);
+            //jpv_pivotDrawData($this);
+            jpv_pivotDrawData_new($this);
             }
         }    
 function jpv_keys_placeholder_popup($this)
@@ -146,7 +158,7 @@ function jpv_keys_placeholder_popup($this)
                 tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
                 for (j=0;j < unique_keys_length; j++)
                         {
-											  printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j]) :  unique_keys[j];
+                                   printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j])[0] :  unique_keys[j];
                         tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
                         }
                 tstr +='</select></li>';
@@ -160,7 +172,8 @@ function jpv_keys_placeholder_popup($this)
                             ,function(e) 
                                 {
                                 jQuery.fn.jPivot.preparePv($this);
-                                jpv_pivotDrawData($this);
+                                //jpv_pivotDrawData($this);
+                                jpv_pivotDrawData_new($this);
                                 }
                              );                                
         
@@ -175,13 +188,15 @@ function jpv_keys_placeholder_popup($this)
                     { 
                     //we have no dialog,create
                     tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
-                    tstr +='asc<input type="radio" name="pv_dlg_plh'+k+'_order" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order" value="D"><hr>'
+                    tstr +='<div id="pv_dlg_plh'+k+'_order">asc<input type="radio" name="pv_dlg_plh'+k+'_order_n" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order_n" value="D"></div>'
+                    tstr +='<div>total<input type="checkbox" id="pv_dlg_plh'+k+'_total"  value="1"></div>';
+                    tstr += '<div id="pv_dlg_plh'+k+'_filter">';
                     for (i=0; i < unique_keys_length; i++)
-                    		{
-  									    printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i]) : unique_keys[i];
-                        tstr +=printed_key+'<input type="checkbox" checked name="pv_dlg_plh'+k+'_flt[]" value="'+unique_keys[i]+'"><br>'
+                          {
+                                 printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i])[0] : unique_keys[i];
+                        tstr +=printed_key+'<input type="checkbox" checked value="'+unique_keys[i]+'"><br>'
                         }
-                    tstr +='</div>';
+                    tstr +='</div></div>';
                     $($this).append(tstr);
                     $('#pv_dlg_plh'+k).dialog
                             ({
@@ -192,7 +207,8 @@ function jpv_keys_placeholder_popup($this)
                                     Ok: function() 
                                         {
                                         jQuery.fn.jPivot.preparePv($this);
-                                        jpv_pivotDrawData($this);
+                                        //jpv_pivotDrawData($this);
+                                        jpv_pivotDrawData_new($this);
                                         $(this).dialog('close');
                                         }
                                     ,Cancel: function() 
@@ -218,132 +234,8 @@ function jpv_keys_placeholder_popup($this)
                   }
             }
         }        
-                    
-function jpv_pivotDrawData($this)
-        {
-      //draw data
-      //start header draw
-           var tstr='';
-        var table_data_html=[];
-        var opts=$this.opts;
-        var pv=$this.pv;
-        var filter_length= opts.filter.length;
-        table_data_html.push('<div>flt<ul class="pv_keys_placeholder" id="pv_filter"></ul></div><br><br>');
-        table_data_html.push('<table class="pv_table">');
+               
 
-        keys_colspan_length=pv.keys_colspan.length;
-        keys_rowspan_length=pv.keys_rowspan.length
-        //header colspans
-        if (keys_colspan_length==0)
-                {
-                //place placeholder only
-                table_data_html.push('<tr id="pv_tr_h_col0"><th colspan="'+keys_rowspan_length+'" ></th><th class="ui-state-default"><ul style="width:20px;height:20px;" class="pv_keys_placeholder" id="pv_colkeys_placeholder"></ul></th><th></th>');                 
-                }
-        var use_printKey = $.isFunction(opts.printKey),printed_key='';
-        for (r=0;r < keys_colspan_length;r++)
-                {
-                len=pv.keys_colspan[r].length;
-                table_data_html.push("<tr id=\"pv_tr_h_col"+r+"\">\n");                 
-                for (c=0;c<len;c++)
-                      {
-                      if ((r==0) && (c==0)) 
-                          {
-                          table_data_html.push('<th colspan="'+keys_rowspan_length+'" rowspan="'+keys_colspan_length+'"></th>'); //top left td
-                          //col keys dragable
-                          table_data_html.push(
-                              '<th style="min-width:40px;" rowspan="'+pv.keys_colspan.length+'">'
-                              +'<ul class="pv_keys_placeholder" id="pv_colkeys_placeholder">');
-                          for (i=0;i<opts.cols.length;i++) 
-                              {
-                              table_data_html.push(
-                                  '<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
-                                  +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-                                  +opts.data_headers[opts.cols[i]] 
-                                  +'</li>');
-                              }
-                          table_data_html.push('</ul></th>');
-                          }
-											 printed_key = (use_printKey) ? opts.printKey(opts.cols[r],pv.keys_colspan[r][c][0]) : pv.keys_colspan[r][c][0];
-                       table_data_html.push('<th  class="ui-state-default" colspan="'+pv.keys_colspan[r][c][1]+'">'+printed_key+'</th>');
-                       }
-                table_data_html.push("</tr>\n"); 
-                }
-                
-        //row keys dragable
-
-      if (keys_rowspan_length==0)
-          {
-          //place placeholder only
-            table_data_html.push('<tr><th  class="ui-state-default" style="min-width:40px;" colspan="'+keys_rowspan_length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder"></ul></th><td colspan="'+pv.data_row_length+'"></td></tr>');
-          }
-      else
-          {
-            table_data_html.push('<tr><th style="min-width:40px;" colspan="'+keys_rowspan_length+'"><ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">');
-            for (i=0;i< keys_rowspan_length ;i++) 
-                  {
-                  table_data_html.push(
-                        '<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
-                        +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-                         +opts.data_headers[opts.rows[i]]
-                         +'</li>');
-                  }
-            table_data_html.push("<td rowspan="+(1+pv.data_rows_count)+"></td><td colspan="+(pv.data_row_length-keys_rowspan_length)+"></td></ul></tr>\n"); 
-            }
-        
-        //draw data
-        var ind_r=[]; for (r=0; r < keys_rowspan_length;r++) {ind_r.push([0,0]);} 
-        var use_printVal = $.isFunction(opts.printValue);
-        for (r=0;r< pv.data_rows_count;r++)
-              {
-              table_data_html.push("<tr>\n"); 
-              for (c=0;c< pv.data_row_length;c++)
-                  {
-                   if ((c==0) && (keys_rowspan_length==0)) table_data_html.push('<td></td><td></td>'); //we have placeholder only, reserve area below it
-                   if  (c < keys_rowspan_length)  
-                      {//row key header
-                      if (ind_r[c][0] == r)
-                          {
-												  printed_key =(use_printKey) ? opts.printKey(opts.rows[c],pv.keys_rowspan[c][ind_r[c][1]][0]) : pv.keys_rowspan[c][ind_r[c][1]][0]; 
-                          table_data_html.push('<th  rowspan = "'+pv.keys_rowspan[c][ind_r[c][1]][1]+'" class="ui-state-default">'+printed_key+'</th>');
-                          ind_r[c][0] += pv.keys_rowspan[c][ind_r[c][1]][1]; //set when next th will be needed by row
-                          ind_r[c][1]++ ; //set for which section we see
-                          }
-                      }
-                  else
-                      {//data
-                     if (use_printVal) 
-                      	table_data_html.push('<td>'+opts.printValue(pv.data[r][c])+'</td>');
-                      else 
-                      	table_data_html.push('<td>'+pv.data[r][c]+'</td>');
-                      }
-                  }
-              table_data_html.push("</tr>\n");
-              }
-        table_data_html.push('</table>');
-        //end draw data
-        var str=table_data_html.join(' ');
-        
-        //draw table
-        $($this).empty().append(str);
-        
-        //create sortable headers
-        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_filter',$this).sortable(
-                { 
-                connectWith: '.pv_keys_placeholder'
-                ,forcePlaceholderSize: true 
-                ,forceHelperSize: true
-                ,helper: 'clone'
-                ,opacity: '0.6'
-                ,placeholder: 'ui-state-default'
-                ,tolerance: 'pointer'
-                ,cursorAt:  'top,left' 
-                ,cursor: 'default'
-                ,snap:true
-                ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
-                }).disableSelection();
-        //create popup filters
-        jpv_keys_placeholder_popup($this);
-        }
 
 // Public Variables and Methods declare
 
@@ -357,20 +249,17 @@ function jpv_pivotDrawData($this)
             this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
                 this.pv={}; //context pivot data            
                 jQuery.fn.jPivot.preparePv(this)
-                jpv_pivotDrawData(this);
+                //jpv_pivotDrawData(this);
+                jpv_pivotDrawData_new(this);
                 
                 return this;                    
     });        
 
         }
-;jQuery.fn.jPivotDraw =        function($this)
-        {
-
-        }        
+       
 ;jQuery.fn.jPivot.preparePv =        function($this)
         {
         // Persistent Context Variables 
-                emsgd('preparePv');      
         var pv = $this.pv
         var data_length=$this.opts.data.length;
         var data_row_length=$this.opts.data[0].length;
@@ -387,18 +276,27 @@ function jpv_pivotDrawData($this)
 
   
             //create sort
-         pv.dialog_sort=[];
-         for(i=0;i < data_row_length; i++ )
-             pv.dialog_sort[i] = $('#pv_dlg_plh'+i+' :radio:checked[name="pv_dlg_plh'+i+'_order"]').val() == 'D' ? 1 : -1;
-            //console.profile('sort');
+        pv.dialog_sort=[];
+        pv.totals_mask=[];
+        pv.dialog_filter=jpv_create_2Darray(data_row_length); //hold dialog filter values for each key
+        pv.head_filter=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+
+        for(i=0;i < data_row_length; i++ )
+             pv.dialog_sort[i] = $('#pv_dlg_plh'+i+'_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;
+        //create filters indexes
+        for(i=0;i < data_row_length; i++ ) //dialog filter
+                 $('#pv_dlg_plh'+i+'_filter :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
+        for(i=0;i < data_row_length; i++ ) //head filter
+                 pv.head_filter[i] = $('#pv_dlg_plh'+i+' select').length > 0 ? $('#pv_dlg_plh'+i+' select').val() : null ;
+        for(i=0;i < data_row_length; i++ )
+             pv.totals_mask[i] = $('#pv_dlg_plh'+i+'_total').attr('checked') ?  1 : 0;
+
         //sort by rows-cols headers
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
             //console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
-        pv.dialog_filter=jpv_create_2Darray(data_row_length); //hold dialog filter values for each key
-        pv.head_filter=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         pv.keys_index=[];//jpv_create_2Darray(data_row_length);
         for (i=0;i<rows_length;i++) pv.keys_index[rows_ptr[i]]=1; 
         for (i=0;i<cols_length;i++) pv.keys_index[cols_ptr[i]]=2; 
@@ -409,11 +307,6 @@ function jpv_pivotDrawData($this)
         var data_row2pv_row=[];  //map raw data rows to pivot rows        
         var data_row2pv_col=[];  //map raw data cols to pivot cols    
               
-        //create filters indexes
-        for(i=0;i < data_row_length; i++ ) //dialog filter
-                 $('#pv_dlg_plh'+i+' :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
-        for(i=0;i < data_row_length; i++ ) //head filter
-                 pv.head_filter[i] = $('#pv_dlg_plh'+i+' select').length > 0 ? $('#pv_dlg_plh'+i+' select').val() : null ;
         /*
         HOW IT WORKS
            example data
@@ -453,16 +346,16 @@ function jpv_pivotDrawData($this)
         for (dr=0; dr < data_length ; dr++)
             {
             is_filtered=false;
-						//head filter unique keys
+                  //head filter unique keys
             for (i=0;i<filter_length;i++)
                   {
-                  //when we first add key to head_fiter we dont have values of this filter (they are creting here)
+                  //when we first add key to head_fiter (just drag it into hoder) we dont have values of this filter (they are creting here)
                   // and <select> is not drawed yet, so we need take first value and use it as filter
                   dc=filter_ptr[i];
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-									if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
+                           if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
                   }                
             composite_row_key=[]; idx=0;
             for (i=0;i<rows_length;i++)
@@ -492,14 +385,13 @@ function jpv_pivotDrawData($this)
                     data_row2pv_col[dr]=in_array(composite_col_key.join('~~~'),cols_composite_index,true);
                     }
             }
-        //console.profileEnd('mainLoop');   
-            //console.profile('sortCol');                        
             //sort cols and create remapping 
             var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
             for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
             cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
             for (i=0; i < len ; i++)
                      {
+                     //find index of cols_composite_index[i]in cols_composite_sorted and map its index
                      cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
                      }
          //console.profileEnd('sortCol');    
@@ -514,7 +406,6 @@ function jpv_pivotDrawData($this)
        //init pv_data
 
           var data_header=jpv_create_2Darray(cols_length);
-          var use_getData=$.isFunction($this.opts.getData); 
           for (i=0;i<data_length;i++)
               {
               if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
@@ -522,26 +413,391 @@ function jpv_pivotDrawData($this)
                       {
                       pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
                       }
-              if (use_getData)
-                 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = $this.opts.getData(i,data_col,data_ptr); //inset data in its place in row
-              else
-              	 pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length] = data_ptr[i][data_col]; //inset data in its place in row
-              if (data_ptr[i][data_col] != null ) for (c=0;c<cols_length;c++)  data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
+              //store data_ptr index instead of actual value
+              //this will be needed on totals and data display functions
+              if (pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length]==undefined) pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length]=[];
+              pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+rows_length].push(i);
+              if (data_ptr[i][data_col] != null ) 
+                  for (c=0;c<cols_length;c++)  
+                  {
+                    for (var r=0;r < rows_length;r++) data_header[c][r]=null;
+                    data_header[c][cols_composite_index_remap[data_row2pv_col[i]] + rows_length] = data_ptr[i][cols_ptr[c]];
+                  }
+              
               }
          
         //rows kyes span
         pv.keys_rowspan=jpv_create_2Darray(rows_length);  
+        
         for (r=0;r < pv.data_rows_count;r++)    
-                for (i=0; i < rows_length; i++) 
-                        jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
-        //cols keys span
-        pv.keys_colspan=jpv_create_2Darray(cols_length);
-        for (r=0; r < cols_length; r++)
-                for (c=rows_length; c < pv.data_row_length; c++)                                
-                        jpv_count_keys_span(pv.keys_colspan[r],data_header[r][c]);
-        //th_row_cnt.push(key,cnt)            
-        }
+                for (i=0; i < rows_length; i++)
+                   jpv_count_keys_span(pv.keys_rowspan[i],pv.data[r][i])
+      
+       //create rows totals and spans
+   
+         function fill_cnt (rw)
+               {
+               for(var i = rows_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
+               }
+         function init_cnt(rw)
+               {
+               cnt=[]; for (var i=0; i < pv.data_row_length; i++) cnt[i]=[];
+               fill_cnt (rw);
+               }
+         pv.rows_totals=[];
+         var cur_rowkey;
+         var span;
+         if (rows_length > 1)
+            {
+            for (c=0;c<rows_length-1;c++)
+                {
+                pv.rows_totals[c]=[];cur_rowkey=0
+                old=pv.data[0][c]; 
+                var cnt; init_cnt(0);
+                pv.rows_totals[c][cur_rowkey] =cnt;    
+                for (r=1; r < pv.data_rows_count; r++)
+                    {
+                    if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
+                        {
+                        //save current
+                        pv.rows_totals[c][cur_rowkey] =cnt;
+                        //prepare new
+                        old = pv.data[r][c];
+                        var cnt; init_cnt(r); 
+                        pv.rows_totals[c][++cur_rowkey] =cnt;
+                        continue                     
+                        }
+                    fill_cnt(r);
+                    pv.data[r][c]=null;                     
+                    }
+                }
+            }  
 
+         function fill_cnt_col (col)
+               {
+               for(var r=0; r < pv.data_rows_count; r++) 
+                   if (pv.data[r][col]!= undefined) cnt[r+1]=cnt[r+1].concat(pv.data[r][col]);
+               }            
+         function init_cnt_col(col)
+               {
+               cnt=jpv_create_2Darray(pv.data_rows_count+1); 
+               fill_cnt_col (col);
+               }            
+            
+         pv.cols_totals=jpv_create_2Darray(cols_length); 
+         var cur_colkey=0;
+         var span;
+         if (cols_length > 1)
+            {
+            for (r=0;r<cols_length;r++)
+                {
+                var cnt; init_cnt_col(rows_length);
+                pv.cols_totals[r][0]=cnt;
+                old=data_header[r][rows_length]; 
+                cur_colkey=0;
+                for (c=rows_length+1; c < pv.data_row_length; c++)
+                    {
+                    if ( (old != data_header[r][c]) || (r>0) && (data_header[r-1][c]!= null)  )
+                        {
+                        pv.cols_totals[r][cur_colkey++]=cnt;
+                        var cnt; init_cnt_col(c);
+                        pv.cols_totals[r][cur_colkey]=cnt;
+                         old = data_header[r][c];
+                        continue                     
+                        }
+                    fill_cnt_col(c);
+                    data_header[r][c]=null;                     
+                    }
+                //last
+                }
+            }  
+          
+        pv.data_header=data_header;
+        }
+function jpv_pivotDrawData_new($this)
+        {
+           //return;
+      //draw data
+      //start header draw
+        var table_data=[];
+        var opts=$this.opts;
+        var pv=$this.pv;
+        var filter_length= opts.filter.length;
+        var row_keys_length=pv.keys_rowspan.length;
+            row_keys_length= (!row_keys_length) ? 1 : row_keys_length; //fix when no row keys, reserve place for key header placeholder
+        var col_keys_length=pv.data_header.length;
+            
+        //temp vars
+            var r;var c;
+        //create array for table_data
+        var td_data_rows_start = 1+col_keys_length;//actual data start 1(row headers here and delimiter) +[col keys count]
+        var td_rows_count=td_data_rows_start+pv.data_rows_count;//+ [number of rows with data]; 
+
+        var td_data_cols_start=row_keys_length+1; //  actual data start [rows keys count]+1(cols headers here)
+        var td_cols_count=td_data_cols_start+pv.data_row_length-row_keys_length;// + [number of cols with data]; 
+        var pv2td_data_col_diff= -row_keys_length+td_data_cols_start
+        if (!col_keys_length)
+            {
+            td_data_rows_start++;td_rows_count++;
+            }
+        //fill rows
+        for (r=0;r < td_rows_count; r++) 
+              {
+              table_data[r]=[];
+              for (c=0;c < td_cols_count; c++) table_data[r][c]=[null,null];
+              }
+  
+        //fill cols header
+        for (r=0;r<col_keys_length;r++)
+          {   
+           for (c=row_keys_length; c < pv.data_row_length; c++)  //loop by pv.data_header[r]
+               {
+               //table_data[r]=[];
+              if (pv.data_header[r][c] != null) 
+                  {
+                      table_data[r][c+pv2td_data_col_diff]=[pv.data_header[r][c], null];
+                  }
+              else 
+                  table_data[r][c+pv2td_data_col_diff]=[null,null];
+              }
+          }
+          
+        //fill rows header and data
+        for (r=0;r<pv.data_rows_count;r++)
+           {
+           //rows keys
+           for (c=0; c < row_keys_length; c++)  table_data[r+td_data_rows_start][c]=[pv.data[r][c],null];
+           //fill with array of indexes of actual data rows (opts.data)
+           for (c=row_keys_length; c < pv.data_row_length; c++)  table_data[r+td_data_rows_start][c+pv2td_data_col_diff]=(pv.data[r][c]==undefined) ? [null,null] : [pv.data[r][c],null]; 
+           }
+
+
+        //ADD row totlas  
+           
+            function append_total_row(col,key_ind)
+                  {
+                  table_data[add]=[];
+                  for (var c=0; c < td_data_cols_start; c++) table_data[add][c]=[null,null];
+                  table_data[add][col]=['&Sigma;','colspan="'+(row_keys_length-col)+'" class="pv_table_total" ']; 
+                  for (var c=row_keys_length; c < pv.data_row_length; c++)     
+                      table_data[add][c+pv2td_data_col_diff]=[pv.rows_totals[col][key_ind][c],'class="pv_table_total"'];
+                  }
+            var total_index=[];for (c=row_keys_length-1;c >= 0; c--) total_index[c]=0;
+            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=pv.totals_mask[opts.rows[r]];
+            var td_rows_map=[]; for (r=0;r<td_data_rows_start+1;r++) td_rows_map[r]=[r,null]; //map headers and first data row -they not have totals before
+            var r_index=td_data_rows_start+1;
+            var add=td_rows_count;
+            
+            for (r=td_data_rows_start+1;r<td_rows_count;r++)
+                  {
+                  for (c=row_keys_length-1-1;c >= 0; c--)
+                      {//check if we had any totals for this col
+                      if ( (table_data[r][c][0] != null) &&  (total_mask[c]) )
+                          {//we need to add total BEFORE current data row, because we hold total_index on previous keys
+                          append_total_row(c,total_index[c]++)
+                          td_rows_map[r_index++]=[null,add++];
+                          }
+                      }
+                  td_rows_map[r_index++]=[r,null];
+                  }
+            //last row is total; these is quicker then additional checks in mail loop;
+            for (c=row_keys_length-1-1;c >= 0; c--) {if (total_mask[c]) {append_total_row(c,total_index[c]++);td_rows_map[r_index++]=[null,add++];}}
+            td_rows_count = add;
+            
+            //create row spans
+             var r_index; var span; var rn; var is_tot;
+             for (c=row_keys_length-1-1;c >= 0; c--)
+                {
+               	do_span=0;is_tot=0;span=1;r_index=td_rows_map[td_data_rows_start][0]; //point to the first row with data - it always have keys.
+                for (r=td_data_rows_start+1;r<td_rows_count;r++)
+                    {
+                    rn= td_rows_map[r][0] != null ? td_rows_map[r][0] : td_rows_map[r][1];
+                    //look left if we had header or total
+                    for (var j = c; j >=0; j--)
+                    	if (table_data[rn][j][0] != null) 
+                    		{
+                        if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan='+span];
+                        r_index = rn; 
+                        is_tot= td_rows_map[r][0] != null ? 0 : 1; //do not create rowspan for totals
+                        span=0;
+                        break;
+                        }
+                        span++
+                    }
+                    if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan='+span];
+                }
+            
+           
+           
+          //  Create col mappings and append cols totals
+            function append_total_col(key_ind)
+                {
+                var tot_index=1; var rn;
+                for (var r=0;r < td_rows_count; r++)
+                    {
+                    rn=(td_rows_map[r][0]!= null) ? td_rows_map[r][0] : td_rows_map[r][1];
+                    if (r < td_data_rows_start )
+                      {
+                      if (r == tc) 
+                          table_data[rn][add]=['&Sigma','rowspan="'+(col_keys_length-tc)+'"class="pv_table_total" ' ];
+                      else
+                          table_data[rn][add]=[null,null]
+                      }
+                    else
+                      {
+                      if(td_rows_map[r][0]==null) //totals intrsect
+                          table_data[rn][add]=[[],null]; // this is  total row - add empty                      
+                      else
+                          table_data[rn][add]=[pv.cols_totals[tc][key_ind][tot_index++],'class="pv_table_total" ' ];                          
+                      }
+                    }
+                }
+
+            var td_cols_map=[];// hold maps of cols with data and totals cols;
+            var key_i_group=[]; for (c=0;c < col_keys_length-1-1;c++) key_i_group[c]=0 //current totals index
+            for (c=0;c < td_data_cols_start; c++) td_cols_map[c]=[c,null]; //skip headers and first rows;
+            var ind = td_data_cols_start; //hold current map index
+            var add = td_cols_count; //number of added rows
+            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=pv.totals_mask[opts.cols[r]];
+            for (c=0;c < col_keys_length-1;c++) key_i_group[c]=0 //current totals index
+            for (c=td_data_cols_start;c<td_cols_count;c++) //loop by columns
+                {
+                for (var tc=col_keys_length -1-1; tc >= 0; tc-- ) //loop by col keys ROWS
+                    {
+                    if ((total_mask[tc]) && (table_data[tc][c][0] != null))
+                        {
+                        if (c != td_data_cols_start)
+                            { 
+                            append_total_col(key_i_group[tc]++)
+                            td_cols_map[ind++]=[null,add++];
+                            }
+                        }
+                    }
+                td_cols_map[ind++]=[c,null];
+                }
+            //lastcol is last totals
+            for (var tc=col_keys_length -1-1; tc >= 0; tc-- )
+            		if (total_mask[tc]) 
+                            { 
+                            append_total_col(key_i_group[tc]++)
+                            td_cols_map[ind++]=[null,add++];
+                            }            
+           td_cols_count = ind;
+           
+            //create col spans
+             var c_index; var cn;
+             for (r=td_data_rows_start-1-1 ;r >= 0; r--) //skip delimeter, skip last colkeys row
+             	{
+             	//header rows mapped 'as is' - whe don't need use td_rows_map;
+             	is_tot=0;span=1;c_index=td_cols_map[td_data_cols_start][0]; //point to the first col with data - it always have keys.
+             	for (c=td_data_cols_start+1;c < td_cols_count; c++) 
+             			{
+                    cn= td_cols_map[c][0] != null ? td_cols_map[c][0] : td_cols_map[c][1]; 
+                    for(var j=r; j >=0; j--) //look top if we had header or total
+                    	if (table_data[j][cn][0] != null)
+                     		{
+                        if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan='+span];
+                        c_index = cn; 
+                        is_tot= td_cols_map[c][0] != null ? 0 : 1; //do not create rowspan for totals
+                        span=0;
+                        break;
+                        }                    	
+                        span++
+                  }
+                  if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan='+span]; //las col            				
+               }
+           
+        var col_drag = col_keys_length ? '' : 'style="padding-bottom:10px;"'; //fix for empty colheader
+        col_drag='<ul class="pv_keys_placeholder" '+col_drag+' id="pv_colkeys_placeholder">';
+        for (i=0;i<col_keys_length;i++) 
+            col_drag +='<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
+                  +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                  +opts.data_headers[opts.cols[i]] 
+                  +'</li>';
+        col_drag +='</ul>';
+        //row dragables
+            var row_drag = '<ul class="pv_keys_placeholder" id="pv_rowkeys_placeholder">';
+            for (i=0;i< row_keys_length ;i++) 
+                  row_drag +='<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
+                            +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                            +opts.data_headers[opts.rows[i]]
+                            +'</li>';
+            row_drag +='</ul>';
+            
+            
+        //Actual print
+           var  ck = col_keys_length ? col_keys_length : 1;
+
+           table_data[0][0]=['00','colspan="'+row_keys_length+'" rowspan="'+ck+'"'];
+           table_data[0][1]=[col_drag,' rowspan="'+ck+'" class="ui-state-default" style="min-width:40px;"'];
+           if (col_keys_length==0) table_data[0][2]=['55',null];
+           table_data[ck][0]=[row_drag,' colspan="'+row_keys_length+'"'];
+           table_data[ck][1]=['vd','rowspan="'+(td_rows_count-col_keys_length)+'"'];
+           table_data[ck][2]=['hd','colspan="'+(td_cols_count-row_keys_length)+'"'];
+           
+           
+           var td_print=[]; var val; var param;
+           var col_index;
+           var newv=1;
+           for (r=0;r < td_rows_count; r++)
+                 {
+                 tr=[]; col_index=0;
+                 for (c=0; c < td_cols_count  ; c++)
+                     {
+                     rn=(td_rows_map[r][0]!= null) ? td_rows_map[r][0] : td_rows_map[r][1];
+                     cn=(td_cols_map[c][0]!= null) ? td_cols_map[c][0] : td_cols_map[c][1];
+                     param='';
+                     if ((r >= td_data_rows_start) && (c >= td_data_cols_start))
+                          {// data
+                          if ( (td_rows_map[r][0]!= null) && (td_cols_map[c][0]!= null) )
+                              val = opts.printValue(table_data[rn][cn][0]);
+                          else if ( (td_rows_map[r][0]== null) && (td_cols_map[c][0]== null) )
+                              val= opts.printTotalIntersect();
+                          else if (td_rows_map[r][0]== null) 
+                              val = opts.printTotalRowValue(table_data[rn][cn][0]);
+                          else if (td_cols_map[c][0]== null) 
+                              val = opts.printTotalColValue(table_data[rn][cn][0]);
+                          else 
+                               val = opts.printTotalColValue(table_data[rn][cn][0]); //intersect of totals
+                          }
+                     else  
+                          {
+                          if (table_data[rn][cn][0] == null) continue; //skip  empty cell
+                          
+ 													if (td_rows_map[r][0]== null) 
+                              val = opts.printTotalRowKey(table_data[rn][cn][0]); 
+                          else                         
+                          		val = opts.printKey(c,table_data[rn][cn][0]);
+                          }
+										 param = val[1];val = val[0];
+                     param += table_data[rn][cn][1] != null ? table_data[rn][cn][1] : ''
+                     tr[col_index++] = '<td '+param+'>'+val+'</td>';
+                     }
+                 td_print[r]='<tr>'+tr.join(' ')+'</tr>';
+                 }
+           var str  = '<div>flt<ul class="pv_keys_placeholder" id="pv_filter"></ul></div><br><br>';
+               str += '<table  class="pv_table">'+td_print.join(' ')+'</table>';
+           $($this).empty().append(str);   
+        //create sortable headers
+        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_filter',$this).sortable(
+                { 
+                connectWith: '.pv_keys_placeholder'
+                ,forcePlaceholderSize: true 
+                ,forceHelperSize: true
+                ,helper: 'clone'
+                ,opacity: '0.6'
+                ,placeholder: 'ui-state-default'
+                ,tolerance: 'pointer'
+                ,cursorAt:  'top,left' 
+                ,cursor: 'default'
+                ,snap:true
+                ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
+                }).disableSelection();
+        //create popup filters
+        jpv_keys_placeholder_popup($this);           
+    //console.dir (pv.cols_totals)
+            
+}
 ;$.fn.jPivot.defaults=
         {
         data:null
@@ -551,8 +807,11 @@ function jpv_pivotDrawData($this)
         ,data_col:null
         ,data_headers:null
         ,printValue:null
+        ,printTotalRowKey:null
         ,printKey:null
         ,getData:null
+        ,getTotals:null
+        ,afterDraw:null
         }    
 
 
