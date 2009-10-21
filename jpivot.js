@@ -428,7 +428,6 @@ function jpv_restoreHeaderData($this)
                   }
               
               }
-         console.dir(pv.data);
 
       
        //create rows totals and spans

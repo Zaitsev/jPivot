@@ -30,11 +30,19 @@ var pv0;
 
 
 $(document).ready(function()
-	{
+ {
+//////////////////////// ready start 	
 	var pivots=$('#pv').jPivot({
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
 			,filter:filter
 	    ,styles:{Key:'class="ui-state-default"'}
+	    ,printValue:function(data_indexes) {
+		      var rclass = this.styles.Value
+    			if (data_indexes==undefined) return  ['',rclass];		;
+    		  return  [calc_val(data_indexes) ,rclass];	
+	    	
+	    	
+	    	}
 			});  	
 	pv0=pivots[0];
 
@@ -43,8 +51,25 @@ $(document).ready(function()
 	 stop:function(){redraw()}
 	 ,handles: 'all' 
 	});
-	}
-	);
+	
+
+	
+	
+//////////////////////// ready stop 		
+	}	);
+	
+	
+	
+function calc_val(data_indexes)
+		{
+		var ret=0;
+		var len =data_indexes.length 
+			for (i=0;i < len; i++) 
+    			ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+    return ret;
+		}
+
+
       function FC_Rendered(DOMId){
          //If it's our required chart
          if (DOMId=="chart1div"){
