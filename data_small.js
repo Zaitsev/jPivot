@@ -33,5 +33,6 @@
 var rows = [0,3];	
 var cols = [1];
 var data_col=4;	
-var filter = []
+var filter = [];
+var agregate = [];
 var data_headers=["город","объект","ddd","TAG"]

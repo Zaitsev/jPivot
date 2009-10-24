@@ -6,18 +6,21 @@
    <script type="text/javascript" src="./js/jquery.tochecklist.js"></script>
 
   
-   <link type="text/css" rel="stylesheet" media="screen" href=".css/jquery.tochecklist.min.css" />
+   <link type="text/css" rel="stylesheet" media="screen" href="./css/jquery.tochecklist.min.css" />
 
 
 <script type="text/javascript">
 $(document).ready(function()  
 	{
+		var a='<select><option>Deodorant</option><option selected >Soap</option><option>Lotion</option></select>';
+		$('#a').empty().append(a);	  
 		$('#products').toChecklist();
 	});
 </script>
 
 </HEAD>
 <BODY>
+  <div id="a"><select><option>Deodorant</option><option>Soap</option><option>Lotion</option></select></div>
 <select  multiple="multiple" name="products" id="products">
 	<option>Deodorant</option>
 	<option>Soap</option>

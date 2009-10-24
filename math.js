@@ -9,9 +9,9 @@ for (var i=0; i < num; i++)
          	   for (var p=0;p < num; p++)
               //data.push(['i'+i,'j'+j,'k'+k,'L'+l,'m'+m,'i'+i+'j'+j+'k'+k+'L'+l+'m'+m])  ;
               data.push(['i'+i,'j'+j,'k'+k,'L'+l,'m'+m,'p'+p,snum++])  ;
-var rows = [2,1,0];	
+var rows = [1,0];	
 var cols = [3,4];
 var data_col=6;	
 var agregate = [5];
-var filter = [];
+var filter = [2];
 var data_headers=['i','j','k','l','m','v']              ;
