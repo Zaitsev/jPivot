@@ -1,29 +1,29 @@
 <HTML>
 <HEAD>
    <TITLE>FusionCharts & JavaScript - Basic Example</TITLE> 
-   <SCRIPT LANGUAGE="Javascript" SRC="./FusionCharts/FusionCharts.js"></SCRIPT>
-   <SCRIPT LANGUAGE="JavaScript">
-      //FC_Rendered method is called whenever a FusionCharts chart on the page
-      //has finished initial rendering. To this function, the chart passes its 
-      //own DOM Id.
-      function FC_Rendered(DOMId){
-         //If it's our required chart
-         if (DOMId=="chart1Id"){
-            //Simply alert 
-           // window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
-            return;
-         }
-      }
-   </SCRIPT>
+   
+   <script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
+   <script type="text/javascript" src="./js/jquery.tochecklist.js"></script>
+
+  
+   <link type="text/css" rel="stylesheet" media="screen" href=".css/jquery.tochecklist.min.css" />
+
+
+<script type="text/javascript">
+$(document).ready(function()  
+	{
+		$('#products').toChecklist();
+	});
+</script>
+
 </HEAD>
 <BODY>
-   <div id="chart1div">
-      FusionCharts
-   </div>
-   <script language="JavaScript"> 
-      var chart1 = new FusionCharts("./FusionCharts/Column3D.swf", "chart1Id", "400", "300", "0", 1); 
-      chart1.setDataXML("<chart palette='5'><set label='A' value='10' /><set label='B' value='11' /></chart>");
-      chart1.render("chart1div");
-   </script>
+<select  multiple="multiple" name="products" id="products">
+	<option>Deodorant</option>
+	<option>Soap</option>
+	<option>Lotion</option>
+	<!-- etc. -->
+</select>
+
 </BODY>
 </HTML>
