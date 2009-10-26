@@ -458,15 +458,17 @@ function jpv_preparePv($this)
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if (pv.head_filter[dc]!= key) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
-                  }                
+                  if (pv.head_filter[dc]!= key) {is_filtered=true;}  //key not allowed (filtered) by head filter , continue to add all possible values to filter                  
+                  }  
+            if (is_filtered)  continue; //do not  continue to add all possible values to dialog_filter 
+                          
             composite_row_key=[]; idx=0;
             for (i=0;i<row_keys_length;i++)
                   {
                   dc=rows_ptr[i];
                   key=data_ptr[dr][dc];
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog
+                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog, continue to add all possible values to filter 
                   composite_row_key[idx++]=key;
                   }
             composite_col_key=[];idx=0;
