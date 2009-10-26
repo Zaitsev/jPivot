@@ -204,7 +204,7 @@ function jpv_keys_placeholder_popup($this)
         //var keys_index_length=$this.pv.keys_index.length;
         var keys_index_length = pv.unique_keys.length
         var data_headers = opts.data_headers;
-        var tstr='';
+        var tstr=''; var t1; var t2;
         for (k=0;k<keys_index_length;k++)
             {
             unique_keys=pv.unique_keys[k];
@@ -215,16 +215,17 @@ function jpv_keys_placeholder_popup($this)
                 continue;    
                 }
                 //is the dialog for col and row headers
-                if (pv.dialog_filter[k].length > 0) $('#pv_key_header'+k).addClass(opts.styles.class_add_KeyHeaderFiltered);//we have filtered keys - show this
-                //if ($('#pv_dlg_plh'+k).length == 0)
-                else
+                if (pv.dialog_filter[k].length > 0) //we have filtered keys - show this
+                		$('#pv_key_header'+k).addClass(opts.styles.class_add_KeyHeaderFiltered);
+                if ($('#pv_dlg_plh'+k).length == 0) //if dialog not created
                     { //we have no dialog,create
                     tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
-                    tstr +='<div id="pv_dlg_plh'+k+'_order">asc<input type="radio" name="pv_dlg_plh'+k+'_order_n" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order_n" value="D"></div>'
-                    tstr +='<div>total<input type="checkbox" id="pv_dlg_plh'+k+'_total"  value="1"></div>';
-                    tstr += '<div id="pv_dlg_plh'+k+'_filter">';
+                    tstr +='<div id="radio_order">asc<input type="radio" checked name="radio_order'+k+'"  value="A"/>'
+                    tstr +='dsc<input type="radio" name="radio_order'+k+'"   value="D"></div>'
+                    tstr +='<div>total<input type="checkbox" name="total"  value="1"></div>';
+                    tstr += '<div id="filter">';
                     for (i=0; i < unique_keys_length; i++)
-                        tstr +=opts.printKey(k,unique_keys[i])[0]+'<input type="checkbox" checked value="'+opts.printKey(k,unique_keys[i])[0]+'"><br>'
+                        tstr +='<input type="checkbox" checked value="'+opts.printKey(k,unique_keys[i])[0]+'">'+opts.printKey(k,unique_keys[i])[0]+'<br>'
                     tstr +='</div></div>';
                     $($this).append(tstr);
                     $('#pv_dlg_plh'+k).dialog
@@ -337,6 +338,41 @@ function jpv_nullifyHeaderData($this)
                   return this;                    
       });         
       }
+/*      
+function jpv_get_sort (data_row_length)
+		{
+		var a=[]; 
+		for(i=0;i < data_row_length; i++ )
+    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
+    return a;
+		}
+		
+function jpv_get_totas_mask (data_row_length)
+		{
+		var a=[];
+		for(i=0;i < data_row_length; i++ )
+        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
+    return a;
+		}	
+		
+function jpv_get_head_filter (data_row_length)
+		{
+		var a=[];			
+ 		for(i=0;i < data_row_length; i++ ) 
+ 				a[i]=null; 
+    $('#pv_filter li').each( function(){
+              a[$(this).attr('value')]=$('select',this).val()
+              });			
+    return a;
+		}		
+function jpv_get_dialog_filter(data_row_length)
+		{
+		var a=jpv_create_2Darray(data_row_length);
+		for(i=0;i < data_row_length; i++ ) 
+       $('#filter :checkbox:not(:checked)','#pv_dlg_plh'+i).each(function(){a[i].push($(this).val())})		
+		return a;	
+		}
+*/				
 function jpv_preparePv($this)
         {
         // Persistent Context Variables 
@@ -352,24 +388,13 @@ function jpv_preparePv($this)
         var filter_length = $this.opts.filter.length;
                 
             //create sort
-        pv.dialog_sort=[];
-        pv.totals_mask=[];
-        pv.dialog_filter=jpv_create_2Darray(data_row_length); //hold dialog filter values for each key
-        pv.head_filter=[];//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
-
-        for(i=0;i < data_row_length; i++ )
-             pv.dialog_sort[i] = $('#pv_dlg_plh'+i+'_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;
-        //create filters indexes
-        for(i=0;i < data_row_length; i++ ) //dialog filter
-                 $('#pv_dlg_plh'+i+'_filter :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
-        for(i=0;i < data_row_length; i++ ) pv.head_filter[i]=null; //head filter
-          $('#pv_filter li').each( function(){
-              pv.head_filter[$(this).attr('value')]=$('select',this).val()
-              });
-        for(i=0;i < data_row_length; i++ )
-             pv.totals_mask[i] = $('#pv_dlg_plh'+i+'_total').attr('checked') ?  1 : 0;
-
-        //sort by rows-cols headers
+        
+        
+        pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
+        
+        
+				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
             //console.profileEnd('sort');
                     
@@ -501,7 +526,7 @@ function jpv_preparePv($this)
 
       
        //create rows totals and spans
-   
+   				jpv_nullifyHeaderData($this)
          function fill_cnt (rw)
                {
                for(var i = row_keys_length; i < pv.data_row_length; i++) if (typeof pv.data[rw][i]!== 'undefined') cnt[i]=cnt[i].concat(pv.data[rw][i]);
@@ -509,37 +534,33 @@ function jpv_preparePv($this)
          function init_cnt(rw)
                {
                cnt=[]; for (var i=0; i < pv.data_row_length; i++) cnt[i]=[];
+               //cnt[0] = pv.data[rw][cur_rowkey];
                fill_cnt (rw);
                }
-         pv.rows_totals=[];
+         pv.rows_totals=jpv_create_2Darray(row_keys_length);
          var cur_rowkey;
          var span;
-         if (row_keys_length > 1)
+        if (row_keys_length > 1)
             {
             for (c=0;c<row_keys_length-1;c++)
                 {
-                pv.rows_totals[c]=[];cur_rowkey=0
-                old=pv.data[col_keys_length][c]; 
-                var cnt; init_cnt(col_keys_length);
-                pv.rows_totals[c][cur_rowkey] =cnt;    
+		            cur_rowkey=0
+		            var cnt; init_cnt(col_keys_length);
+		            pv.rows_totals[c][cur_rowkey]=cnt
                 for (r=col_keys_length+1; r < pv.data_rows_count; r++)
-                    {
-                    if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
-                        {
-                        //save current
-                        pv.rows_totals[c][cur_rowkey] =cnt;
-                        //prepare new
-                        old = pv.data[r][c];
-                        var cnt; init_cnt(r); 
+                		{
+                		if ((pv.data[r][c]!= null) || (r == pv.data_rows_count-1))
+                				{
+                				pv.rows_totals[c][cur_rowkey] =cnt;
+                				var cnt; init_cnt(r); 
                         pv.rows_totals[c][++cur_rowkey] =cnt;
-                        continue                     
-                        }
-                    fill_cnt(r);
-                    pv.data[r][c]=null;                     
-                    }
+                        continue;
+                				}
+                		fill_cnt(r);
+                		}
                 }
-            }  
-
+            }         
+         
          function fill_cnt_col (col)
                {
                for(var r=col_keys_length; r < pv.data_rows_count; r++) 
@@ -558,22 +579,19 @@ function jpv_preparePv($this)
             {
             for (r=0;r<col_keys_length;r++)
                 {
+                cur_colkey=0;
                 var cnt; init_cnt_col(row_keys_length);
                 pv.cols_totals[r][0]=cnt;
-                old=pv.data[r][row_keys_length]; 
-                cur_colkey=0;
                 for (c=row_keys_length+1; c < pv.data_row_length; c++)
                     {
-                    if ( (old != pv.data[r][c]) || (r>0) && (pv.data[r-1][c]!= null)  )
+                    if ((pv.data[r][c]!= null) || (c == pv.data_row_length-1))
                         {
-                        pv.cols_totals[r][cur_colkey++]=cnt;
-                        var cnt; init_cnt_col(c);
                         pv.cols_totals[r][cur_colkey]=cnt;
-                         old = pv.data[r][c];
+                        var cnt; init_cnt_col(c);
+                        pv.cols_totals[r][++cur_colkey]=cnt;
                         continue                     
                         }
                     fill_cnt_col(c);
-                    pv.data[r][c]=null;                     
                     }
                 //last
                 }
@@ -642,7 +660,7 @@ function jpv_pivotDrawData($this)
            }              
 
         //ADD row totlas  
-           
+          var totals_mask=opts.getTotasMask(opts.data.length);
             function append_total_row(col,key_ind)
                   {
                   table_data[add]=[];
@@ -652,7 +670,7 @@ function jpv_pivotDrawData($this)
                       table_data[add][c+pv2td_data_col_diff]=[pv.rows_totals[col][key_ind][c],'class="pv_table_total"'];
                   }
             var total_index=[];for (c=row_keys_length-1;c >= 0; c--) total_index[c]=0;
-            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=pv.totals_mask[opts.rows[r]];
+            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=totals_mask[opts.rows[r]];
             var td_rows_map=[]; for (r=0;r<td_data_rows_start+1;r++) td_rows_map[r]=[r,null]; //map headers and first data row -they not have totals before
             var r_index=td_data_rows_start+1;
             var add=td_rows_count;
@@ -727,7 +745,7 @@ function jpv_pivotDrawData($this)
             for (c=0;c < td_data_cols_start; c++) td_cols_map[c]=[c,null]; //skip headers and first rows;
             var ind = td_data_cols_start; //hold current map index
             var add = td_cols_count; //number of added rows
-            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=pv.totals_mask[opts.cols[r]];
+            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=totals_mask[opts.cols[r]];
             for (c=0;c < col_keys_length-1;c++) key_i_group[c]=0 //current totals index
             for (c=td_data_cols_start;c<td_cols_count;c++) //loop by columns
                 {
@@ -860,10 +878,12 @@ function jpv_pivotDrawData($this)
               {//create agregate and filter
                str += '<table><tr><td>Aggregate</td><td>Filter</td></tr>'
                str += '<tr><td id="'+opts.agregate_keys_placeholder+'"'+opts.styles.FliterPlaceholder+'></td>';
-               str += '<td id="'+opts.filter_keys_placeholder+'" '+opts.styles.FliterPlaceholder+'></td></tr></table>';
+               str += '<td id="'+opts.filter_keys_placeholder+'" '+opts.styles.FliterPlaceholder+'></td></tr></table></div>';
               }
                str += '<table  class="pv_table">'+td_print.join(' ')+'</table>';
-           $($this).empty().append(str);   
+           if ($("#jpivot_placeholder",$this).length == 0) 
+           		$($this).empty().append('<div id="jpivot_placeholder"></div>');   
+        	 $("#jpivot_placeholder",$this).empty().append(str); 
 
 
            opts.OnCreateManage($this);
@@ -923,7 +943,38 @@ function jpv_pivotDrawData($this)
 //			#pv_filter li, #pv_row_keys_list li {float:left;}	
 //			#pv_row_keys_list{padding-bottom:5px;}
 //			#pv_col_keys_list{padding-bottom:0px;}
-//			#pv_filter {padding-bottom:5px;}		
+//			#pv_filter {padding-bottom:5px;}	
+			,getSort:function(data_row_length)	
+					{
+					var a=[]; 
+					for(i=0;i < data_row_length; i++ )
+			    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
+			    return a;						
+					}
+			,getTotasMask:function(data_row_length)
+					{
+					var a=[];
+					for(i=0;i < data_row_length; i++ )
+			        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
+			    return a;						
+					}
+			,getHeadFilter:function(data_row_length)//actas INCLUDE filter with 1 value
+					{
+					var a=[];
+			 		for(i=0;i < data_row_length; i++ ) 
+			 				a[i]=null; 
+			    $('#pv_filter li').each( function(){
+			              a[$(this).attr('value')]=$('select',this).val()
+			              });			
+			    return a;					
+					}	
+			,getDialogFilter:function(data_row_length)//actas EXCLUDE filter with multiple values
+					{ 
+					var a=jpv_create_2Darray(data_row_length);
+					for(i=0;i < data_row_length; i++ ) 
+			       $('#filter :checkbox:not(:checked)','#pv_dlg_plh'+i).each(function(){a[i].push($(this).val())})		
+					return a;						
+					}											
       ,OnDrawData:function($this)
           {
           jpv_pivotDrawData($this);
