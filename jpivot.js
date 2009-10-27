@@ -74,103 +74,19 @@ function jpv_create_2Darray(len)
         for (var i=0;i<len;i++) a[i]=[];
         return a;
         }        
-function jpv_OnCreateManage($this)
-          {
-          var opts=$this.opts;
-          var pv=$this.pv;
-          var i;
-          var t;
-
-          var col_drag = pv.col_keys_length ? '' : 'style="padding-bottom:10px;"'; //fix for empty colheader
-          col_drag='<ul '+opts.styles.KeysColsPlaceholder+' '+col_drag+' id="pv_col_keys_list">';
-          for (i=0;i<pv.col_keys_length;i++) 
-              col_drag +='<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
-                    +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-                    +opts.data_headers[opts.cols[i]] 
-                    +'</li>';
-          col_drag +='</ul>'; 
-
-        //row dragables
-        var row_drag = '<ul id="pv_row_keys_list">';
-        for (i=0;i< pv.row_keys_length ;i++) 
-              row_drag +='<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
-                        +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
-                        +opts.data_headers[opts.rows[i]]
-                        +'</li>';
-        row_drag +='</ul>';  
-        var agregate_drag = '<ul id="pv_agregate">';
-        for (k=0;k<opts.agregate.length;k++)
-            agregate_drag +='<li  value="'+opts.agregate[k]+'" class="ui-state-default">'+opts.data_headers[opts.agregate[k]]+'</li> ';
-        agregate_drag += '</ul>';
-        var filter_drag = '<ul id="pv_filter">';        
-        for (k=0;k<opts.filter.length;k++)
-            {
-            t=opts.filter[k];
-            filter_drag +='<li value="'+t+'">'
-            filter_drag +=opts.data_headers[t]+'<select>';
-            for (i=0; i < pv.unique_keys[t].length; i++)
-              if (pv.unique_keys[t][i] == pv.head_filter[t])
-                filter_drag += '<option selected value="'+pv.unique_keys[t][i]+'">'+pv.unique_keys[t][i]+'</option>';
-              else
-                filter_drag += '<option value="'+pv.unique_keys[t][i]+'">'+pv.unique_keys[t][i]+'</option>';
-            filter_drag +='</select></li>';
-            }
-            
-        filter_drag += '</ul>';        
-        
-        
-            $('#'+opts.filter_keys_placeholder)
-                .empty()
-                .append(filter_drag)
-                .addClass(opts.styles.FliterPlaceholder);
-            if ($this.opts.immediate_draw)
-                $('#'+opts.filter_keys_placeholder+' select').bind(
-                            "change"
-                            ,function(e) 
-                                {
-                                jpv_preparePv($this);
-                                $this.opts.OnDrawData($this);
-                                }
-                             ); 
-
-            $('#'+opts.agregate_keys_placeholder).empty().append(agregate_drag).addClass(opts.styles.AgregatePlaceholder);
-            $('#'+opts.col_keys_placeholder).empty().append(col_drag).addClass(opts.styles.KeysColsPlaceholder);
-            $('#'+opts.row_keys_placeholder).empty().append(row_drag).addClass(opts.styles.KeysRowsPlaceholder);
-            $('#pv_row_keys_list, #pv_col_keys_list, #pv_agregate, #pv_filter')
-                  .addClass('pv_connectWith')
-                  .sortable(
-                    { 
-                    connectWith: '.pv_connectWith'
-                    ,forcePlaceholderSize: true 
-                    ,forceHelperSize: true
-                    ,helper: 'clone'
-                    ,opacity: '0.6'
-                    ,placeholder: 'ui-state-default'
-                    ,tolerance: 'pointer'
-                    ,cursorAt:  'top,left' 
-                    ,cursor: 'default'
-                    ,snap:true
-                    ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
-                    }).disableSelection();
-        
-        //create popup filters
-        jpv_keys_placeholder_popup($this);  
-              
-          }
-        
 function jpv_keys_placeholder_update($this, event, ui)
         {
         //this func called for each lists (we have 4) so wait until last 
         if (jpv_keys_placeholder_update_list_cnt++ > 2) 
             {
             var rows=[]; var cols=[]; var filter=[]; var agregate=[];
-            $('li','#pv_col_keys_list').each(
+            $('li','#pv_colkeys_placeholder').each(
                     function () 
                         { 
                         cols.push($(this).attr('value')) 
                         }
                     );
-            $('li','#pv_row_keys_list').each(
+            $('li','#pv_rowkeys_placeholder').each(
                     function () 
                         { 
                         rows.push($(this).attr('value')) 
@@ -193,50 +109,90 @@ function jpv_keys_placeholder_update($this, event, ui)
             $this.opts.rows=rows;
             $this.opts.filter=filter;
             $this.opts.agregate=agregate;
-            if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
+            jQuery.fn.jPivot.preparePv($this);
+            //jpv_pivotDrawData($this);
+            jpv_pivotDrawData($this);
             }
         }    
 function jpv_keys_placeholder_popup($this)
         {
-        var opts = $this.opts;
-        var pv = $this.pv;
-        //var keys_index=$this.pv.keys_index;
-        //var keys_index_length=$this.pv.keys_index.length;
-        var keys_index_length = pv.unique_keys.length
-        var data_headers = opts.data_headers;
-        var tstr=''; var t1; var t2;
+        var keys_index=$this.pv.keys_index;
+        var keys_index_length=$this.pv.keys_index.length;
+        var data_headers = $this.opts.data_headers;
+        var tstr='';
+        var use_printKey = $.isFunction($this.opts.printKey),printed_key='';
+        tstr = '';
+        for (k=0;k<$this.opts.agregate.length;k++)
+            {
+            tstr +='<li  value="'+$this.opts.agregate[k]+'" class="ui-state-default">'+data_headers[$this.opts.agregate[k]]+'</li> ';
+            }
+        $('#pv_agregate',$this).append(tstr);
+        tstr = '';
         for (k=0;k<keys_index_length;k++)
             {
-            unique_keys=pv.unique_keys[k];
-            unique_keys_length=pv.unique_keys[k].length;
-            if ( (unique_keys == null) ||  (unique_keys_length == 0) )
+            unique_keys=$this.pv.unique_keys[k];
+             unique_keys_length=$this.pv.unique_keys[k].length;
+            if ( (unique_keys == null) ||  (unique_keys.length == 0) )
                 {
                 $('#pv_dlg_plh'+k).remove(); //remove placeholder
                 continue;    
                 }
-                //is the dialog for col and row headers
-                if (pv.dialog_filter[k].length > 0) //we have filtered keys - show this
-                		$('#pv_key_header'+k).addClass(opts.styles.class_add_KeyHeaderFiltered);
-                if ($('#pv_dlg_plh'+k).length == 0) //if dialog not created
-                    { //we have no dialog,create
+            if (keys_index[k] == 3)
+                {//is a filter
+                tstr ='<li id="pv_dlg_plh'+k+'" value="'+k+'"class="ui-state-highlight">'+data_headers[k]+'<select> ';
+                for (j=0;j < unique_keys_length; j++)
+                        {
+                        printed_key =  (use_printKey) ? $this.opts.printKey(k,unique_keys[j])[0] :  unique_keys[j];
+                        tstr +='<option value="'+unique_keys[j]+'">'+printed_key+'</option>';
+                        }
+                tstr +='</select></li>';
+                $('#pv_filter',$this).append(tstr);
+                //set current
+                $('#pv_dlg_plh'+k+' select',$this).val( ($this.pv.head_filter[k]==null) ? unique_keys[0] : $this.pv.head_filter[k] )
+                //bind click event
+                $('#pv_dlg_plh'+k+' select',$this).bind
+                            (
+                            "change"
+                            ,function(e) 
+                                {
+                                jQuery.fn.jPivot.preparePv($this);
+                                //jpv_pivotDrawData($this);
+                                jpv_pivotDrawData($this);
+                                }
+                             );                                
+        
+                //this is filter, bind new behavior
+                $('#pv_key_header'+k,$this).unbind('click');
+                continue;
+                }
+            else
+                {//is a dialog for col and row headers
+                if ($this.pv.dialog_filter[k].length > 0) $('#pv_key_header'+k,$this).addClass($this.opts.styles.class_add_KeyHeaderFiltered);//we have filtered keys - show this
+                if ($('#pv_dlg_plh'+k).length == 0)
+                    { 
+                    //we have no dialog,create
                     tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
-                    tstr +='<div id="radio_order">asc<input type="radio" checked name="radio_order'+k+'"  value="A"/>'
-                    tstr +='dsc<input type="radio" name="radio_order'+k+'"   value="D"></div>'
-                    tstr +='<div>total<input type="checkbox" name="total"  value="1"></div>';
-                    tstr += '<div id="filter">';
+                    tstr +='<div id="pv_dlg_plh'+k+'_order">asc<input type="radio" name="pv_dlg_plh'+k+'_order_n" checked value="A">dsc<input type="radio" name="pv_dlg_plh'+k+'_order_n" value="D"></div>'
+                    tstr +='<div>total<input type="checkbox" id="pv_dlg_plh'+k+'_total"  value="1"></div>';
+                    tstr += '<div id="pv_dlg_plh'+k+'_filter">';
                     for (i=0; i < unique_keys_length; i++)
-                        tstr +='<input type="checkbox" checked value="'+opts.printKey(k,unique_keys[i])[0]+'">'+opts.printKey(k,unique_keys[i])[0]+'<br>'
+                          {
+                                 printed_key = (use_printKey) ? $this.opts.printKey(k,unique_keys[i])[0] : unique_keys[i];
+                        tstr +=printed_key+'<input type="checkbox" checked value="'+unique_keys[i]+'"><br>'
+                        }
                     tstr +='</div></div>';
                     $($this).append(tstr);
                     $('#pv_dlg_plh'+k).dialog
                             ({
                             autoOpen:false
-                         ,title:opts.data_headers[k]
+                         ,title:false
                          ,dialogClass:'pv_dialog'
                          ,buttons: {
                                     Ok: function() 
                                         {
-                                        if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
+                                        jQuery.fn.jPivot.preparePv($this);
+                                        //jpv_pivotDrawData($this);
+                                        jpv_pivotDrawData($this);
                                         $(this).dialog('close');
                                         }
                                     ,Cancel: function() 
@@ -247,8 +203,8 @@ function jpv_keys_placeholder_popup($this)
                                             
                             });
                     }
-                  //bind click event, we must rebind for each time in case header was restored from agregate or filter state
-                  $('#pv_key_header'+k).bind
+                  //bind click event
+                  $('#pv_key_header'+k,$this).bind
                               (
                               "click"
                               ,{selector:'#pv_dlg_plh'+k}
@@ -259,6 +215,7 @@ function jpv_keys_placeholder_popup($this)
                                           .dialog("open")
                                   }
                                );
+                  }
             }
         }        
                
@@ -284,33 +241,7 @@ function jpv_restoreHeaderData($this)
         pv.data[r][c] = old;
         }
       }      
-    }	
-function jpv_nullifyHeaderData($this)
-    {
-    var pv = $this.pv;
-    var old;
-    for (c=0;c<pv.row_keys_length-1;c++)
-        {
-        old=pv.data[pv.col_keys_length][c]; 
-        for (r=pv.col_keys_length+1; r < pv.data_rows_count; r++)
-            if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
-              old = pv.data[r][c];
-            else
-              pv.data[r][c]=null;                     
-        }  
-
-    for (r=0;r<pv.col_keys_length;r++)
-        {
-        old=pv.data[r][pv.row_keys_length]; 
-        for (c=pv.row_keys_length+1; c < pv.data_row_length; c++)
-            {
-            if ( (old != pv.data[r][c]) || (r>0) && (pv.data[r-1][c]!= null)  )
-              old = pv.data[r][c];
-            else
-              pv.data[r][c]=null;                     
-            }
-        }
-    }	    
+}	
 
 // Public Variables and Methods declare
 
@@ -321,59 +252,18 @@ function jpv_nullifyHeaderData($this)
     var jpivot_opts = options; //pass options to each pivot
     return this.each(function() { 
                 if (this.pv) return; //this is me, next...
-                this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
-                this.drawData = function(){this.opts.OnDrawData(this)}
-                this.preparePv = function(){jpv_preparePv(this)}
+            this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
                 this.pv={}; //context pivot data            
-                jpv_preparePv(this)
-                if (this.opts.immediate_draw) this.opts.OnDrawData(this);
+                jQuery.fn.jPivot.preparePv(this)
+                //jpv_pivotDrawData(this);
+                jpv_pivotDrawData(this);
+                
                 return this;                    
     });        
 
         }
-;jQuery.fn.jPivot_preparePv =        function($this)
-      {
-      return this.each(function() { 
-                  jpv_preparePv(this);
-                  return this;                    
-      });         
-      }
-/*      
-function jpv_get_sort (data_row_length)
-		{
-		var a=[]; 
-		for(i=0;i < data_row_length; i++ )
-    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
-    return a;
-		}
-		
-function jpv_get_totas_mask (data_row_length)
-		{
-		var a=[];
-		for(i=0;i < data_row_length; i++ )
-        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
-    return a;
-		}	
-		
-function jpv_get_head_filter (data_row_length)
-		{
-		var a=[];			
- 		for(i=0;i < data_row_length; i++ ) 
- 				a[i]=null; 
-    $('#pv_filter li').each( function(){
-              a[$(this).attr('value')]=$('select',this).val()
-              });			
-    return a;
-		}		
-function jpv_get_dialog_filter(data_row_length)
-		{
-		var a=jpv_create_2Darray(data_row_length);
-		for(i=0;i < data_row_length; i++ ) 
-       $('#filter :checkbox:not(:checked)','#pv_dlg_plh'+i).each(function(){a[i].push($(this).val())})		
-		return a;	
-		}
-*/				
-function jpv_preparePv($this)
+
+;jQuery.fn.jPivot.preparePv =        function($this)
         {
         // Persistent Context Variables 
         var pv = $this.pv
@@ -388,22 +278,31 @@ function jpv_preparePv($this)
         var filter_length = $this.opts.filter.length;
                 
             //create sort
-        
-        
-        pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
-        pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
-        
-        
-				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
+        pv.dialog_sort=[];
+        pv.totals_mask=[];
+        pv.dialog_filter=jpv_create_2Darray(data_row_length); //hold dialog filter values for each key
+        pv.head_filter=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+
+        for(i=0;i < data_row_length; i++ )
+             pv.dialog_sort[i] = $('#pv_dlg_plh'+i+'_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;
+        //create filters indexes
+        for(i=0;i < data_row_length; i++ ) //dialog filter
+                 $('#pv_dlg_plh'+i+'_filter :checkbox:not(:checked)').each(function(){pv.dialog_filter[i].push($(this).val())})
+        for(i=0;i < data_row_length; i++ ) //head filter
+                 pv.head_filter[i] = $('#pv_dlg_plh'+i+' select').length > 0 ? $('#pv_dlg_plh'+i+' select').val() : null ;
+        for(i=0;i < data_row_length; i++ )
+             pv.totals_mask[i] = $('#pv_dlg_plh'+i+'_total').attr('checked') ?  1 : 0;
+
+        //sort by rows-cols headers
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
             //console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
-        //pv.keys_index=[];//jpv_create_2Darray(data_row_length);
-        //for (i=0;i<row_keys_length;i++) pv.keys_index[rows_ptr[i]]=1; 
-        //for (i=0;i<col_keys_length;i++) pv.keys_index[cols_ptr[i]]=2; 
-        //for (i=0;i<filter_length;i++) pv.keys_index[filter_ptr[i]]=3;
+        pv.keys_index=[];//jpv_create_2Darray(data_row_length);
+        for (i=0;i<row_keys_length;i++) pv.keys_index[rows_ptr[i]]=1; 
+        for (i=0;i<col_keys_length;i++) pv.keys_index[cols_ptr[i]]=2; 
+        for (i=0;i<filter_length;i++) pv.keys_index[filter_ptr[i]]=3;
                 
         var rows_composite_index=[]; //row key value unique composite indexes
         var cols_composite_index=[]; //col kye value unique composite indexes            
@@ -458,30 +357,30 @@ function jpv_preparePv($this)
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if (pv.head_filter[dc]!= key) {is_filtered=true;}  //key not allowed (filtered) by head filter , continue to add all possible values to filter                  
-                  }  
-            if (is_filtered)  continue; //do not  continue to add all possible values to dialog_filter 
-                          
+                           if ( (pv.head_filter[dc]!=null) &&  (pv.head_filter[dc]!= key) ) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
+                  }                
             composite_row_key=[]; idx=0;
             for (i=0;i<row_keys_length;i++)
                   {
                   dc=rows_ptr[i];
                   key=data_ptr[dr][dc];
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog, continue to add all possible values to filter 
+                  if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
                   composite_row_key[idx++]=key;
                   }
+                  
             composite_col_key=[];idx=0;
             for (i=0;i<col_keys_length;i++)
                   {
                   dc=cols_ptr[i];
                   key=data_ptr[dr][dc];
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog
+                  if ( in_array(key,pv.dialog_filter[dc],false) !==null ) {is_filtered=true;continue;} //key filtered in dialog
                   composite_col_key[idx++]=key;
                   }
-                  
-                  
+
+              
+
             if (!is_filtered)
                     {   //create mapping data to pvtable
                     data_row2pv_row[dr]=in_array(composite_row_key.join('~~~'),rows_composite_index,true)+col_keys_length; //shift down by cols keys rows
@@ -489,84 +388,92 @@ function jpv_preparePv($this)
                     }
             }
             //sort cols and create remapping 
-            var cols_composite_index_remap=[];cols_composite_sorted=[]; len=cols_composite_index.length;
+            var cols_composite_index_remap=[];cols_composite_sorted=[], len=cols_composite_index.length;
             for (i=0; i < len ; i++) cols_composite_sorted[i] = cols_composite_index[i];
-            cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);}); 
-            //find index of cols_composite_index[i]in cols_composite_sorted and map its index
+            cols_composite_sorted.sort(function(a,b){return jpv_colsSort(a,b,$this);});
             for (i=0; i < len ; i++)
-               cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
+                     {
+                     //find index of cols_composite_index[i]in cols_composite_sorted and map its index
+                     cols_composite_index_remap[i]=in_array(cols_composite_index[i],cols_composite_sorted,false);
+                     }
+         //console.profileEnd('sortCol');    
          
           //sort unique keys for filters
        len = pv.unique_keys.length;
        for (i=0;i<len;i++)pv.unique_keys[i].sort();
                         
        pv.data_rows_count = rows_composite_index.length+col_keys_length; //rows count+col headers rows
+       //pv.data_rows_start = col_keys_length;
        pv.data_row_length = cols_composite_index.length+row_keys_length;
        pv.data=jpv_create_2Darray(pv.data_rows_count);
        //init pv_data
-          var rn; var cn;
+
           //var data_header=jpv_create_2Darray(col_keys_length);
           for (i=0;i<data_length;i++)
               {
-              rn=data_row2pv_row[i]; //data row mapped to rn pv.data row
-              if ( (rn==null) || (data_row2pv_col[i]==null) ) continue; //row filtered, so it not mapped
+              if ( (data_row2pv_row[i]==null) || (data_row2pv_col[i]==null) ) continue; //row filtered
               for (j=0;j<row_keys_length;j++) 
-                      pv.data[rn][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
+                      {
+                      pv.data[data_row2pv_row[i]][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
+                      }
               //store data_ptr index instead of actual value
               //this will be needed on totals and data display functions
-              cn=cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length; //data row mapped to cn pv.data col
-              if (typeof pv.data[rn][cn] == 'undefined') pv.data[rn][cn]=[];
-              pv.data[rn][cn].push(i); //add data row index to value
+              if (pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length]==undefined) pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length]=[];
+              pv.data[data_row2pv_row[i]][cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length].push(i);
               if (data_ptr[i][data_col] != null ) 
                   for (c=0;c<col_keys_length;c++)  
                   {
                     for (var r=0;r < row_keys_length;r++) pv.data[c][r]=null;
-                    pv.data[c][cn] = data_ptr[i][cols_ptr[c]];
+                    pv.data[c][cols_composite_index_remap[data_row2pv_col[i]] + row_keys_length] = data_ptr[i][cols_ptr[c]];
                   }
+              
               }
-         //console.dir(pv.data);
 
       
        //create rows totals and spans
-   				jpv_nullifyHeaderData($this)
+   
          function fill_cnt (rw)
                {
-               for(var i = row_keys_length; i < pv.data_row_length; i++) if (typeof pv.data[rw][i]!== 'undefined') cnt[i]=cnt[i].concat(pv.data[rw][i]);
+               for(var i = row_keys_length; i < pv.data_row_length; i++) if (pv.data[rw][i]!= undefined) cnt[i]=cnt[i].concat(pv.data[rw][i]);
                }
          function init_cnt(rw)
                {
                cnt=[]; for (var i=0; i < pv.data_row_length; i++) cnt[i]=[];
-               //cnt[0] = pv.data[rw][cur_rowkey];
                fill_cnt (rw);
                }
-         pv.rows_totals=jpv_create_2Darray(row_keys_length);
+         pv.rows_totals=[];
          var cur_rowkey;
          var span;
-        if (row_keys_length > 1)
+         if (row_keys_length > 1)
             {
             for (c=0;c<row_keys_length-1;c++)
                 {
-		            cur_rowkey=0
-		            var cnt; init_cnt(col_keys_length);
-		            pv.rows_totals[c][cur_rowkey]=cnt
+                pv.rows_totals[c]=[];cur_rowkey=0
+                old=pv.data[col_keys_length][c]; 
+                var cnt; init_cnt(col_keys_length);
+                pv.rows_totals[c][cur_rowkey] =cnt;    
                 for (r=col_keys_length+1; r < pv.data_rows_count; r++)
-                		{
-                		if ((pv.data[r][c]!= null) || (r == pv.data_rows_count-1))
-                				{
-                				pv.rows_totals[c][cur_rowkey] =cnt;
-                				var cnt; init_cnt(r); 
+                    {
+                    if ( (old != pv.data[r][c]) || (c>0) && (pv.data[r][c-1]!= null)  )
+                        {
+                        //save current
+                        pv.rows_totals[c][cur_rowkey] =cnt;
+                        //prepare new
+                        old = pv.data[r][c];
+                        var cnt; init_cnt(r); 
                         pv.rows_totals[c][++cur_rowkey] =cnt;
-                        continue;
-                				}
-                		fill_cnt(r);
-                		}
+                        continue                     
+                        }
+                    fill_cnt(r);
+                    pv.data[r][c]=null;                     
+                    }
                 }
-            }         
-         
+            }  
+
          function fill_cnt_col (col)
                {
                for(var r=col_keys_length; r < pv.data_rows_count; r++) 
-                   if (typeof pv.data[r][col] != 'undefined') cnt[r]=cnt[r].concat(pv.data[r][col]);
+                   if (pv.data[r][col]!= undefined) cnt[r]=cnt[r].concat(pv.data[r][col]);
                }            
          function init_cnt_col(col)
                {
@@ -581,19 +488,22 @@ function jpv_preparePv($this)
             {
             for (r=0;r<col_keys_length;r++)
                 {
-                cur_colkey=0;
                 var cnt; init_cnt_col(row_keys_length);
                 pv.cols_totals[r][0]=cnt;
+                old=pv.data[r][row_keys_length]; 
+                cur_colkey=0;
                 for (c=row_keys_length+1; c < pv.data_row_length; c++)
                     {
-                    if ((pv.data[r][c]!= null) || (c == pv.data_row_length-1))
+                    if ( (old != pv.data[r][c]) || (r>0) && (pv.data[r-1][c]!= null)  )
                         {
-                        pv.cols_totals[r][cur_colkey]=cnt;
+                        pv.cols_totals[r][cur_colkey++]=cnt;
                         var cnt; init_cnt_col(c);
-                        pv.cols_totals[r][++cur_colkey]=cnt;
+                        pv.cols_totals[r][cur_colkey]=cnt;
+                         old = pv.data[r][c];
                         continue                     
                         }
                     fill_cnt_col(c);
+                    pv.data[r][c]=null;                     
                     }
                 //last
                 }
@@ -603,22 +513,8 @@ function jpv_preparePv($this)
          
         //pv.data_header=data_header;
         }
-;jQuery.fn.jPivot.drawData =        function()
-    {
-    this.opts.OnDrawData(this);
-    }           
-;jQuery.fn.jPivot_drawData =        function()   
-    {
-    return this.each(function() { 
-                this.opts.OnDrawData(this);
-                return this;                    
-    });        
-
-    }       
-
 function jpv_pivotDrawData($this)
         {
-        jpv_nullifyHeaderData($this);
            //return;
       //draw data
       //start header draw
@@ -662,7 +558,7 @@ function jpv_pivotDrawData($this)
            }              
 
         //ADD row totlas  
-          var totals_mask=opts.getTotasMask(opts.data.length);
+           
             function append_total_row(col,key_ind)
                   {
                   table_data[add]=[];
@@ -672,7 +568,7 @@ function jpv_pivotDrawData($this)
                       table_data[add][c+pv2td_data_col_diff]=[pv.rows_totals[col][key_ind][c],'class="pv_table_total"'];
                   }
             var total_index=[];for (c=row_keys_length-1;c >= 0; c--) total_index[c]=0;
-            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=totals_mask[opts.rows[r]];
+            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=pv.totals_mask[opts.rows[r]];
             var td_rows_map=[]; for (r=0;r<td_data_rows_start+1;r++) td_rows_map[r]=[r,null]; //map headers and first data row -they not have totals before
             var r_index=td_data_rows_start+1;
             var add=td_rows_count;
@@ -747,7 +643,7 @@ function jpv_pivotDrawData($this)
             for (c=0;c < td_data_cols_start; c++) td_cols_map[c]=[c,null]; //skip headers and first rows;
             var ind = td_data_cols_start; //hold current map index
             var add = td_cols_count; //number of added rows
-            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=totals_mask[opts.cols[r]];
+            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=pv.totals_mask[opts.cols[r]];
             for (c=0;c < col_keys_length-1;c++) key_i_group[c]=0 //current totals index
             for (c=td_data_cols_start;c<td_cols_count;c++) //loop by columns
                 {
@@ -795,31 +691,33 @@ function jpv_pivotDrawData($this)
                   if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan='+span]; //las col            				
                }
            
-
-
+        var col_drag = col_keys_length ? '' : 'style="padding-bottom:10px;"'; //fix for empty colheader
+        col_drag='<ul '+opts.styles.KeysColsPlaceholder+' '+col_drag+' id="pv_colkeys_placeholder">';
+        for (i=0;i<col_keys_length;i++) 
+            col_drag +='<li id="pv_key_header'+opts.cols[i]+'" value="'+opts.cols[i]+'" class="ui-state-highlight">'
+                  +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.cols[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                  +opts.data_headers[opts.cols[i]] 
+                  +'</li>';
+        col_drag +='</ul>';
+        //row dragables
+        var row_drag = '<ul '+opts.styles.KeysRowsPlaceholder+' id="pv_rowkeys_placeholder">';
+        for (i=0;i< row_keys_length ;i++) 
+              row_drag +='<li id="pv_key_header'+opts.rows[i]+'" value="'+opts.rows[i]+'" class="ui-state-highlight">'
+                        +'<span style="float:right;" class="ui-icon '+(pv.dialog_sort[opts.rows[i]] > 0  ? 'ui-icon-triangle-1-s ' : 'ui-icon-triangle-1-n' )+' "></span>'
+                        +opts.data_headers[opts.rows[i]]
+                        +'</li>';
+        row_drag +='</ul>';
             
             
         //Actual print
            var  ck = col_keys_length ? col_keys_length : 1;
+
            table_data[0][0]=[opts.TableTitle,'colspan="'+row_keys_length+'" rowspan="'+ck+'"'];
-           //Cols headers
-           if (opts.ExternalManage)
-              {
-              if (col_keys_length==0) {table_data[0][2]=['Val',null];table_data[0][1]=['',null];}
-              for(i=0; i < col_keys_length; i++) table_data[i][1] = opts.printKeyHeader(c,opts.data_headers[opts.cols[c]]);
-              for(i=0; i < row_keys_length; i++) table_data[ck][i] = opts.printKeyHeader(c,opts.data_headers[opts.rows[c]])
-              table_data[ck][i++]=['','rowspan="'+(td_rows_count-col_keys_length)+'"'];
-              table_data[ck][i++]=['','colspan="'+(td_cols_count-row_keys_length)+'"'];              
-              }
-           else  
-              {
-              table_data[0][1]=['CKP',' rowspan="'+ck+'" id="'+opts.col_keys_placeholder+'" style="min-width:40px;"'];
-              table_data[ck][0]=['RKP',' id="'+opts.row_keys_placeholder+'" colspan="'+row_keys_length+'"'];
-              table_data[ck][1]=['','rowspan="'+(td_rows_count-col_keys_length)+'"'];
-              table_data[ck][2]=['','colspan="'+(td_cols_count-row_keys_length)+'"'];
-              if (col_keys_length==0) table_data[0][2]=['55',null];
-              }
-           
+           table_data[0][1]=[col_drag,' rowspan="'+ck+'" class="ui-state-default" style="min-width:40px;"'];
+           if (col_keys_length==0) table_data[0][2]=['55',null];
+           table_data[ck][0]=[row_drag,' colspan="'+row_keys_length+'"'];
+           table_data[ck][1]=['','rowspan="'+(td_rows_count-col_keys_length)+'"'];
+           table_data[ck][2]=['','colspan="'+(td_cols_count-row_keys_length)+'"'];
            
            
            var td_print=[]; var val; var param;
@@ -833,7 +731,6 @@ function jpv_pivotDrawData($this)
                      rn=(td_rows_map[r][0]!= null) ? td_rows_map[r][0] : td_rows_map[r][1];
                      cn=(td_cols_map[c][0]!= null) ? td_cols_map[c][0] : td_cols_map[c][1];
                      param='';
-                                                     
                      if ((r >= td_data_rows_start) && (c >= td_data_cols_start))
                           {// data
                           if ( (td_rows_map[r][0]!= null) && (td_cols_map[c][0]!= null) )
@@ -850,25 +747,14 @@ function jpv_pivotDrawData($this)
                      else  
                           {
                           if (table_data[rn][cn][0] == null) continue; //skip  empty cell
-                          if  ( opts.ExternalManage && (rn == td_data_rows_start -1 ) && (cn < td_data_cols_start-1) ) //row headers
-                              {
-                              val= opts.printKeyHeader(c,opts.data_headers[opts.rows[c]]);
-                              }
-                          else if (opts.ExternalManage &&  (rn < td_data_rows_start -1 ) && (cn == 1) ) //col headers
-                              {
-                              val= opts.printKeyHeader(rn,opts.data_headers[opts.cols[rn]]);
-                              }
-                          else
-                            {
-                            if (td_rows_map[r][0]== null) 
-                                val = opts.printTotalRowKey(c,table_data[rn][cn][0]); 
-                            else if (td_cols_map[c][0]== null) 
-                                val = opts.printTotalColKey(c,table_data[rn][cn][0]);
-                            else                       
-                            		val = opts.printKey(c,table_data[rn][cn][0]);
-                          	}
+                          
+ 													if (td_rows_map[r][0]== null) 
+                              val = opts.printTotalRowKey(c,table_data[rn][cn][0]); 
+                          else if (td_cols_map[c][0]== null) 
+                              val = opts.printTotalColKey(c,table_data[rn][cn][0]);
+                          else                         
+                          		val = opts.printKey(c,table_data[rn][cn][0]);
                           }
-                        //}
 										 param = val[1];val = val[0];
                      param += table_data[rn][cn][1] != null ? table_data[rn][cn][1] : ''
                      tr[col_index++] = '<td '+param+'>'+val+'</td>';
@@ -876,22 +762,31 @@ function jpv_pivotDrawData($this)
                  td_print[r]='<tr>'+tr.join(' ')+'</tr>';
                  }
            var str='';
-           if (!opts.ExternalManage)
-              {//create agregate and filter
-               str += '<table><tr><td>Aggregate</td><td>Filter</td></tr>'
-               str += '<tr><td id="'+opts.agregate_keys_placeholder+'"'+opts.styles.FliterPlaceholder+'></td>';
-               str += '<td id="'+opts.filter_keys_placeholder+'" '+opts.styles.FliterPlaceholder+'></td></tr></table></div>';
-              }
+               str += '<table><tr><td '+opts.styles.FliterPlaceholder+'>Argregate<ul id="pv_agregate"></ul></td>';
+               str += '<td '+opts.styles.FliterPlaceholder+'>flt<ul  id="pv_filter"></ul></td></tr></table>';
                str += '<table  class="pv_table">'+td_print.join(' ')+'</table>';
-           if ($("#jpivot_placeholder",$this).length == 0) 
-           		$($this).empty().append('<div id="jpivot_placeholder"></div>');   
-        	 $("#jpivot_placeholder",$this).empty().append(str); 
-
-
-           opts.OnCreateManage($this);
-
-           jpv_restoreHeaderData($this);         
-
+           $($this).empty().append(str);   
+        //create sortable headers
+        
+        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_agregate, #pv_filter',$this).addClass('pv_connectWith');
+        $('#pv_rowkeys_placeholder, #pv_colkeys_placeholder, #pv_agregate, #pv_filter',$this).sortable(
+                { 
+                connectWith: '.pv_connectWith'
+                ,forcePlaceholderSize: true 
+                ,forceHelperSize: true
+                ,helper: 'clone'
+                ,opacity: '0.6'
+                ,placeholder: 'ui-state-default'
+                ,tolerance: 'pointer'
+                ,cursorAt:  'top,left' 
+                ,cursor: 'default'
+                ,snap:true
+                ,deactivate: function(event, ui){jpv_keys_placeholder_update($this,event, ui)}
+                }).disableSelection();
+        //create popup filters
+        jpv_keys_placeholder_popup($this);  
+        jpv_restoreHeaderData($this);         
+    //console.dir (pv.cols_totals)
             
 }
 
@@ -904,13 +799,7 @@ function jpv_pivotDrawData($this)
         ,agregate:[]
         ,data_col:null
         ,data_headers:null
-        ,immediate_draw:true
         ,TableTitle:'Jpivot'
-        ,ExternalManage:false
-        ,row_keys_placeholder:'pv_row_keys_placeholder'
-        ,col_keys_placeholder:'pv_col_keys_placeholder'
-        ,agregate_keys_placeholder:'pv_agregate_placeholder'
-        ,filter_keys_placeholder:'pv_filter_placeholder'
         ,styles:
             {
              Table:'class="pv_Table"' 
@@ -920,12 +809,10 @@ function jpv_pivotDrawData($this)
             ,TotalRowKey:'class="pv_TotalRowKey"'
             ,TotalColKey:'class="pv_TotalColKey"'
             ,Key:'class="pv_Key"'
-            ,KeyHeader:'class="pv_KeyHeader"'
             ,Value:'class="pv_Value"'
-            ,KeysRowsPlaceholder:'pv_KeysRowsPlaceholder'
-            ,KeysColsPlaceholder:'pv_KeysColsPlaceholder'
-            ,AgregatePlaceholder:'pv_AgregatePlaceholder'
-            ,FliterPlaceholder:'pv_FliterPlaceholder'
+            ,KeysRowsPlaceholder:'class="pv_KeysRowsPlaceholder"'
+            ,KeysColsPlaceholder:'class="pv_KeysColsPlaceholder"'
+            ,FliterPlaceholder:'class="pv_FliterPlaceholder"'
             ,class_add_KeyHeaderFiltered:'pv_KeyHeaderFiltered'
             }
 
@@ -942,57 +829,19 @@ function jpv_pivotDrawData($this)
 //			.pv_Table td{border:1px solid green; vertical-align:top;}
 //			.pv_key_header_filtered {color:green;}
 //			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
-//			#pv_filter li, #pv_row_keys_list li {float:left;}	
-//			#pv_row_keys_list{padding-bottom:5px;}
-//			#pv_col_keys_list{padding-bottom:0px;}
-//			#pv_filter {padding-bottom:5px;}	
-			,getSort:function(data_row_length)	
-					{
-					var a=[]; 
-					for(i=0;i < data_row_length; i++ )
-			    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
-			    return a;						
-					}
-			,getTotasMask:function(data_row_length)
-					{
-					var a=[];
-					for(i=0;i < data_row_length; i++ )
-			        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
-			    return a;						
-					}
-			,getHeadFilter:function(data_row_length)//actas INCLUDE filter with 1 value
-					{
-					var a=[];
-			 		for(i=0;i < data_row_length; i++ ) 
-			 				a[i]=null; 
-			    $('#pv_filter li').each( function(){
-			              a[$(this).attr('value')]=$('select',this).val()
-			              });			
-			    return a;					
-					}	
-			,getDialogFilter:function(data_row_length)//actas EXCLUDE filter with multiple values
-					{ 
-					var a=jpv_create_2Darray(data_row_length);
-					for(i=0;i < data_row_length; i++ ) 
-			       $('#filter :checkbox:not(:checked)','#pv_dlg_plh'+i).each(function(){a[i].push($(this).val())})		
-					return a;						
-					}											
-      ,OnDrawData:function($this)
+//			#pv_filter li, #pv_rowkeys_placeholder li {float:left;}	
+//			#pv_rowkeys_placeholder{padding-bottom:5px;}
+//			#pv_colkeys_placeholder{padding-bottom:0px;}
+//			#pv_filter {padding-bottom:5px;}		  
+     
+      ,printTopLeft:function(data_indexes)       
           {
-          jpv_pivotDrawData($this);
-          }  
-      ,OnCreateManage:function($this)
-          {
-          jpv_OnCreateManage($this)
-          }
-      ,printTopLeft:function()       
-          {
-          return this.opts.TableTitle;
+          return 'JPivot';
           }
 			,printTotalColValue:function(data_indexes)
 		      {
 		      var rclass = this.styles.TotalColValue
-    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
 					if (debug==1) ret='tcv'
 					if (debug==2) ret='tcv'+data_indexes.join(' +');
@@ -1004,11 +853,11 @@ function jpv_pivotDrawData($this)
     				  }
     		  return  [ret,rclass];
 		      }
-      
+
 			,printTotalRowValue:function(data_indexes)
 					{
 		      var rclass = this.styles.TotalRowValue
-    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
 					if (debug==1) ret='trv'
 					if (debug==2) ret='trv'+data_indexes.join(' +');
@@ -1027,7 +876,7 @@ function jpv_pivotDrawData($this)
 		,printValue:function(data_indexes)
 					{
 		      var rclass = this.styles.Value
-    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			if (data_indexes==undefined) return  ['',rclass];		;
     			var ret=0;
 					if (debug==1) ret='trv'
 					if (debug==2) ret='trv'+data_indexes.join(' +');
@@ -1042,7 +891,7 @@ function jpv_pivotDrawData($this)
 			,printTotalRowKey:function(data_col,val)
 					{
 					var rclass = this.styles.Value;
-    			if (typeof val == 'undefined') return  ['',rclass];		;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['TRK',rclass ];
 				  if (debug==2) return ['TRK'+data_col+val,rclass ];
 					return [val,rclass ];
@@ -1050,7 +899,7 @@ function jpv_pivotDrawData($this)
 			,printTotalColKey:function(data_col,val)
 					{
 					var rclass = this.styles.TotalColKey;
-    			if (typeof val == 'undefined') return  ['',rclass];		;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['TCK',rclass ];
 				  if (debug==2) return ['TCK'+data_col+val,rclass ];
 					return [val,rclass ];
@@ -1058,20 +907,12 @@ function jpv_pivotDrawData($this)
 			,printKey:function(data_col,val)
 					{
 					var rclass = this.styles.Key;
-    			if (typeof val == 'undefined') return  ['',rclass];		;
+    			if (val==undefined) return  ['',rclass];		;
 				  if (debug==1) return ['K',rclass ];
 				  if (debug==2) return ['K'+data_col+val,rclass ];
 					return [val,rclass ];
 					}	
-        ,printKeyHeader:function(data_col,val)
-					{
-					var rclass = this.styles.KeyHeader;
-    			if (typeof val == 'undefined') return  ['',rclass];		;
-				  if (debug==1) return ['H',rclass ];
-				  if (debug==2) return ['H'+data_col+val,rclass ];
-					return [val,rclass];
-					}	
-
+        
         }    
       
 // Public Variables and Methods

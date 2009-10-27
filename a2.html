@@ -8,12 +8,6 @@
 		<script type="text/javascript" src="./jpivot.js"></script>
 		<script type="text/javascript" src="./FusionCharts/fusioncharts.js"></script>
 		<link type="text/css" href="./css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
-    
-    <script language="javascript" type="text/javascript" src="./js/jquery.colorPicker.js"/></script>		
-		<link rel="stylesheet" href="./css/colorPicker.css" type="text/css" />
-		
-    <script language="javascript" type="text/javascript" src="./js/jquery.tochecklist.js"/></script>		
-		<link rel="stylesheet" href="./css/jquery.toChecklist.min.css" type="text/css" />
 		
 <!--
 //!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -36,103 +30,46 @@ var pv0;
 
 
 $(document).ready(function()
-	{
-	prepare_colors();
+ {
+//////////////////////// ready start 	
 	var pivots=$('#pv').jPivot({
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
 			,filter:filter
 	    ,styles:{Key:'class="ui-state-default"'}
-	    ,ExternalManage:false
-	    ,immediate_draw:false
-	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
-	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
-	    
-		,printValue:function(data_indexes)
-					{
+	    ,printValue:function(data_indexes) {
 		      var rclass = this.styles.Value
-		      if (typeof data_indexes == 'undefined') return  ['',rclass];		;
-    			var ret=0;
-    			var len =data_indexes.length 
-    					for (var i=0;i < len; i++) 
-    							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
-    		  var c;
-    			for (i=0; i < colors.length; i++)
-    			    {
-    			    c=colors[i][1]
-    		      if (ret > colors[i][0])  
-    		          break;
-    		      }
-    		  rclass +=' style="background-color:'+c+'"';
-    		  return  [ret,rclass];	
-					}	    
-			});  
- //redraw_pivot();
+    			if (data_indexes==undefined) return  ['',rclass];		;
+    		  return  [calc_val(data_indexes) ,rclass];	
+	    	
+	    	
+	    	}
+			});  	
 	pv0=pivots[0];
-	pv0.drawData();
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').empty();
-for (var i=0;i < data_headers.length;i++)
-    {
-    $('#sel_col,#sel_row,#sel_flt').append('<option value="'+i+'">'+data_headers[i]+'</option>')
-    $('#sel_agr').append('<option selected value="'+i+'">'+data_headers[i]+'</option>')
-    }
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').toChecklist();
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
-    {
-    var a  = e.target.value;
-    var i=this.id;
-    if (i !='sel_agr') $('input[value='+a+']','#sel_agr').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_row') $('input[value='+a+']','#sel_row').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_col') $('input[value='+a+']','#sel_col').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_flt') $('input[value='+a+']','#sel_flt').attr('checked','').parent().removeClass(this.cssChecked)
-
-    }
-);
-
-    $('#colors input').each(function(i)
-        {
-        colors[i]=$(this).colorPicker();
-        }
-    )
-
- 
-
 
 	$("#resize_chart_1").resizable({
 	 
 	 stop:function(){redraw()}
 	 ,handles: 'all' 
 	});
-	}
-	);
-var colors=[];
-function prepare_colors()
-    {
-    colors=[];
-    $('#colors input').each(function(i)
-        {
-        colors[i]=[parseFloat($(this).attr('level')),$(this).val()]
-        }
-    )
-    }
+	
 
-function redraw_pivot()
-    {
-    prepare_colors();
-    $('#pv').jPivot_drawData()	
-    
-    }
-function prepare_pivot()
-    {
-    pv0.opts.rows=[];
-    $('input:checked','#sel_row').each(function(){pv0.opts.rows.push(this.value)})
-    pv0.opts.cols=[];
-    $('input:checked','#sel_col').each(function(){pv0.opts.cols.push(this.value)})
-    pv0.opts.filter=[];
-    $('input:checked','#sel_flt').each(function(){pv0.opts.filter.push(this.value)})    
-    pv0.opts.agregate=[];
-    $('input:checked','#sel_agr').each(function(){pv0.opts.agregate.push(this.value)})        
-    $('#pv').jPivot_preparePv()	
-    }	
+	
+	
+//////////////////////// ready stop 		
+	}	);
+	
+	
+	
+function calc_val(data_indexes)
+		{
+		var ret=0;
+		var len =data_indexes.length 
+			for (i=0;i < len; i++) 
+    			ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+    return ret;
+		}
+
+
       function FC_Rendered(DOMId){
          //If it's our required chart
          if (DOMId=="chart1div"){
@@ -258,74 +195,22 @@ function redraw()
 		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;;}
 		  .pv_TotalColKey  ,.pv_TotalRowKey  {padding:0; background-color:gold;}
 		  .pv_Key{background-color:#FEF0D8;}
-			.pv_KeyHeader{background-color:#FFFF9B;font-weight:bold}
 		  .pv_Value{padding:3px;}
 			.pv_dialog {font-size:10px;}
 			.pv_KeyHeaderFiltered {color:green; font-weight:bold;}
-			.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul {padding:0px;list-style-type: none; margin:0;}
-			.pv_FliterPlaceholder li, .pv_KeysRowsPlaceholder li {float:left; padding:3px 5px 3px 5px ;}	
-			.pv_KeysRowsPlaceholder ul{padding-bottom:5px;}
-			.pv_KeysColsPlaceholder ul{padding-bottom:0px;}
-			.pv_AgregatePlaceholder{}
+			div.pv_FliterPlaceholder{padding-bottom:2em;}
+			.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder,.pv_KeysColsPlaceholder {padding:0px;list-style-type: none; margin:0;}
+			.pv_FliterPlaceholder {border:1px solid red; height:2em;}
+			.pv_FliterPlaceholder li, #pv_rowkeys_placeholder li {float:left; padding:3px 5px 3px 5px ;}	
+			#pv_rowkeys_placeholder{padding-bottom:5px;}
+			#pv_colkeys_placeholder{padding-bottom:0px;}
 			#pv_filter,#pv_agregate {padding-bottom:5px;}
 			
 			#chart2div, #resize_chart_1 { width: 800px; height: 400px;}
-div#color_custom{display:none;}			
- div.controlset {display: block; float:left; width: 100%; padding: 0.25em 0;}
-div.controlset label, 
- div.controlset input,
-div.controlset div { display: inline; float: left; }
-
-div.form-container div.controlset label { width: 100px;}
 		</style>
 	</head>
 	<body>
-<table border=1>
-    <tr><td>Rows</td><td>Cols</td><td>Aggr</td><td>Filter</td><td>colors</td></tr>
-	  <tr>
-		<td id='qpv_row_keys_placeholder'>herereww</td>
-		<td id='qpv_col_keys_placeholder'>herecol</td>
-		<td id='pv_agregate_placeholder'>ag</td>
-		<td id='pv_filter_placeholder'>f</td>
-		<td id="colors" width="120px">
-			<div class="controlset"><label for="color3">80</label> <input level="80" type="text" name="color3" value="#99cc00" /></div>
-			<div class="controlset"><label for="color3">50</label> <input level="50" type="text" name="color3" value="#99cc00" /></div>
-			<div class="controlset"><label for="color2">30</label> <input level="30" type="text" name="color2" value="#FF0000" /></div>
-			<div class="controlset"><label for="color1">10</label> <input level="10" type="text" name="color1" value="#333399" /></div>
-		</td>
-	  <td width="120px">
-		  <select multiple SIZE=8 id="sel_row" style="width:100%;">
-		    <option value="A">A</option>
-		    <option value="b">v</option>
-		    <option value="c">c</option>
-		  </select>
-	  </td>
-		<td width="120px">
-		  <select multiple SIZE=8 id="sel_col" style="width:100%;">
-		    <option value="A">A</option>
-		    <option value="b">v</option>
-		    <option value="c">c</option>
-		  </select>
-	  </td>
-	  <td width="120px">
-		  <select multiple SIZE=8 id="sel_flt" style="width:100%;">
-		    <option value="A">A</option>
-		    <option value="b">v</option>
-		    <option value="c">c</option>
-		  </select>
-	  </td>	  
-	  <td width="120px">
-		  <select multiple SIZE=8 id="sel_agr" style="width:100%;">
-		    <option value="A">A</option>
-		    <option value="b">v</option>
-		    <option value="c">c</option>
-		  </select>
-	  </td>	  
-	
-	  </tr>
-</table>
-<button name="dr" onclick="redraw_pivot()">Draw</button>
-<button name="dr" onclick="prepare_pivot()">Prepare</button>
+
 		<hr>
 		<div id='pv'></div>
 		<hr>
