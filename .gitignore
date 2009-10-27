@@ -3,3 +3,9 @@ js/*
 development-bundle/*
 src/*
 FusionCharts*
+
+/css/ui.daterangepicker.css
+/css/colorPicker.css
+/css/jquery.toChecklist.min.css
+/css/redmond
+/css/images
