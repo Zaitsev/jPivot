@@ -8,6 +8,7 @@
 		<script type="text/javascript" src="./jpivot.js"></script>
 		<script type="text/javascript" src="./FusionCharts/fusioncharts.js"></script>
 		<link type="text/css" href="./css/redmond/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+		<link type="text/css" href="./css/jpivot-external.css" rel="stylesheet" />	
 		
 <!--
 //!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -35,7 +36,7 @@ $(document).ready(function()
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
 			,filter:filter
 	    ,styles:{Key:'class="ui-state-default"'}
-	    ,ExternalManage:false
+	    ,ExternalManage:true
 	    ,immediate_draw:false
 	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
 	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
@@ -169,32 +170,18 @@ function redraw()
 	chart1.setDataXML(strXML);
 	//chart1.setTransparent (true);
 	chart1.render("chart1div");		
-*/
+
 	var chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0","1");
 	chart2.setDataXML(strXML);
 	chart2.setTransparent (true);
 	chart2.render("chart2div");		     
-    }	
+*/    
+}	
 
 			
 		</script>
 		<style>
-			table.pv_table{border-collapse:collapse;}
-			.pv_table td{border:1px solid green; vertical-align:top;}
-      .pv_TotalIntersect {background-color:#ECECEC;}
-		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;;}
-		  .pv_TotalColKey  ,.pv_TotalRowKey  {padding:0; background-color:gold;}
-		  .pv_Key{background-color:#FEF0D8;}
-			.pv_KeyHeader{background-color:#FFFF9B;font-weight:bold}
-		  .pv_Value{padding:3px;}
-			.pv_dialog {font-size:10px;}
-			.pv_KeyHeaderFiltered {color:green; font-weight:bold;}
-			.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul {padding:0px;list-style-type: none; margin:0;}
-			.pv_FliterPlaceholder li, .pv_KeysRowsPlaceholder li {float:left; padding:3px 5px 3px 5px ;}	
-			.pv_KeysRowsPlaceholder ul{padding-bottom:5px;}
-			.pv_KeysColsPlaceholder ul{padding-bottom:0px;}
-			.pv_AgregatePlaceholder{background-color:red;}
-			#pv_filter,#pv_agregate {padding-bottom:5px;}
+
 			
 			#chart2div, #resize_chart_1 { width: 800px; height: 400px;}
 		</style>
