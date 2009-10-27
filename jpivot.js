@@ -338,41 +338,7 @@ function jpv_nullifyHeaderData($this)
                   return this;                    
       });         
       }
-/*      
-function jpv_get_sort (data_row_length)
-		{
-		var a=[]; 
-		for(i=0;i < data_row_length; i++ )
-    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
-    return a;
-		}
-		
-function jpv_get_totas_mask (data_row_length)
-		{
-		var a=[];
-		for(i=0;i < data_row_length; i++ )
-        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
-    return a;
-		}	
-		
-function jpv_get_head_filter (data_row_length)
-		{
-		var a=[];			
- 		for(i=0;i < data_row_length; i++ ) 
- 				a[i]=null; 
-    $('#pv_filter li').each( function(){
-              a[$(this).attr('value')]=$('select',this).val()
-              });			
-    return a;
-		}		
-function jpv_get_dialog_filter(data_row_length)
-		{
-		var a=jpv_create_2Darray(data_row_length);
-		for(i=0;i < data_row_length; i++ ) 
-       $('#filter :checkbox:not(:checked)','#pv_dlg_plh'+i).each(function(){a[i].push($(this).val())})		
-		return a;	
-		}
-*/				
+				
 function jpv_preparePv($this)
         {
         // Persistent Context Variables 
@@ -458,15 +424,17 @@ function jpv_preparePv($this)
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if (pv.head_filter[dc]!= key) {is_filtered=true;continue;}  //key not allowed (filtered) by head filter                     
-                  }                
+                  if (pv.head_filter[dc]!= key) {is_filtered=true;}  //key not allowed (filtered) by head filter , continue to add all possible values to filter                  
+                  }  
+            if (is_filtered)  continue; //do not  continue to add all possible values to dialog_filter 
+                          
             composite_row_key=[]; idx=0;
             for (i=0;i<row_keys_length;i++)
                   {
                   dc=rows_ptr[i];
                   key=data_ptr[dr][dc];
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog
+                  if ( in_array(key,pv.dialog_filter[dc],false) !=null ) {is_filtered=true;continue;} //key not allowed (filtered)  in dialog, continue to add all possible values to filter 
                   composite_row_key[idx++]=key;
                   }
             composite_col_key=[];idx=0;
@@ -529,7 +497,13 @@ function jpv_preparePv($this)
    				jpv_nullifyHeaderData($this)
          function fill_cnt (rw)
                {
-               for(var i = row_keys_length; i < pv.data_row_length; i++) if (typeof pv.data[rw][i]!== 'undefined') cnt[i]=cnt[i].concat(pv.data[rw][i]);
+               for(var i = row_keys_length; i < pv.data_row_length; i++) 
+               		{
+               		if (typeof(pv.data[rw][i])!== 'undefined') 
+               				{
+               				cnt[i]=cnt[i].concat(pv.data[rw][i]);
+               				}
+               		}
                }
          function init_cnt(rw)
                {
@@ -564,7 +538,7 @@ function jpv_preparePv($this)
          function fill_cnt_col (col)
                {
                for(var r=col_keys_length; r < pv.data_rows_count; r++) 
-                   if (typeof pv.data[r][col] != 'undefined') cnt[r]=cnt[r].concat(pv.data[r][col]);
+                   if (typeof(pv.data[r][col]) != 'undefined') cnt[r]=cnt[r].concat(pv.data[r][col]);
                }            
          function init_cnt_col(col)
                {
