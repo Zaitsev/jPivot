@@ -1,0 +1,16 @@
+			table.pv_table{border-collapse:collapse;}
+			.pv_table td{border:1px solid green; vertical-align:top;}
+      .pv_TotalIntersect {background-color:#ECECEC;}
+		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;;}
+		  .pv_TotalColKey  ,.pv_TotalRowKey  {padding:0; background-color:gold;}
+		  .pv_Key{background-color:#FEF0D8;}
+			.pv_KeyHeader{background-color:#FFFF9B;font-weight:bold}
+		  .pv_Value{padding:3px;}
+			.pv_dialog {font-size:10px;}
+			.pv_KeyHeaderFiltered {color:green; font-weight:bold;}
+			.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul {padding:0px;list-style-type: none; margin:0;}
+			.pv_FliterPlaceholder li, .pv_KeysRowsPlaceholder li {float:left; padding:3px 5px 3px 5px ;}	
+			.pv_KeysRowsPlaceholder ul{padding-bottom:5px;}
+			.pv_KeysColsPlaceholder ul{padding-bottom:0px;}
+			.pv_AgregatePlaceholder{background-color:red;}
+			#pv_filter,#pv_agregate {padding-bottom:5px;}
