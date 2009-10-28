@@ -324,7 +324,8 @@ function jpv_nullifyHeaderData($this)
                 this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
                 this.drawData = function(){this.opts.OnDrawData(this)}
                 this.preparePv = function(){jpv_preparePv(this)}
-                this.pv={}; //context pivot data            
+                this.pv={}; //context pivot data 
+                this.opts.pivot_data = this.pv ;// ptr to context pivot data     
                 jpv_preparePv(this)
                 if (this.opts.immediate_draw) this.opts.OnDrawData(this);
                 return this;                    
@@ -413,6 +414,7 @@ function jpv_preparePv($this)
             {
             is_filtered=false;
                   //head filter unique keys
+            if ($this.opts.getCustomFilter(dr)) continue;
             for (i=0;i<filter_length;i++)
                   {
                   //when we first add key to head_fiter (just drag it into hoder) we dont have values of this filter (they are creting here)
@@ -548,6 +550,10 @@ function jpv_preparePv($this)
         //$this.opts.pivot_data = pv; 
 
         }
+;jQuery.fn.jPivot.getDataForExcel =        function()
+    {
+    this.opts.getDataForExcel();
+    }         
 ;jQuery.fn.jPivot.drawData =        function()
     {
     this.opts.OnDrawData(this);
@@ -795,22 +801,29 @@ function jpv_pivotDrawData($this)
                      else  
                           {
                           if (table_data[rn][cn][0] == null) continue; //skip  empty cell
-                          if  ( opts.ExternalManage && (rn == td_data_rows_start -1 ) && (cn < td_data_cols_start-1) ) //row headers
-                              {
-                              val= opts.printKeyHeader(c,opts.data_headers[opts.rows[c]]);
-                              }
-                          else if (opts.ExternalManage &&  (rn < td_data_rows_start -1 ) && (cn == 1) ) //col headers
-                              {
-                              val= opts.printKeyHeader(rn,opts.data_headers[opts.cols[rn]]);
-                              }
+                          if ((r==0) && (c==0))
+                          	{
+                          	val=opts.printTopLeft();
+                          	}
                           else
-                            {
-                            if (td_rows_map[r][0]== null) 
-                                val = opts.printTotalRowKey(c,table_data[rn][cn][0]); 
-                            else if (td_cols_map[c][0]== null) 
-                                val = opts.printTotalColKey(c,table_data[rn][cn][0]);
-                            else                       
-                            		val = opts.printKey(c,table_data[rn][cn][0]);
+                          	{
+	                          if  ( opts.ExternalManage && (rn == td_data_rows_start -1 ) && (cn < td_data_cols_start-1) ) //row headers
+	                              {
+	                              val= opts.printKeyHeader(c,opts.data_headers[opts.rows[c]]);
+	                              }
+	                          else if (opts.ExternalManage &&  (rn < td_data_rows_start -1 ) && (cn == 1) ) //col headers
+	                              {
+	                              val= opts.printKeyHeader(rn,opts.data_headers[opts.cols[rn]]);
+	                              }
+	                          else
+	                            {
+	                            if (td_rows_map[r][0]== null) 
+	                                val = opts.printTotalRowKey(c,table_data[rn][cn][0]); 
+	                            else if (td_cols_map[c][0]== null) 
+	                                val = opts.printTotalColKey(c,table_data[rn][cn][0]);
+	                            else                       
+	                            		val = opts.printKey(c,table_data[rn][cn][0]);
+	                          	}
                           	}
                           }
                         //}
@@ -850,7 +863,7 @@ function jpv_pivotDrawData($this)
         ,data_col:null
         ,data_headers:null
         ,immediate_draw:true
-        ,TableTitle:'Jpivot'
+        ,TableTitle:'JQuery pivot'
         ,ExternalManage:false
         ,row_keys_placeholder:'pv_row_keys_placeholder'
         ,col_keys_placeholder:'pv_col_keys_placeholder'
@@ -859,6 +872,7 @@ function jpv_pivotDrawData($this)
         ,styles:
             {
              Table:'class="pv_Table"' 
+            ,TopLeft:'class="pv_Key"'
             ,TotalColValue:'class="pv_TotalColValue"'
             ,TotalRowValue: 'class="pv_TotalRowValue"'
             ,TotalIntersect:'class="pv_TotalIntersect"'
@@ -891,7 +905,7 @@ function jpv_pivotDrawData($this)
 //			#pv_row_keys_list{padding-bottom:5px;}
 //			#pv_col_keys_list{padding-bottom:0px;}
 //			#pv_filter {padding-bottom:5px;}	
-      ,pivot_data:[]
+			,pivot_data:[]
 			,getSort:function(data_row_length)	
 					{
 					var a=[]; 
@@ -906,6 +920,11 @@ function jpv_pivotDrawData($this)
 			        a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr('checked') ?  1 : 0;
 			    return a;						
 					}
+			,getCustomFilter:function(pvdata_row)//actas INCLUDE filter with 1 value
+					{
+					//false - pass row, true - do not pass row
+			    return false;					
+					}						
 			,getHeadFilter:function(data_row_length)//actas INCLUDE filter with 1 value
 					{
 					var a=[];
@@ -933,7 +952,7 @@ function jpv_pivotDrawData($this)
           }
       ,printTopLeft:function()       
           {
-          return this.opts.TableTitle;
+          return [this.TableTitle,this.styles.TopLeft];
           }
 			,printTotalColValue:function(data_indexes)
 		      {
@@ -1032,6 +1051,10 @@ function jpv_pivotDrawData($this)
 				  if (debug==2) return ['H'+data_col+val,rclass ];
 					return [val,rclass];
 					}	
+				,getDataForExcel:function()
+						{
+						return '';
+						}
 
         }    
       

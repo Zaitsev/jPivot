@@ -22,7 +22,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!
 -->
 
-<script type="text/javascript" src="./math.js"></script>
+
 		
 		<script type="text/javascript">
 		  
@@ -47,6 +47,20 @@ $(document).ready(function()
 	    ,immediate_draw:false
 	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
 	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
+	    ,getCustomFilter:function(pvdata_row)
+	    		{
+	    		if (!use_custom_filter) return false;// do not filter
+	    		var val=this.data[pvdata_row][data_col];
+	    		if ((custom_filter_cmp==0) && (val >= custom_filter_val)) return false;
+	    		if ((custom_filter_cmp==1) && (val != custom_filter_val)) return false;
+	    		if ((custom_filter_cmp==2) && (val <= custom_filter_val)) return false;
+	    		if ((custom_filter_cmp==3) && (val == custom_filter_val)) return false;
+	    		return true; //do not pass row
+	    		}
+	    ,getDataForExcel:function()
+						{
+						alert ('excel');
+						}
 	    /*
 		,printValue:function(data_indexes)
 					{
@@ -71,12 +85,14 @@ $(document).ready(function()
  //redraw_pivot();
 	pv0=pivots[0];
 	pv0.drawData();
+/* 
 $('#sel_col,#sel_row,#sel_flt,#sel_agr').empty();
 for (var i=0;i < data_headers.length;i++)
     {
     $('#sel_col,#sel_row,#sel_flt').append('<option value="'+i+'">'+data_headers[i]+'</option>')
     $('#sel_agr').append('<option selected value="'+i+'">'+data_headers[i]+'</option>')
     }
+   
 $('#sel_col,#sel_row,#sel_flt,#sel_agr').toChecklist();
 $('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
     {
@@ -89,6 +105,7 @@ $('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
 
     }
 );
+*/
 
     $('#colors input').each(function(i)
         {
@@ -106,6 +123,12 @@ $('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
 	});
 	}
 	);
+	
+	
+function export_pivot()
+		{
+		pv0.getDataForExcel();
+		}
 var colors=[];
 function prepare_colors()
     {
@@ -121,8 +144,14 @@ function redraw_pivot()
     {
     prepare_colors();
     $('#pv').jPivot_drawData()	
-    
     }
+var use_custom_filter=0;custom_filter_cmp=0;custom_filter_val=0;
+function prepare_custom_filter()   
+		{
+		use_custom_filter = $('#use_custom_filter').is(':checked');
+		custom_filter_cmp = parseInt($('#custom_filter_cmp').val());
+		custom_filter_val = parseFloat($('#custom_filter_val').val());
+		}
 function prepare_pivot()
     {
 /*    	
@@ -135,6 +164,7 @@ function prepare_pivot()
     pv0.opts.agregate=[];
     $('input:checked','#sel_agr').each(function(){pv0.opts.agregate.push(this.value)})    
 */       
+    prepare_custom_filter();
     $('#pv').jPivot_preparePv()	
     }	
       function FC_Rendered(DOMId){
@@ -283,6 +313,7 @@ div.form-container div.controlset label { width: 100px;}
 			<div class="controlset"><label for="color2">30</label> <input level="30" type="text" name="color2" value="#FFFF00" /></div>
 			<div class="controlset"><label for="color1">10</label> <input level="10" type="text" name="color1" value="#FF0000" /></div>
 		</td>
+<!--		
 	  <td width="120px">
 		  <select multiple SIZE=8 id="sel_row" style="width:100%;">
 		    <option value="A">A</option>
@@ -310,12 +341,23 @@ div.form-container div.controlset label { width: 100px;}
 		    <option value="b">v</option>
 		    <option value="c">c</option>
 		  </select>
-	  </td>	  
-	
+	  </td>
+-->	  	  
+		<td>
+			<input type="checkbox" id="use_custom_filter" value="1">значенение
+				<select id="custom_filter_cmp">
+				<option value="0">&ge;</option>
+				<option value="1">&ne;</option>
+				<option value="2">&le;</option>
+				<option value="3">=</option>
+			 </select>
+			<input type="text" style="width:20px;" id="custom_filter_val" value="50">
+		</td>
 	  </tr>
 </table>
 <button name="dr" onclick="redraw_pivot()">Draw</button>
 <button name="dr" onclick="prepare_pivot()">Prepare</button>
+<button name="dr" onclick="export_pivot()">Excel</button>
 		<hr>
 		<div id='pv'></div>
 		<hr>
@@ -334,4 +376,8 @@ div.form-container div.controlset label { width: 100px;}
 	  <div><input onclick="redraw()" type="button" name="refresh" value="Refresh"></div>
 		<div style="z-index:500" id="resize_chart_1" class="ui-widget-content"><div id='chart1div'></div></div>
 		<div id='chart2div'></div>
+
+
+<script type="text/javascript" src="./math.js"></script>		
 	</body>
+	
