@@ -323,6 +323,7 @@ function jpv_nullifyHeaderData($this)
                 if (this.pv) return; //this is me, next...
                 this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
                 this.drawData = function(){this.opts.OnDrawData(this)}
+                this.getDataForExcel = function(){this.opts.getDataForExcel(this)}
                 this.preparePv = function(){jpv_preparePv(this)}
                 this.pv={}; //context pivot data 
                 this.opts.pivot_data = this.pv ;// ptr to context pivot data     
@@ -550,6 +551,7 @@ function jpv_preparePv($this)
         //$this.opts.pivot_data = pv; 
 
         }
+/*        
 ;jQuery.fn.jPivot.getDataForExcel =        function()
     {
     this.opts.getDataForExcel();
@@ -557,7 +559,9 @@ function jpv_preparePv($this)
 ;jQuery.fn.jPivot.drawData =        function()
     {
     this.opts.OnDrawData(this);
-    }           
+    }   
+*/      
+          
 ;jQuery.fn.jPivot_drawData =        function()   
     {
     return this.each(function() { 
@@ -656,7 +660,7 @@ function jpv_pivotDrawData($this)
                     for (var j = c; j >=0; j--)
                     	if (table_data[rn][j][0] != null) 
                     		{
-                        if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan='+span];
+                        if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan="'+span+'"'];
                         r_index = rn; 
                         is_tot= td_rows_map[r][0] != null ? 0 : 1; //do not create rowspan for totals
                         span=0;
@@ -664,7 +668,7 @@ function jpv_pivotDrawData($this)
                         }
                         span++
                     }
-                    if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan='+span];
+                    if (!is_tot) table_data[r_index][c]=[table_data[r_index][c][0],'rowspan="'+span+'"'];
                 }
             
            
@@ -735,7 +739,7 @@ function jpv_pivotDrawData($this)
                     for(var j=r; j >=0; j--) //look top if we had header or total
                     	if (table_data[j][cn][0] != null)
                      		{
-                        if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan='+span];
+                        if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan="'+span+'"'];
                         c_index = cn; 
                         is_tot= td_cols_map[c][0] != null ? 0 : 1; //do not create rowspan for totals
                         span=0;
@@ -743,7 +747,7 @@ function jpv_pivotDrawData($this)
                         }                    	
                         span++
                   }
-                  if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan='+span]; //las col            				
+                  if (!is_tot) table_data[r][c_index]=[table_data[r][c_index][0],'colspan="'+span+'"']; //las col            				
                }
            
 
@@ -760,7 +764,7 @@ function jpv_pivotDrawData($this)
               for(i=0; i < col_keys_length; i++) table_data[i][1] = opts.printKeyHeader(c,opts.data_headers[opts.cols[c]]);
               for(i=0; i < row_keys_length; i++) table_data[ck][i] = opts.printKeyHeader(c,opts.data_headers[opts.rows[c]])
               table_data[ck][i++]=['','rowspan="'+(td_rows_count-col_keys_length)+'"'];
-              table_data[ck][i++]=['','colspan="'+(td_cols_count-row_keys_length)+'"'];              
+              table_data[ck][i++]=['','colspan="'+(td_cols_count-row_keys_length-1)+'"'];              
               }
            else  
               {
@@ -1021,7 +1025,7 @@ function jpv_pivotDrawData($this)
 					}
 			,printTotalRowKey:function(data_col,val)
 					{
-					var rclass = this.styles.Value;
+					var rclass = this.styles.TotalRowKey;
     			if (typeof val == 'undefined') return  ['',rclass];		;
 				  if (debug==1) return ['TRK',rclass ];
 				  if (debug==2) return ['TRK'+data_col+val,rclass ];
