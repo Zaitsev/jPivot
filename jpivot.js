@@ -547,21 +547,22 @@ function jpv_preparePv($this)
                     }
                 }
             }  
-
+         //Grand totals
+         pv.grand_totals_row=jpv_create_2Darray(pv.data_rows_count);
+         pv.grand_totals_col=jpv_create_2Darray(pv.data_row_length);
+         for(c=row_keys_length; c < pv.data_row_length; c++  )
+            for (r=col_keys_length; r < pv.data_rows_count; r++)
+               {
+              //if (pv.data[r][c]!= null)  
+              pv.grand_totals_row[r].push(pv.data[r][c]);
+              pv.grand_totals_col[c].push(pv.data[r][c]);
+               }
+         console.dir(pv.grand_totals_rows);
+           console.dir(pv.grand_totals_cols);
         //$this.opts.pivot_data = pv; 
 
         }
-/*        
-;jQuery.fn.jPivot.getDataForExcel =        function()
-    {
-    this.opts.getDataForExcel();
-    }         
-;jQuery.fn.jPivot.drawData =        function()
-    {
-    this.opts.OnDrawData(this);
-    }   
-*/      
-          
+    
 ;jQuery.fn.jPivot_drawData =        function()   
     {
     return this.each(function() { 
@@ -646,8 +647,15 @@ function jpv_pivotDrawData($this)
                   }
             //last row is total; these is quicker then additional checks in mail loop;
             for (c=row_keys_length-1-1;c >= 0; c--) {if (total_mask[c]) {append_total_row(c,total_index[c]++);td_rows_map[r_index++]=[null,add++];}}
-            td_rows_count = add;
-            
+            //td_rows_count = add++;
+            //add grand total row (totals by column)
+                  table_data[add]=[];
+                  for (var c=0; c < td_data_cols_start; c++) table_data[add][c]=[null,null];
+                  table_data[add][0]=['GT','colspan="'+(row_keys_length)+'"']; 
+                  for (var c=row_keys_length; c < pv.data_row_length; c++)     
+                      table_data[add][c+pv2td_data_col_diff]=[pv.grand_totals_col[c],'class="pv_table_total"'];
+                  td_rows_map[r_index++]=[null,add++];
+            td_rows_count = add;   
             //create row spans
              var r_index; var span; var rn; var is_tot;
              for (c=row_keys_length-1-1;c >= 0; c--)
@@ -725,8 +733,30 @@ function jpv_pivotDrawData($this)
                             { 
                             append_total_col(key_i_group[tc]++)
                             td_cols_map[ind++]=[null,add++];
-                            }            
-           td_cols_count = ind;
+                            } 
+            //add grand total col (totals by row)                                       
+                var rn; tc=pv.col_keys_length;
+                for (var r=0;r < td_rows_count; r++)
+                    {
+                    rn=(td_rows_map[r][0]!= null) ? td_rows_map[r][0] : td_rows_map[r][1];
+                    if (r < td_data_rows_start )
+                      {
+                      if (r == 0) 
+                          table_data[rn][add]=['GT','rowspan="'+(col_keys_length)+'"' ];
+                      else
+                          table_data[rn][add]=[null,null]
+                      }
+                    else
+                      {
+                      if(td_rows_map[r][0]==null) //totals intrsect
+                          table_data[rn][add]=[[],null]; // this is  total row - add empty                      
+                      else
+                          table_data[rn][add]=[pv.grand_totals_row[tc++],''];                          
+                      }
+                    }  
+               td_cols_map[ind++]=[null,add++];          
+               //end grand total col 
+               td_cols_count = ind;
             //create col spans
              var c_index; var cn;
              for (r=td_data_rows_start-1-1 ;r >= 0; r--) //skip delimeter, skip last colkeys row
