@@ -264,6 +264,7 @@ function jpv_keys_placeholder_popup($this)
                
 function jpv_restoreHeaderData($this)
     {
+    //restore keys fields in pv.data after jpv_nullifyHeaderData
     var pv = $this.pv;
     var old;
     for (var c=0;c<pv.row_keys_length;c++)
@@ -287,6 +288,7 @@ function jpv_restoreHeaderData($this)
     }	
 function jpv_nullifyHeaderData($this)
     {
+    //nullify repeated keys fields in pv.data for spans an totals
     var pv = $this.pv;
     var old;
     for (c=0;c<pv.row_keys_length-1;c++)
@@ -355,18 +357,18 @@ function jpv_preparePv($this)
         var filter_ptr=$this.opts.filter;
         var filter_length = $this.opts.filter.length;
                 
-            //create sort
-        
-        
         pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
-        
-        
 				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
+				
+				//for resoring state (not data) we need serialize
+				// rows_ptr,cols_ptr,filter_ptr, agregate(not holded in Jpivot)
+				// head_filter,dialog_filter,dialog_sort
+				
+				
+        //////////////// datt processing /////////////////				
+				//sort
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
-            //console.profileEnd('sort');
-                    
-                
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
 
                 

@@ -16,12 +16,14 @@
     <script language="javascript" type="text/javascript" src="./js/jquery.tochecklist.js"/></script>		
 		<link rel="stylesheet" href="./css/jquery.toChecklist.min.css" type="text/css" />
 		
+    <script language="javascript" type="text/javascript" src="./js/jquery.json-2.2.min.js"/></script>		
+		
+		
 <!--
 //!!!!!!!!!!!!!!!!!!!!!!!!!
 ////  http://www.fusioncharts.com/forum/Topic5009-47-1.aspx#bm8077
 //!!!!!!!!!!!!!!!!!!!!!!
 -->
-
 
 		
 		<script type="text/javascript">
@@ -34,6 +36,8 @@ var month_subst = ['янв','фев','мрт','апр','май','июн','июл
 var debug=0;
 
 var pv0;
+
+var serial={};
 
 var pv_json=[];
 $(document).ready(function()
@@ -103,28 +107,15 @@ $(document).ready(function()
  //redraw_pivot();
    pv0=pivots[0];
    pv0.drawData();
-/* 
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').empty();
-for (var i=0;i < data_headers.length;i++)
-    {
-    $('#sel_col,#sel_row,#sel_flt').append('<option value="'+i+'">'+data_headers[i]+'</option>')
-    $('#sel_agr').append('<option selected value="'+i+'">'+data_headers[i]+'</option>')
-    }
+//save state
+				//for resoring state (not data) we need serialize
+				// rows_ptr,cols_ptr,filter_ptr, opts.agregate
+				// head_filter,dialog_filter,dialog_sort
    
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').toChecklist();
-$('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
-    {
-    var a  = e.target.value;
-    var i=this.id;
-    if (i !='sel_agr') $('input[value='+a+']','#sel_agr').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_row') $('input[value='+a+']','#sel_row').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_col') $('input[value='+a+']','#sel_col').attr('checked','').parent().removeClass(this.cssChecked)
-    if (i !='sel_flt') $('input[value='+a+']','#sel_flt').attr('checked','').parent().removeClass(this.cssChecked)
+   serial=save();
 
-    }
-);
-*/
 
+  
     $('#colors input').each(function(i)
         {
         colors[i]=$(this).colorPicker();
@@ -141,12 +132,47 @@ $('#sel_col,#sel_row,#sel_flt,#sel_agr').bind('change', function(e)
    });
    }
    );
-   
-   
+function save_state()
+    {
+    serial=save();
+    }  
+function save()
+    {
+   var t ={};
+   t.data_headers = pv0.opts.data_headers;
+   t.data_col = pv0.opts.data_col;
+   t.cols = pv0.opts.cols;
+   t.rows = pv0.opts.rows;
+   t.agregate = pv0.opts.agregate;
+   t.filter = pv0.opts.filter;
+   t.head_filter = pv0.pv.head_filter;
+   t.dialog_sort = pv0.pv.dialog_sort;
+   console.dir(t);
+   return t;      
+    }
+function restore()
+    {
+   console.dir(serial);
+   pv0.opts.data_headers = serial.data_headers;
+   pv0.opts.data_col = serial.data_col;
+   pv0.opts.cols =serial.cols;
+   pv0.opts.rows = serial.rows;
+   pv0.opts.agregate = serial.agregate;
+   pv0.opts.filter = serial.filter;
+   pv0.pv.head_filter=serial.head_filter;
+   pv0.pv.dialog_sort = serial.dialog_sort;      
+   pv0.preparePv()   
+   pv0.drawData() 
+      
+    }
+
 function export_pivot()
       {
        pv0.getDataForExcel();
       }
+      
+      
+      
 var colors=[];
 function prepare_colors()
     {
@@ -163,6 +189,8 @@ function redraw_pivot()
     prepare_colors();
     $('#pv').jPivot_drawData()   
     }
+    
+    
 var use_custom_filter=0;custom_filter_cmp=0;custom_filter_val=0;
 function prepare_custom_filter()   
       {
@@ -172,16 +200,6 @@ function prepare_custom_filter()
       }
 function prepare_pivot()
     {
-/*       
-    pv0.opts.rows=[];
-    $('input:checked','#sel_row').each(function(){pv0.opts.rows.push(this.value)})
-    pv0.opts.cols=[];
-    $('input:checked','#sel_col').each(function(){pv0.opts.cols.push(this.value)})
-    pv0.opts.filter=[];
-    $('input:checked','#sel_flt').each(function(){pv0.opts.filter.push(this.value)})    
-    pv0.opts.agregate=[];
-    $('input:checked','#sel_agr').each(function(){pv0.opts.agregate.push(this.value)})    
-*/       
     prepare_custom_filter();
     $('#pv').jPivot_preparePv()   
     }   
@@ -271,35 +289,17 @@ function graph()
          //updateChartXML('chart',strXML);
          
       }   
-   
-var pv;
-var chart1;
-var chart2;
-   var colors=new Array("AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46");   
+     var colors=new Array("AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46");   
 function redraw()
     {
                var strXML = graph();
-   
-               //var chartObj = getChartFromId('chart1div');
-       //var chart1 = new FusionCharts("./FusionCharts/MSCombi2D.swf", "chart1div"
-       //var chart1 = new FusionCharts("./FusionCharts/MSCombi3D.swf", "chart1div"
       var chart1 = new FusionCharts("./FusionCharts/MSColumnLine3D.swf", "chart1div"
       , $("#resize_chart_1").width(), $("#resize_chart_1").height()
       , "0", 1); 
       chart1.setDataXML(strXML);
       chart1.setTransparent (true);
       chart1.render("chart1div");   
-   /*
-   var chart1 = new FusionCharts("./FusionCharts/Column3D.swf", "chart1div", "800", "400","0",1);
-   chart1.setDataXML(strXML);
-   //chart1.setTransparent (true);
-   chart1.render("chart1div");      
-
-   var chart2 = new FusionCharts("./FusionCharts/FCF_MSColumn3D.swf", "chart2div", "800", "400","0","1");
-   chart2.setDataXML(strXML);
-   chart2.setTransparent (true);
-   chart2.render("chart2div");           
-*/    
+  
 }   
 
          
@@ -331,36 +331,6 @@ div.form-container div.controlset label { width: 100px;}
          <div class="controlset"><label for="color2">30</label> <input level="30" type="text" name="color2" value="#FFFF00" /></div>
          <div class="controlset"><label for="color1">10</label> <input level="10" type="text" name="color1" value="#FF0000" /></div>
       </td>
-<!--      
-     <td width="120px">
-        <select multiple SIZE=8 id="sel_row" style="width:100%;">
-          <option value="A">A</option>
-          <option value="b">v</option>
-          <option value="c">c</option>
-        </select>
-     </td>
-      <td width="120px">
-        <select multiple SIZE=8 id="sel_col" style="width:100%;">
-          <option value="A">A</option>
-          <option value="b">v</option>
-          <option value="c">c</option>
-        </select>
-     </td>
-     <td width="120px">
-        <select multiple SIZE=8 id="sel_flt" style="width:100%;">
-          <option value="A">A</option>
-          <option value="b">v</option>
-          <option value="c">c</option>
-        </select>
-     </td>     
-     <td width="120px">
-        <select multiple SIZE=8 id="sel_agr" style="width:100%;">
-          <option value="A">A</option>
-          <option value="b">v</option>
-          <option value="c">c</option>
-        </select>
-     </td>
--->          
       <td>
          <input type="checkbox" id="use_custom_filter" value="1">значенение
             <select id="custom_filter_cmp">
@@ -376,6 +346,8 @@ div.form-container div.controlset label { width: 100px;}
 <button name="dr" onclick="redraw_pivot()">Draw</button>
 <button name="dr" onclick="prepare_pivot()">Prepare</button>
 <button name="dr" onclick="export_pivot()">Excel</button>
+<button name="dr" onclick="save_state()">Save</button>
+<button name="dr" onclick="restore()">Restore</button>
       <hr>
       <div id='pv'></div>
       <hr>
