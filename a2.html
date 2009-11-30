@@ -107,14 +107,6 @@ $(document).ready(function()
  //redraw_pivot();
    pv0=pivots[0];
    pv0.drawData();
-//save state
-				//for resoring state (not data) we need serialize
-				// rows_ptr,cols_ptr,filter_ptr, opts.agregate
-				// head_filter,dialog_filter,dialog_sort
-   
-   serial=save();
-
-
   
     $('#colors input').each(function(i)
         {
@@ -134,36 +126,14 @@ $(document).ready(function()
    );
 function save_state()
     {
-    serial=save();
+    serial=pv0.save();
+    console.dir(serial);
     }  
-function save()
-    {
-   var t ={};
-   t.data_headers = pv0.opts.data_headers;
-   t.data_col = pv0.opts.data_col;
-   t.cols = pv0.opts.cols;
-   t.rows = pv0.opts.rows;
-   t.agregate = pv0.opts.agregate;
-   t.filter = pv0.opts.filter;
-   t.head_filter = pv0.pv.head_filter;
-   t.dialog_sort = pv0.pv.dialog_sort;
-   console.dir(t);
-   return t;      
-    }
 function restore()
     {
-   console.dir(serial);
-   pv0.opts.data_headers = serial.data_headers;
-   pv0.opts.data_col = serial.data_col;
-   pv0.opts.cols =serial.cols;
-   pv0.opts.rows = serial.rows;
-   pv0.opts.agregate = serial.agregate;
-   pv0.opts.filter = serial.filter;
-   pv0.pv.head_filter=serial.head_filter;
-   pv0.pv.dialog_sort = serial.dialog_sort;      
-   pv0.preparePv()   
-   pv0.drawData() 
-      
+    pv0.restore(serial);
+    pv0.preparePv();   
+    pv0.drawData(); 
     }
 
 function export_pivot()

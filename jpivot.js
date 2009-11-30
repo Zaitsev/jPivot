@@ -323,12 +323,16 @@ function jpv_nullifyHeaderData($this)
     var jpivot_opts = options; //pass options to each pivot
     return this.each(function() { 
                 if (this.pv) return; //this is me, next...
+                //vars
                 this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
+                this.pv={}; //context pivot data 
+                this.opts.pivot_data = this.pv ;// ptr to context pivot data     
+                //Methods
                 this.drawData = function(){this.opts.OnDrawData(this)}
                 this.getDataForExcel = function(){this.opts.getDataForExcel(this)}
                 this.preparePv = function(){jpv_preparePv(this)}
-                this.pv={}; //context pivot data 
-                this.opts.pivot_data = this.pv ;// ptr to context pivot data     
+                this.save = function(){return jPivot_save(this);}
+                this.restore = function(obj) {jPivot_restore(obj,this);}
                 jpv_preparePv(this)
                 if (this.opts.immediate_draw) this.opts.OnDrawData(this);
                 return this;                    
@@ -342,7 +346,30 @@ function jpv_nullifyHeaderData($this)
                   return this;                    
       });         
       }
-				
+function jPivot_save($this)
+     {
+     var t ={};
+     t.data_headers = $this.opts.data_headers;
+     t.data_col = $this.opts.data_col;
+     t.cols = $this.opts.cols;
+     t.rows = $this.opts.rows;
+     t.agregate = $this.opts.agregate;
+     t.filter = $this.opts.filter;
+     //dialog filters not saving - on restore they not defined or we can't know they ids
+     //t.head_filter = pv0.pv.head_filter;
+     //t.dialog_sort = pv0.pv.dialog_sort;
+     //t.dialog_filter =  pv0.pv.dialog_filter;
+     return t;      
+     }
+function jPivot_restore(obj,$this)
+   {
+   $this.opts.data_headers = obj.data_headers;
+   $this.opts.data_col = obj.data_col;
+   $this.opts.cols =obj.cols;
+   $this.opts.rows = obj.rows;
+   $this.opts.agregate = obj.agregate;
+   $this.opts.filter = obj.filter;
+   }     				
 function jpv_preparePv($this)
         {
         // Persistent Context Variables 
