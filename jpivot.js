@@ -364,7 +364,6 @@ function jpv_preparePv($this)
         
 				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
-            //console.profileEnd('sort');
                     
                 
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
@@ -409,7 +408,6 @@ function jpv_preparePv($this)
           For those gaps we can't sort data_rows "at once" and must separate sort col_composite_index and create remapping of data_row2pv_col
           
         */
-        //console.profile('mainLoop');   
         var composite_row_key,composite_col_key, dc,dr;
         for (dr=0; dr < data_length ; dr++)
             {
@@ -493,7 +491,6 @@ function jpv_preparePv($this)
               
         pv.col_keys_length = col_keys_length;
         pv.row_keys_length = row_keys_length;              
-         //console.dir(pv.data);
 
       
         //create rows totals and spans
@@ -557,8 +554,6 @@ function jpv_preparePv($this)
               pv.grand_totals_row[r].push(pv.data[r][c]);
               pv.grand_totals_col[c].push(pv.data[r][c]);
                }
-         console.dir(pv.grand_totals_rows);
-           console.dir(pv.grand_totals_cols);
         //$this.opts.pivot_data = pv; 
 
         }
