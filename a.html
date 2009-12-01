@@ -1,33 +1,194 @@
-<HTML>
-<HEAD>
-   <TITLE>FusionCharts & JavaScript - Basic Example</TITLE> 
-   
-   <script type="text/javascript" src="./js/jquery-1.3.2.min.js"></script>
-   <script type="text/javascript" src="./js/jquery.tochecklist.js"></script>
-
-  
-   <link type="text/css" rel="stylesheet" media="screen" href="./css/jquery.tochecklist.min.css" />
-
-
-<script type="text/javascript">
-$(document).ready(function()  
-	{
-		var a='<select><option>Deodorant</option><option selected >Soap</option><option>Lotion</option></select>';
-		$('#a').empty().append(a);	  
-		$('#products').toChecklist();
-	});
-</script>
-
-</HEAD>
-<BODY>
-Cтрана: <br /><input type="radio" name="country" value="Russia" checked="checked">Россия <br /><input type="radio" name="country" value="Other">Другая	
-  <div id="a"><select><option>Deodorant</option><option>Soap</option><option>Lotion</option></select></div>
-<select  multiple="multiple" name="products" id="products">
-	<option>Deodorant</option>
-	<option>Soap</option>
-	<option>Lotion</option>
-	<!-- etc. -->
-</select>
-
-</BODY>
-</HTML>
+<html>
+<head>
+  <title>Date Selector Sample</title>
+  <script type="text/javascript" language="javascript">
+<!--
+    var date_selector =
+    {
+      frm:null,
+      init:function(frm1)
+      {
+        this.frm=frm1;
+      },
+      getMonthTable:function(year, month, date)
+      {
+        var tableText = "";
+        var months =
+        [
+          "January", "February", "March", "April", "May", "June", "July",
+          "August", "September", "October", "November", "December"
+        ];
+        var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        month = (month == null || isNaN(month) ? null : month);
+        if(year == null || isNaN(year) || month == null || isNaN(month))
+        {
+          var dt = new Date();
+          year = dt.getFullYear();
+          month = dt.getMonth();
+          date = dt.getDate();
+        }
+        date = (date == null || isNaN(date) ? null : date);
+        var previousMonth = new Date(year, month-1, 1);
+        var nextMonth = new Date(year, month+1, 1);
+        tableText =
+        (
+          "<table align=\"center\" id=\"dateSelector_sample\" \
+          style=\"border-collapse:collapse;\" \
+          cellpadding=\"1\" cellspacing=\"0\">\
+          <tr>\
+          <th style=\"cursor:pointer;text-align:left;\" \
+         onclick=\"date_selector.updateDateSelectorPane("
+          +previousMonth.getFullYear()+", "+previousMonth.getMonth()
+          +");\">&#8592;</th>\
+          <th style=\"text-align:center;\" colspan=\"4\">"+months[month]
+          +", "+year+"</th>\
+          <th style=\"cursor:pointer;text-align:right;\" \
+         onclick=\"date_selector.updateDateSelectorPane("
+          +nextMonth.getFullYear()+", "+nextMonth.getMonth()+");\">&#8594;</th>\
+          <th style=\"text-align:right;cursor:pointer;\" \
+         onclick=\"date_selector.updateDateElement();\">X</th>\
+          </tr>"
+        );
+        for(var i=0; i<days.length; i++)
+        {
+          tableText += "<th>"+days[i]+"</th>";
+        }
+        tableText += "</tr>";
+        var tempDate;
+        for(var i=1-(new Date(year, month, 1)).getDay();; i++)
+        {
+          tempDate = new Date(year, month, i);
+          if(tempDate.getDay() == 0)
+          {
+            tableText += "<tr>";
+          }
+          tableText +=
+          (
+            "<td"+(tempDate.getMonth() == month ? " \
+            onclick=\"date_selector.updateDateElement("
+            +tempDate.getFullYear()+", "+
+            tempDate.getMonth()+", "+tempDate.getDate()+");\""+
+            (tempDate.getDate() == date
+            ? " style=\"border:solid 2px black;font-weight:bold;\"" : "")
+            : " \
+           style=\"color:silver;cursor:default;\"")+">"+
+            tempDate.getDate()+
+            "</td>"
+          );
+          if(tempDate.getDay() == 6)
+          {
+            tableText += "</tr>";
+          }
+          tempDate = new Date(year, month, i+1);
+          if(tempDate.getMonth() != month && tempDate.getDay() == 0)
+          {
+            break;
+          }
+        }
+        tableText += "</table>";
+        return tableText;
+      },
+      updateDateSelectorPane:function(year, month, day)
+      {
+        var d = document.getElementById("dateSelectorPane");
+        d.innerHTML = this.getMonthTable(year, month, day);
+        d.style.display = "block";
+      },
+      showDateSelector:function(elementName)
+      {
+        if(elementName == null)
+        {
+          this.updateDateSelectorPane();
+        }
+        else
+        {
+          this.dateElementToUpdate = elementName;
+          var e = this.frm.elements[elementName];
+          e = e.value.split("/");
+          try
+          {
+            e[0] = parseInt(e[0], 10);
+            e[1] = parseInt(e[1], 10);
+            e[2] = parseInt(e[2], 10);
+            this.updateDateSelectorPane(e[2], e[0]-1, e[1]);
+          }
+          catch(e)
+          {
+            this.updateDateSelectorPane();
+          }
+        }
+      },
+      updateDateElement:function(year, month, day)
+      {
+        document.getElementById("dateSelectorPane").style.display="none";
+        if(year != null && month != null && day != null)
+        {
+          month = (month+1)+"";
+          day += "";
+          month = (month.length == 1 ? "0"+month : month);
+          day = (day.length == 1 ? "0"+day : day);
+          this.frm.elements[this.dateElementToUpdate].value
+          = (month+"/"+day+"/"+year);
+        }
+        this.dateElementToUpdate = null;
+      },
+      dateElementToUpdate:null
+    };
+    function printDateRange()
+    {
+      var frm = date_selector.frm;
+      window.alert
+      (
+        'This Popup summarizes the date range you entered.\n\n'
+        +'Minimum Date:  '+frm.minimumDate.value
+        +'\n\nMaximum Date:  '+frm.maximumDate.value
+      );
+    }
+-->
+  </script>
+    <style type="text/css">
+      div#dateSelectorPane th,div#dateSelectorPane td
+      {
+        font-size:10pt;
+        text-align:right;
+      }
+      div#dateSelectorPane td
+      {
+        cursor:pointer;
+      }
+      div#dateSelectorPane
+      {
+        display:none;
+      }
+      div#dateSelectorPane table
+      {
+        border:solid 2px black;
+      }
+    </style>
+  </head>
+  <body onload="date_selector.init(window.document.forms['form1']);">
+    <form style="display:inline;" method="post" id="form1" name="form1">
+      <table style="border-collapse:collapse;vertical-align:top;"
+      cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            Select a <a href="javascript:;" onclick="printDateRange();">date range</a><br>
+            Between
+            <div style="text-align:center;">
+              <input type="text" name="minimumDate" style="width:75px;font-size:8pt;"
+              value="MM/DD/YYYY">
+              <input type="button" style="height:20px;width:20px;" value="..."
+              onclick="date_selector.showDateSelector('minimumDate');">
+              and
+              <input type="text" name="maximumDate" style="width:75px;font-size:8pt;"
+              value="MM/DD/YYYY">
+              <input type="button" style="height:20px;width:20px;" value="..."
+              onclick="date_selector.showDateSelector('maximumDate' );">
+            </div>
+            <div id="dateSelectorPane"></div>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>
+</html>

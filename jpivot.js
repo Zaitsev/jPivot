@@ -586,8 +586,6 @@ function jpv_preparePv($this)
               pv.grand_totals_row[r].push(pv.data[r][c]);
               pv.grand_totals_col[c].push(pv.data[r][c]);
                }
-         console.dir(pv.grand_totals_rows);
-           console.dir(pv.grand_totals_cols);
         //$this.opts.pivot_data = pv; 
 
         }
