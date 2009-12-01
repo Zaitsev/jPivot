@@ -264,6 +264,7 @@ function jpv_keys_placeholder_popup($this)
                
 function jpv_restoreHeaderData($this)
     {
+    //restore keys fields in pv.data after jpv_nullifyHeaderData
     var pv = $this.pv;
     var old;
     for (var c=0;c<pv.row_keys_length;c++)
@@ -287,6 +288,7 @@ function jpv_restoreHeaderData($this)
     }	
 function jpv_nullifyHeaderData($this)
     {
+    //nullify repeated keys fields in pv.data for spans an totals
     var pv = $this.pv;
     var old;
     for (c=0;c<pv.row_keys_length-1;c++)
@@ -321,12 +323,16 @@ function jpv_nullifyHeaderData($this)
     var jpivot_opts = options; //pass options to each pivot
     return this.each(function() { 
                 if (this.pv) return; //this is me, next...
+                //vars
                 this.opts = $.extend(true, {}, $.fn.jPivot.defaults, jpivot_opts);
+                this.pv={}; //context pivot data 
+                this.opts.pivot_data = this.pv ;// ptr to context pivot data     
+                //Methods
                 this.drawData = function(){this.opts.OnDrawData(this)}
                 this.getDataForExcel = function(){this.opts.getDataForExcel(this)}
                 this.preparePv = function(){jpv_preparePv(this)}
-                this.pv={}; //context pivot data 
-                this.opts.pivot_data = this.pv ;// ptr to context pivot data     
+                this.save = function(){return jPivot_save(this);}
+                this.restore = function(obj) {jPivot_restore(obj,this);}
                 jpv_preparePv(this)
                 if (this.opts.immediate_draw) this.opts.OnDrawData(this);
                 return this;                    
@@ -340,7 +346,30 @@ function jpv_nullifyHeaderData($this)
                   return this;                    
       });         
       }
-				
+function jPivot_save($this)
+     {
+     var t ={};
+     t.data_headers = $this.opts.data_headers;
+     t.data_col = $this.opts.data_col;
+     t.cols = $this.opts.cols;
+     t.rows = $this.opts.rows;
+     t.agregate = $this.opts.agregate;
+     t.filter = $this.opts.filter;
+     //dialog filters not saving - on restore they not defined or we can't know they ids
+     //t.head_filter = pv0.pv.head_filter;
+     //t.dialog_sort = pv0.pv.dialog_sort;
+     //t.dialog_filter =  pv0.pv.dialog_filter;
+     return t;      
+     }
+function jPivot_restore(obj,$this)
+   {
+   $this.opts.data_headers = obj.data_headers;
+   $this.opts.data_col = obj.data_col;
+   $this.opts.cols =obj.cols;
+   $this.opts.rows = obj.rows;
+   $this.opts.agregate = obj.agregate;
+   $this.opts.filter = obj.filter;
+   }     				
 function jpv_preparePv($this)
         {
         // Persistent Context Variables 
@@ -355,17 +384,18 @@ function jpv_preparePv($this)
         var filter_ptr=$this.opts.filter;
         var filter_length = $this.opts.filter.length;
                 
-            //create sort
-        
-        
         pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
-        
-        
 				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
+				
+				//for resoring state (not data) we need serialize
+				// rows_ptr,cols_ptr,filter_ptr, agregate(not holded in Jpivot)
+				// head_filter,dialog_filter,dialog_sort
+				
+				
+        //////////////// datt processing /////////////////				
+				//sort
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
-                    
-                
         pv.unique_keys=jpv_create_2Darray(data_row_length); //hold unique key values for each key for dialog filter
 
                 
@@ -408,6 +438,7 @@ function jpv_preparePv($this)
           For those gaps we can't sort data_rows "at once" and must separate sort col_composite_index and create remapping of data_row2pv_col
           
         */
+        //console.profile('mainLoop');   
         var composite_row_key,composite_col_key, dc,dr;
         for (dr=0; dr < data_length ; dr++)
             {
@@ -491,6 +522,7 @@ function jpv_preparePv($this)
               
         pv.col_keys_length = col_keys_length;
         pv.row_keys_length = row_keys_length;              
+         //console.dir(pv.data);
 
       
         //create rows totals and spans
@@ -554,6 +586,8 @@ function jpv_preparePv($this)
               pv.grand_totals_row[r].push(pv.data[r][c]);
               pv.grand_totals_col[c].push(pv.data[r][c]);
                }
+         console.dir(pv.grand_totals_rows);
+           console.dir(pv.grand_totals_cols);
         //$this.opts.pivot_data = pv; 
 
         }
