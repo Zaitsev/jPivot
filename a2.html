@@ -83,7 +83,27 @@ $(document).ready(function()
                    ,{pv_table:JSON.stringify(pv_json)}
                    )
                    }
-      /* 
+		,printValue:function(data_indexes)
+					{
+					  var rclass = this.styles.Value;
+					  if ($('#use_percent_totals').is(':checked'))
+					   {
+					   return print_value_by_total(this,data_indexes);
+					   }
+		      
+    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			var ret=0;
+					if (debug==1) ret='trv'
+					if (debug==2) ret='trv'+data_indexes.join(' +');
+					if (!debug)
+    					{
+    					var len =data_indexes.length 
+    					for (i=0;i < len; i++) 
+    							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+    				  }
+    		  return  [ret,rclass];	
+					}
+					/*                   
       ,printValue:function(data_indexes)
                {
             var rclass = this.styles.Value
@@ -101,12 +121,13 @@ $(document).ready(function()
                 }
             rclass +=' style="background-color:'+c+'"';
             return  [ret,rclass];   
-               }   
-*/                
+               } 
+      */                 
          });  
  //redraw_pivot();
    pv0=pivots[0];
    pv0.drawData();
+   create_totals_dropdown(); 
   
     $('#colors input').each(function(i)
         {
@@ -157,7 +178,10 @@ function prepare_colors()
 function redraw_pivot()
     {
     prepare_colors();
-    $('#pv').jPivot_drawData()   
+    var tot_perc =  $('#totals_dropdown').val();
+    $('#pv').jPivot_drawData();
+    create_totals_dropdown(); 
+    $('#totals_dropdown').val(tot_perc);
     }
     
     
@@ -171,7 +195,7 @@ function prepare_custom_filter()
 function prepare_pivot()
     {
     prepare_custom_filter();
-    $('#pv').jPivot_preparePv()   
+    $('#pv').jPivot_preparePv(); 
     }   
       function FC_Rendered(DOMId){
          //If it's our required chart
@@ -262,7 +286,7 @@ function graph()
      var colors=new Array("AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46");   
 function redraw()
     {
-               var strXML = graph();
+       var strXML = graph();
       var chart1 = new FusionCharts("./FusionCharts/MSColumnLine3D.swf", "chart1div"
       , $("#resize_chart_1").width(), $("#resize_chart_1").height()
       , "0", 1); 
@@ -271,8 +295,32 @@ function redraw()
       chart1.render("chart1div");   
   
 }   
-
-         
+function create_totals_dropdown()
+      {
+      $('#totals_dropdown').empty();
+      //get cols and rows keys captions 
+      var headers=pv0.opts.data_headers;
+      var l = pv0.opts.rows.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.rows[i]+'">'+headers[pv0.opts.rows[i]]+'</option>');
+      var l = pv0.opts.cols.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.cols[i]+'">'+headers[pv0.opts.cols[i]]+'</option>');
+      }
+function print_value_by_total($this,data_indexes) 
+      {
+    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			var ret=0;
+					if (debug==1) ret='trv'
+					if (debug==2) ret='trv'+data_indexes.join(' +');
+					if (!debug)
+    					{
+    					var len =data_indexes.length 
+    					for (i=0;i < len; i++) 
+    							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
+    				  }
+    		  return  ['tt'+ret,rclass];	         
+      }        
       </script>
       <style>
 
@@ -310,6 +358,10 @@ div.form-container div.controlset label { width: 100px;}
             <option value="3">=</option>
           </select>
          <input type="text" style="width:20px;" id="custom_filter_val" value="50">
+      </td>
+      <td>
+         <input type="checkbox" checked id="use_percent_by_totals" value="1">
+         %from totals by <select id="totals_dropdown"></select>
       </td>
      </tr>
 </table>

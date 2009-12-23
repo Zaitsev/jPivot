@@ -193,6 +193,7 @@ function jpv_keys_placeholder_update($this, event, ui)
             $this.opts.rows=rows;
             $this.opts.filter=filter;
             $this.opts.agregate=agregate;
+            $this.opts.totals_mask=$this.opts.GetTotalsMask($this.opts.data[0].length);
             if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
             }
         }    
@@ -236,6 +237,7 @@ function jpv_keys_placeholder_popup($this)
                          ,buttons: {
                                     Ok: function() 
                                         {
+                                        jpv_build_filters($this);
                                         if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
                                         $(this).dialog('close');
                                         }
@@ -355,6 +357,7 @@ function jPivot_save($this)
      t.rows = $this.opts.rows;
      t.agregate = $this.opts.agregate;
      t.filter = $this.opts.filter;
+     t.totals_mask = $this.opts.totals_mask;
      //dialog filters not saving - on restore they not defined or we can't know they ids
      //t.head_filter = pv0.pv.head_filter;
      //t.dialog_sort = pv0.pv.dialog_sort;
@@ -369,7 +372,16 @@ function jPivot_restore(obj,$this)
    $this.opts.rows = obj.rows;
    $this.opts.agregate = obj.agregate;
    $this.opts.filter = obj.filter;
-   }     				
+   $this.opts.totals_mask = obj.totals_mask;
+   }   
+function jpv_build_filters($this)
+      {
+        $this.opts.totals_mask = $this.opts.getTotasMask($this.pv.data_row_length);        
+        $this.pv.head_filter=$this.opts.getHeadFilter($this.pv.data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        $this.pv.dialog_filter=$this.opts.getDialogFilter($this.pv.data_row_length); //hold dialog filter values for each key
+			    	$this.pv.dialog_sort=$this.opts.getSort($this.pv.data_row_length); //sort direction for each data index
+         
+      }  				
 function jpv_preparePv($this)
         {
         // Persistent Context Variables 
@@ -383,16 +395,18 @@ function jpv_preparePv($this)
         var col_keys_length = $this.opts.cols.length;
         var filter_ptr=$this.opts.filter;
         var filter_length = $this.opts.filter.length;
-                
-        pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
-        pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
-				pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
 				
 				//for resoring state (not data) we need serialize
 				// rows_ptr,cols_ptr,filter_ptr, agregate(not holded in Jpivot)
 				// head_filter,dialog_filter,dialog_sort
-				
-				
+				//jpv_build_filters($this) - buildin ol filters by dialok @OK@ button click;
+   if ($this.pv.head_filter === undefined)
+      {
+        $this.opts.totals_mask = $this.opts.getTotasMask(data_row_length);        
+        $this.pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        $this.pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
+			    	$this.pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
+				   }
         //////////////// datt processing /////////////////				
 				//sort
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
@@ -645,7 +659,7 @@ function jpv_pivotDrawData($this)
            }              
 
         //ADD row totlas  
-          var totals_mask=opts.getTotasMask(opts.data.length);
+          //var totals_mask=opts.getTotasMask(opts.data[0].length);
             function append_total_row(col,key_ind)
                   {
                   table_data[add]=[];
@@ -655,7 +669,7 @@ function jpv_pivotDrawData($this)
                       table_data[add][c+pv2td_data_col_diff]=[pv.rows_totals[col][key_ind][c],'class="pv_table_total"'];
                   }
             var total_index=[];for (c=row_keys_length-1;c >= 0; c--) total_index[c]=0;
-            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=totals_mask[opts.rows[r]];
+            var total_mask=[]; for (r=0;r<row_keys_length;r++) total_mask[r]=opts.totals_mask[opts.rows[r]];
             var td_rows_map=[]; for (r=0;r<td_data_rows_start+1;r++) td_rows_map[r]=[r,null]; //map headers and first data row -they not have totals before
             var r_index=td_data_rows_start+1;
             var add=td_rows_count;
@@ -737,7 +751,7 @@ function jpv_pivotDrawData($this)
             for (c=0;c < td_data_cols_start; c++) td_cols_map[c]=[c,null]; //skip headers and first rows;
             var ind = td_data_cols_start; //hold current map index
             var add = td_cols_count; //number of added rows
-            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=totals_mask[opts.cols[r]];
+            var total_mask=[]; for (r=0;r<col_keys_length;r++) total_mask[r]=opts.totals_mask[opts.cols[r]];
             for (c=0;c < col_keys_length-1;c++) key_i_group[c]=0 //current totals index
             for (c=td_data_cols_start;c<td_cols_count;c++) //loop by columns
                 {
@@ -923,6 +937,7 @@ function jpv_pivotDrawData($this)
         ,agregate:[]
         ,data_col:null
         ,data_headers:null
+        ,totals_mask:[]
         ,immediate_draw:true
         ,TableTitle:'JQuery pivot'
         ,ExternalManage:false
@@ -949,23 +964,6 @@ function jpv_pivotDrawData($this)
             ,class_add_KeyHeaderFiltered:'pv_KeyHeaderFiltered'
             }
 
-//      .pv_TotalIntersect {background-color:#C0C0C0;}
-//		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
-//		  .pv_TotalColKey {background-color:green;}
-//		  .pv_TotalRowKey {background-color:maroon;}
-//      .pv_TotalIntersect {background-color:#C0C0C0;}
-//		  .pv_TotalColValue,.pv_TotalRowValue {background-color:silver;}
-//		  .pv_TotalColKey {background-color:green;}
-//		  .pv_TotalRowKey {background-color:maroon;}
-//			.pv_dialog {font-size:10px;}
-//			table.pv_Table{border-collapse:collapse;border:1px solid red;}
-//			.pv_Table td{border:1px solid green; vertical-align:top;}
-//			.pv_key_header_filtered {color:green;}
-//			.pv_keys_placeholder {padding:0px;list-style-type: none; margin:0;}
-//			#pv_filter li, #pv_row_keys_list li {float:left;}	
-//			#pv_row_keys_list{padding-bottom:5px;}
-//			#pv_col_keys_list{padding-bottom:0px;}
-//			#pv_filter {padding-bottom:5px;}	
 			,pivot_data:[]
 			,getSort:function(data_row_length)	
 					{
