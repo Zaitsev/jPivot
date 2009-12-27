@@ -33,16 +33,15 @@ var month_subst = ['янв','фев','мрт','апр','май','июн','июл
 
 			
 
-var debug=0;
+var debug=2;
 
-var pv0;
+var pv0=null;
 
 var serial={};
 
 var pv_json=[];
 $(document).ready(function()
 	{
-	prepare_colors();
 	var pivots=$('#pv').jPivot({
 			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
 			,filter:filter
@@ -51,6 +50,10 @@ $(document).ready(function()
 	    ,immediate_draw:false
 	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
 	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
+	    ,AfterDraw:function(){AfterDraw()}
+	    ,BeforeDraw:function(){BeforeDraw()}
+	    ,BeforePrepare:function(){BeforePrepare()}
+	    ,AfterPrepare:function(){AfterPrepare()}
 	    ,getCustomFilter:function(pvdata_row)
 	    		{
 	    		if (!use_custom_filter) return false;// do not filter
@@ -86,7 +89,7 @@ $(document).ready(function()
 		,printValue:function(data_indexes)
 					{
 					  var rclass = this.styles.Value;
-					  if ($('#use_percent_totals').is(':checked'))
+					  if ($('#use_percent_by_totals').is(':checked'))
 					   {
 					   return print_value_by_total(this,data_indexes);
 					   }
@@ -127,16 +130,12 @@ $(document).ready(function()
  //redraw_pivot();
    pv0=pivots[0];
    pv0.drawData();
-   create_totals_dropdown(); 
-  
+   //init colorpickers
     $('#colors input').each(function(i)
         {
         colors[i]=$(this).colorPicker();
         }
-    )
-
- 
-
+    )      
 
    $("#resize_chart_1").resizable({
     
@@ -145,6 +144,108 @@ $(document).ready(function()
    });
    }
    );
+var colors=[];   
+var use_custom_filter=0;custom_filter_cmp=0;custom_filter_val=0;
+
+var tot_perc = null;
+var precalc_total=null; 
+function BeforePrepare()
+   {
+   use_custom_filter = $('#use_custom_filter').is(':checked');
+   custom_filter_cmp = parseInt($('#custom_filter_cmp').val());
+   custom_filter_val = parseFloat($('#custom_filter_val').val());
+   }
+function AfterPrepare()
+   {
+   precalc_total=null;
+   if (pv0==null) return;
+   tot_perc =  $('#totals_dropdown').val(); 
+   var tot_ptr=null; 
+   if (tot_perc != '')  
+      {
+      //get totals 
+      var is_row=null; var is_col=null;
+      for (var i=0; i < pv0.opts.rows.length;i++)
+         if (pv0.opts.rows[i]==tot_perc) {is_row=i;break;}
+      if (is_row == null)
+         {
+         for (var i=0; i < pv0.opts.cols.length;i++)
+           if (pv0.opts.cols[i]==tot_perc) {is_col=i;break;}
+         }
+      if (is_row != null)
+         {
+         if (is_row==pv0.opts.rows.length) tot_ptr=pv0.pv.grand_totals_row
+         else tot_ptr=pv0.pv.rows_totals[is_row];
+         }
+      if (is_col != null)
+         {
+         if (is_col==pv0.opts.cols.length) tot_ptr=pv0.pv.grand_totals_col
+         else tot_ptr=pv0.pv.cols_totals[is_col];
+         } 
+      if (tot_ptr !== null)      
+         {
+         precalc_total = [];
+         var l = tot_ptr.length;
+         for (var r = 0 ; r < l; r++)
+            {
+            precalc_total[r]=[];
+       					var len =tot_ptr[r];
+       					var vals=0;
+       					for (i=0;i < len; i++) 
+       					    {
+       					    vals = tot_ptr[r][i];
+       					    if (typeof vals === 'undefined') continue;
+       					    for (var j =0 ; j < vals.length; j++)
+       							      precalc_total[r][i] += parseFloat(pv0.pv.data[vals[j]][pv0.opts.data_col]);	
+       						  }
+       					}
+         }
+      }
+
+   }         
+function BeforeDraw()
+   {
+    //preapre colors
+    colors=[];
+    $('#colors input').each(function(i)
+        {
+        colors[i]=[parseFloat($(this).attr('level')),$(this).val()]
+        }
+    )
+   //save state
+   tot_perc =  $('#totals_dropdown').val();    
+   }   
+  
+function AfterDraw()
+   {
+      //create totals dropdown 
+      $('#totals_dropdown').empty();
+      //get cols and rows keys captions 
+      var headers=pv0.opts.data_headers;
+      var l = pv0.opts.rows.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.rows[i]+'">'+headers[pv0.opts.rows[i]]+'</option>');
+      var l = pv0.opts.cols.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.cols[i]+'">'+headers[pv0.opts.cols[i]]+'</option>');
+      //restore state   
+      $('#totals_dropdown').val(tot_perc);    
+   }   
+function print_value_by_total($this,data_indexes) 
+      {
+       var rclass = $this.styles.Value;
+    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			var ret=0;
+					if (debug==1) ret='trv'
+					if (debug==2) ret='trv'+data_indexes.join(' +');
+					if (!debug)
+    					{
+    					var len =data_indexes.length 
+    					for (i=0;i < len; i++) 
+    							ret += parseFloat($this.data[data_indexes[i]][data_col]);	
+    				  }
+    		  return  ['tt'+ret,rclass];	         
+      }    
 function save_state()
     {
     serial=pv0.save();
@@ -164,163 +265,25 @@ function export_pivot()
       
       
       
-var colors=[];
-function prepare_colors()
-    {
-    colors=[];
-    $('#colors input').each(function(i)
-        {
-        colors[i]=[parseFloat($(this).attr('level')),$(this).val()]
-        }
-    )
-    }
+
 
 function redraw_pivot()
     {
-    prepare_colors();
-    var tot_perc =  $('#totals_dropdown').val();
+    
     $('#pv').jPivot_drawData();
-    create_totals_dropdown(); 
-    $('#totals_dropdown').val(tot_perc);
+    
     }
     
     
-var use_custom_filter=0;custom_filter_cmp=0;custom_filter_val=0;
-function prepare_custom_filter()   
-      {
-      use_custom_filter = $('#use_custom_filter').is(':checked');
-      custom_filter_cmp = parseInt($('#custom_filter_cmp').val());
-      custom_filter_val = parseFloat($('#custom_filter_val').val());
-      }
+
 function prepare_pivot()
     {
-    prepare_custom_filter();
     $('#pv').jPivot_preparePv(); 
     }   
-      function FC_Rendered(DOMId){
-         //If it's our required chart
-         if (DOMId=="chart1div"){
-            //Simply alert 
-            var chartObj = getChartFromId('chart1div');
-            //window.alert("Look Ma! I am Column3D and I've finished loading and rendering.");
-            return;
-         }   
-        }
-function graph()
-      {
-      if (pv0==undefined) return null;
-      //var pvdata = pv.data;
-      var strXML = '';
-      pv=pv0.pv;
-      opts=pv0.opts;
-      var ads='';
-    var set = $('#FS_settindgs  [name=longlabels]:checked').val();
-    //alert (set);
-    if (set=='WRAP') {ads +=" labelDisplay='WRAP' "}
-    if (set=='ROTATE') {ads+=" labelDisplay='ROTATE' "}
-    if (set=='ROTATE slang') {ads+=" labelDisplay='ROTATE' slantLabels='1' "}
-    if (set=='Stagger') {ads+=" labelDisplay='Stagger' "}
-    if (set=='Stagger2') {ads+=" labelDisplay='Stagger' staggerLines='4' "}
 
-    set = $('#FS_settindgs  [name=val_ins]:checked').val();
-    if (set=='val_ins') {ads+=" placeValuesInside='1' showValues='1'  "}
-    if (set=='val_non') {ads+=" showValues='0' "}
-    set = $('#FS_settindgs  [name=val_norm]:checked').val();
-    if (set=='val_rot') {ads+=" rotateValues='1' "}
-    
-       strXML +="<graph  palette='3' "+ads+"   baseFontSize='9' legendPosition='bottom' showLegend='1' xAxisName='"+data_headers[rows[0]]
-       +"'  legendCaption='"+data_headers[cols[0]]+"' numberSuffix='%' decimalPrecision='0' animation='0' " 
-       + "  rotateXAxisName='90' showYAxisValues='1' showDivLineValues='1' yaxismaxvalue='100' bgAngle='270'  bgAlpha='10,10' chartOrder='area,column,  line'>"; 
-      var nm,c;
-      strXML += "<categories>";
-      for (var i=pv.col_keys_length; i< pv.data_rows_count;i++)
-         {
-         nm=''; for (c= pv.row_keys_length-1; c >=0; c--) nm +=  pv.data[i][c];
-         strXML +="<category showLabel='1' toolText='"+nm+"' name='"+nm+"' /><vLine color='FF5904' thickness='2' />";
-         }
-      strXML +="</categories>";
-      set = $('#FS_settindgs  [name=val_color]:checked').val();
-      var use_color = (set == 'val_set' );
-      //var line=[];
-      //for (var row = 0 ; row < pv.data_rows_count; row++) line[row]=[0,0];
-      var val;
-      for (var col=pv.row_keys_length;col < pv.data_row_length ; col++)
-            {
-            strXML += "<dataset  renderAs='bar' alpha='100' seriesName='" + pv.data[pv.col_keys_length-1][col] + "' "+(use_color ? " color='"+colors[col-pv.col_keys_length]+"' ":'' )+" >";
-            for (row = pv.col_keys_length ; row < pv.data_rows_count; row++)
-                  {
-                  if (pv.data[row][col] == undefined)
-                    {
-                     strXML +="<set />";
-                    }
-                  else
-                    {
-                    v = 0;
-                    val=pv.data[row][col];
-                    for (var i=0; i < val.length;i++) 
-                      v+= parseFloat(opts.data[val[i]][data_col]);
-                     strXML +="<set value='" + v + "' />";
-                     //line[row][0] += parseFloat(val);line[row][1]++
-                    }
-                  }
-            strXML +="</dataset>";
-            } 
-/*            
-      strXML += "<dataset renderAs='AREA' seriesName='AVG' alpha='5' showValues='0' >";            
-      for (row = 0 ; row < pv.data_rows_count; row++)  
-          strXML += (line[row][1]) ? "<set value='" + (line[row][0] /  line[row][1]) + "' />" : "<set />";
 
-          
-         strXML +="</dataset>";
-*/         
-      strXML +="<trendlines>"
-         strXML +="<line  alpha='20' startValue='90' endValue='100' color='F7C42A'  isTrendZone='1' displayValue='GOOD' showOnTop='1'/>"
-         strXML +="<line  alpha='20' startValue='0'  endValue='25' color='F70000'  isTrendZone='1' displayValue='BAD' showOnTop='0'/>"
-         strXML +="</trendlines>";
-         strXML +="</graph>"
-         return strXML;
-      //chart1.render("chart1div");
-         //updateChartXML('chart',strXML);
-         
-      }   
-     var colors=new Array("AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46","AFD8F8", "F6BD0F", "8BBA00", "FF8E46");   
-function redraw()
-    {
-       var strXML = graph();
-      var chart1 = new FusionCharts("./FusionCharts/MSColumnLine3D.swf", "chart1div"
-      , $("#resize_chart_1").width(), $("#resize_chart_1").height()
-      , "0", 1); 
-      chart1.setDataXML(strXML);
-      chart1.setTransparent (true);
-      chart1.render("chart1div");   
-  
-}   
-function create_totals_dropdown()
-      {
-      $('#totals_dropdown').empty();
-      //get cols and rows keys captions 
-      var headers=pv0.opts.data_headers;
-      var l = pv0.opts.rows.length;
-      for (var i=0; i < l; i++)
-         $('#totals_dropdown').append('<option value="'+pv0.opts.rows[i]+'">'+headers[pv0.opts.rows[i]]+'</option>');
-      var l = pv0.opts.cols.length;
-      for (var i=0; i < l; i++)
-         $('#totals_dropdown').append('<option value="'+pv0.opts.cols[i]+'">'+headers[pv0.opts.cols[i]]+'</option>');
-      }
-function print_value_by_total($this,data_indexes) 
-      {
-    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
-    			var ret=0;
-					if (debug==1) ret='trv'
-					if (debug==2) ret='trv'+data_indexes.join(' +');
-					if (!debug)
-    					{
-    					var len =data_indexes.length 
-    					for (i=0;i < len; i++) 
-    							ret += parseFloat(this.data[data_indexes[i]][data_col]);	
-    				  }
-    		  return  ['tt'+ret,rclass];	         
-      }        
+
+       
       </script>
       <style>
 
@@ -361,7 +324,7 @@ div.form-container div.controlset label { width: 100px;}
       </td>
       <td>
          <input type="checkbox" checked id="use_percent_by_totals" value="1">
-         %from totals by <select id="totals_dropdown"></select>
+         %from totals by <select  id="totals_dropdown"></select>
       </td>
      </tr>
 </table>
@@ -370,6 +333,12 @@ div.form-container div.controlset label { width: 100px;}
 <button name="dr" onclick="export_pivot()">Excel</button>
 <button name="dr" onclick="save_state()">Save</button>
 <button name="dr" onclick="restore()">Restore</button>
+
+
+
+<!--   graph -->
+<script language="javascript" type="text/javascript" src="./jgraph.js"/></script>
+
       <hr>
       <div id='pv'></div>
       <hr>

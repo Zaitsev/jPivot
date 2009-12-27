@@ -193,7 +193,7 @@ function jpv_keys_placeholder_update($this, event, ui)
             $this.opts.rows=rows;
             $this.opts.filter=filter;
             $this.opts.agregate=agregate;
-            $this.opts.totals_mask=$this.opts.GetTotalsMask($this.opts.data[0].length);
+            $this.opts.totals_mask=$this.opts.getTotalsMask($this.opts.data[0].length);
             if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
             }
         }    
@@ -376,7 +376,7 @@ function jPivot_restore(obj,$this)
    }   
 function jpv_build_filters($this)
       {
-        $this.opts.totals_mask = $this.opts.getTotasMask($this.pv.data_row_length);        
+        $this.opts.totals_mask = $this.opts.getTotalsMask($this.pv.data_row_length);        
         $this.pv.head_filter=$this.opts.getHeadFilter($this.pv.data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         $this.pv.dialog_filter=$this.opts.getDialogFilter($this.pv.data_row_length); //hold dialog filter values for each key
 			    	$this.pv.dialog_sort=$this.opts.getSort($this.pv.data_row_length); //sort direction for each data index
@@ -402,11 +402,12 @@ function jpv_preparePv($this)
 				//jpv_build_filters($this) - buildin ol filters by dialok @OK@ button click;
    if ($this.pv.head_filter === undefined)
       {
-        $this.opts.totals_mask = $this.opts.getTotasMask(data_row_length);        
+        $this.opts.totals_mask = $this.opts.getTotalsMask(data_row_length);        
         $this.pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         $this.pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
 			    	$this.pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
 				   }
+				   if ($this.opts.BeforePrepare !== null) $this.opts.BeforePrepare();
         //////////////// datt processing /////////////////				
 				//sort
         data_ptr.sort(function(a,b){return jpv_rowsSort(a,b,$this);});
@@ -601,7 +602,7 @@ function jpv_preparePv($this)
               pv.grand_totals_col[c].push(pv.data[r][c]);
                }
         //$this.opts.pivot_data = pv; 
-
+         if ($this.opts.AfterPrepare != null) $this.opts.AfterPrepare();
         }
     
 ;jQuery.fn.jPivot_drawData =        function()   
@@ -615,6 +616,7 @@ function jpv_preparePv($this)
 
 function jpv_pivotDrawData($this)
         {
+        if ($this.opts.BeforeDraw!=null) $this.opts.BeforeDraw();   
         jpv_nullifyHeaderData($this);
         //return;
       //draw data
@@ -659,7 +661,6 @@ function jpv_pivotDrawData($this)
            }              
 
         //ADD row totlas  
-          //var totals_mask=opts.getTotasMask(opts.data[0].length);
             function append_total_row(col,key_ind)
                   {
                   table_data[add]=[];
@@ -923,7 +924,9 @@ function jpv_pivotDrawData($this)
 
            opts.OnCreateManage($this);
 
-           jpv_restoreHeaderData($this);         
+           jpv_restoreHeaderData($this);  
+           
+           if ($this.opts.AfterDraw!=null) $this.opts.AfterDraw();      
 
             
 }
@@ -965,6 +968,10 @@ function jpv_pivotDrawData($this)
             }
 
 			,pivot_data:[]
+			,BeforePrepare:null
+			,AfterPrepare:null
+			,BeforeDraw:null
+			,AfterDraw:null
 			,getSort:function(data_row_length)	
 					{
 					var a=[]; 
@@ -972,7 +979,7 @@ function jpv_pivotDrawData($this)
 			    		a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;		
 			    return a;						
 					}
-			,getTotasMask:function(data_row_length)
+			,getTotalsMask:function(data_row_length)
 					{
 					var a=[];
 					for(i=0;i < data_row_length; i++ )
