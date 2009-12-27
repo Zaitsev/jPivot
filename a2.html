@@ -87,12 +87,12 @@ $(document).ready(function()
                    ,{pv_table:JSON.stringify(pv_json)}
                    )
                    }
-		,printValue:function(data_indexes)
+		,printValue:function(data_indexes,rn,cn)
 					{
 					  var rclass = this.styles.Value;
 					  if ($('#use_percent_by_totals').is(':checked'))
 					   {
-					   return print_value_by_total(this,data_indexes);
+					   return print_value_by_total(this,data_indexes,rn,cn);
 					   }
 		      
     			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
@@ -160,6 +160,7 @@ function AfterPrepare()
    {
    precalc_total=null;
    if (pv0==null) return;
+   var pv=pv0.pv;
    tot_perc =  $('#totals_dropdown').val(); 
    var tot_ptr=null; 
    if (tot_perc != '')  
@@ -168,16 +169,34 @@ function AfterPrepare()
       var is_row=null; var is_col=null;
       for (var i=0; i < pv0.opts.rows.length;i++)
          if (pv0.opts.rows[i]==tot_perc) {is_row=i;break;}
+      if (is_row != null)
+         {
+         if (is_row==pv0.opts.rows.length) 
+              {
+              tot_ptr=pv0.pv.grand_totals_row;
+              }
+         else 
+              {
+              tot_ptr=pv0.pv.rows_totals[is_row];
+              var tot_ind=0;
+              for (r=pv.col_keys_length; r < pv.data_rows_count ; r++)
+                  {
+                  if ((r !=pv.col_keys_length) && (pv.data[r][is_row]!=null)) tot_ind++;
+                  for (c=pv.row_keys_length; c < pv.data_row_length ; c++)
+                    {
+                    pv.data[r][c]=['r'+r+'c'+c+'t'+tot_ind];
+                    }
+                  }               
+              }
+         }
+/*                  
       if (is_row == null)
          {
          for (var i=0; i < pv0.opts.cols.length;i++)
            if (pv0.opts.cols[i]==tot_perc) {is_col=i;break;}
          }
-      if (is_row != null)
-         {
-         if (is_row==pv0.opts.rows.length) tot_ptr=pv0.pv.grand_totals_row
-         else tot_ptr=pv0.pv.rows_totals[is_row];
-         }
+
+         
       if (is_col != null)
          {
          if (is_col==pv0.opts.cols.length) tot_ptr=pv0.pv.grand_totals_col
@@ -202,7 +221,8 @@ function AfterPrepare()
        					}
          }
       }
-
+*/      
+      }
    }         
 function BeforeDraw()
    {
@@ -232,7 +252,7 @@ function AfterDraw()
       //restore state   
       $('#totals_dropdown').val(tot_perc);    
    }   
-function print_value_by_total($this,data_indexes) 
+function print_value_by_total($this,data_indexes,rn,cn) 
       {
        var rclass = $this.styles.Value;
     			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
