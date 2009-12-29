@@ -340,7 +340,7 @@ function jpv_nullifyHeaderData($this)
                 return this;                    
     });        
 
-        }
+    }
 ;jQuery.fn.jPivot_preparePv =        function($this)
       {
       return this.each(function() { 
@@ -421,24 +421,26 @@ function jpv_preparePv($this)
                  ['rk1','rk2','cc1','cc2',v0] is row0
                  ['rk1','rk2','cc1','cc3',v1] is row1
                  ['rk1','rk3','cc1','cc2',v2] is row2
-                 
-          create maps for data_rows to pivot table rows, find place for data in pivot table row (by cols key)
-  
-                find map to pivot_row by its rows kews ,we will hold this map in  data_row2pv_row
-                in each data_row create composite_index by concatenate rows keys 
+          suppose we want draw table here rk-s in its rows and cc-s in its cols, v-s is value, so rk-s is ROWS_keys, cc-s is COLS_keys 
+          create pivot_table which will hold  prearranged data
+          
+               
+                find map "data_row to pivot_row" by its rows_kews ,we will hold this map in  data_row2pv_row
+                for each data_row create composite_index by concatenate rows_keys with ~~~
                   (
-                  row0 and row1  have equal row_composite_index ('rk1~~rk2') and so both mapped to pivot table row 0 
-                  row2 have  row_composite_index ('rk1~~rk3') and  so  mapped to pivot table row 1 
+                  row0 and row1  have equal row_composite_index ('rk1~~~rk2') and so both mapped to pivot_row 0 in pivot_table
+                  row2 have  row_composite_index ('rk1~~~rk3') and  so  mapped to pivot_row 1 in pivot_table 
                   )
-                by columns composite index we determine position of data_row value in pivot row ,we will hold this map in data_row2pv_col
+                by columns composite index we determine position of data_row value (v-s) in pivot_row,
+                we will hold this map in data_row2pv_col
                   (
-                  row0 has col_composite_index = 'cc1~~~cc2'  and mapped to column  0 of pivot row 0
-                  row1 has col_composite_index = 'cc1~~~cc3'  and mapped to column  1 of pivot row 0
-                  row2 has col_composite_index = 'cc1~~~cc2' (same as row0) so mapped to column 0 of pivot row 1   
+                  row0 has col_composite_index = 'cc1~~~cc2'  and mapped to column  0 of pivot_row 0 (by  data_row2pv_row)
+                  row1 has col_composite_index = 'cc1~~~cc3'  and mapped to column  1 of pivot_row 0 (by  data_row2pv_row)
+                  row2 has col_composite_index = 'cc1~~~cc2' (same as row0) so mapped to column 0 of pivot_row 1 (by  data_row2pv_row)   
                   rows indexes obtained above in row_composite_index creation
                   )
 
-          after this we will had this pivot table
+          after this we will had this pivot_table
                     | cc1 | cc1 |
                     | cc2 | cc3 |
           rk1 | rk2 |  v0 |  v2 |
@@ -458,12 +460,12 @@ function jpv_preparePv($this)
             for (i=0;i<filter_length;i++)
                   {
                   //when we first add key to head_fiter (just drag it into hoder) we dont have values of this filter (they are creting here)
-                  // and <select> is not drawed yet, so we need take first value and use it as filter
+                  // so <select> is not drawed yet (pv.head_filter[dc]==null) and we need take first value and use it as filter
                   dc=filter_ptr[i];
                   key=data_ptr[dr][dc];
                   if (pv.head_filter[dc]==null) pv.head_filter[dc] = key;
                   in_array(key,pv.unique_keys[dc],true); //add to uniq keys for using in filters                  
-                  if (pv.head_filter[dc]!= key) {is_filtered=true;}  //key not allowed (filtered) by head filter , continue to add all possible values to filter                  
+                  if (pv.head_filter[dc]!= key) {is_filtered=true;}  //key not allowed (filtered) by head filter , continue this loop to add all possible values to filter                  
                   }  
             if (is_filtered)  continue; //do not  continue to add all possible values to dialog_filter 
                           
@@ -505,6 +507,8 @@ function jpv_preparePv($this)
        len = pv.unique_keys.length;
        for (i=0;i<len;i++)pv.unique_keys[i].sort();
                         
+       pv.col_keys_length = col_keys_length;
+       pv.row_keys_length = row_keys_length;   
        pv.data_rows_count = rows_composite_index.length+col_keys_length; //rows count+col headers rows
        pv.data_row_length = cols_composite_index.length+row_keys_length;
        pv.data=jpv_create_2Darray(pv.data_rows_count);
@@ -512,26 +516,26 @@ function jpv_preparePv($this)
           var rn; var cn;
           for (i=0;i<data_length;i++)
               {
-              rn=data_row2pv_row[i]; //data row mapped to rn pv.data row
+              rn=data_row2pv_row[i]; //data row mapped to  pv.data[rn] row
               if ( (rn==null) || (data_row2pv_col[i]==null) ) continue; //row filtered, so it not mapped
               for (j=0;j<row_keys_length;j++) 
                       pv.data[rn][j]=data_ptr[i][rows_ptr[j]]; //fill row keys
               //store data_ptr index instead of actual value
               //this will be needed on totals and data display functions
-              cn=cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length; //data row mapped to cn pv.data col
-              if (typeof pv.data[rn][cn] == 'undefined') pv.data[rn][cn]=[];
+              cn=cols_composite_index_remap[data_row2pv_col[i]]+row_keys_length; //data row mapped to  pv.data[rn][cn] col
+              if (typeof pv.data[rn][cn] == 'undefined') pv.data[rn][cn]=[]; //init value
               pv.data[rn][cn].push(i); //add data row index to value
-              if (data_ptr[i][data_col] != null ) 
+ /* TODO some overworking in cols_keys fill */
+              if (data_ptr[i][data_col] != null ) //fill cols keys
                   for (c=0;c<col_keys_length;c++)  
-                  {
+                    {
                     for (var r=0;r < row_keys_length;r++) pv.data[c][r]=null;
                     pv.data[c][cn] = data_ptr[i][cols_ptr[c]];
-                  }
+                    }
               }
               
               
-        pv.col_keys_length = col_keys_length;
-        pv.row_keys_length = row_keys_length;              
+           
          //console.dir(pv.data);
 
       
@@ -540,8 +544,8 @@ function jpv_preparePv($this)
         //save pv.data cells to totals
         //save with undefined 
         // links and count of  cells wiil be needed by statistics functions ( MIN for exmple)           
-   				jpv_nullifyHeaderData($this)
-         var cur_key;
+   			jpv_nullifyHeaderData($this)
+        var cur_key;
          		
         pv.rows_totals=jpv_create_2Darray(row_keys_length);
         function fill_cnt (rw)
@@ -682,7 +686,7 @@ function jpv_pivotDrawData($this)
                       }
                   td_rows_map[r_index++]=[r,null];
                   }
-            //last row is total; these is quicker then additional checks in mail loop;
+            //last row is total; code bolow is quicker then additional checks in mail loop;
             for (c=row_keys_length-1-1;c >= 0; c--) {if (total_mask[c]) {append_total_row(c,total_index[c]++);td_rows_map[r_index++]=[null,add++];}}
             //td_rows_count = add++;
             //add grand total row (totals by column)
