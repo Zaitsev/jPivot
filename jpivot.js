@@ -376,11 +376,11 @@ function jPivot_restore(obj,$this)
    }   
 function jpv_build_filters($this)
       {
-        $this.opts.totals_mask = $this.opts.getTotalsMask($this.pv.data_row_length);        
-        $this.pv.head_filter=$this.opts.getHeadFilter($this.pv.data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
-        $this.pv.dialog_filter=$this.opts.getDialogFilter($this.pv.data_row_length); //hold dialog filter values for each key
-			    	$this.pv.dialog_sort=$this.opts.getSort($this.pv.data_row_length); //sort direction for each data index
-         
+        var drl = ($this.pv.data_row_length===undefined) ? $this.opts.data[0].length : $this.pv.data_row_length; 
+        $this.opts.totals_mask = $this.opts.getTotalsMask(drl);        
+        $this.pv.head_filter=$this.opts.getHeadFilter(drl);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        $this.pv.dialog_filter=$this.opts.getDialogFilter(drl); //hold dialog filter values for each key
+			  $this.pv.dialog_sort=$this.opts.getSort(drl); //sort direction for each data index
       }  				
 function jpv_preparePv($this)
         {
@@ -400,13 +400,8 @@ function jpv_preparePv($this)
 				// rows_ptr,cols_ptr,filter_ptr, agregate(not holded in Jpivot)
 				// head_filter,dialog_filter,dialog_sort
 				//jpv_build_filters($this) - buildin ol filters by dialok @OK@ button click;
-   if ($this.pv.head_filter === undefined)
-      {
-        $this.opts.totals_mask = $this.opts.getTotalsMask(data_row_length);        
-        $this.pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
-        $this.pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
-			    	$this.pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
-				   }
+				jpv_build_filters($this)
+
 				   if ($this.opts.BeforePrepare !== null) $this.opts.BeforePrepare();
         //////////////// datt processing /////////////////				
 				//sort
