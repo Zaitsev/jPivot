@@ -592,14 +592,14 @@ function jpv_preparePv($this)
                 }
             }  
          //Grand totals
-         pv.grand_totals_row=jpv_create_2Darray(pv.data_rows_count);
-         pv.grand_totals_col=jpv_create_2Darray(pv.data_row_length);
+         pv.grand_totals_col=jpv_create_2Darray(pv.data_rows_count);
+         pv.grand_totals_row=jpv_create_2Darray(pv.data_row_length);
          for(c=row_keys_length; c < pv.data_row_length; c++  )
             for (r=col_keys_length; r < pv.data_rows_count; r++)
                {
               //if (pv.data[r][c]!= null)  
-              pv.grand_totals_row[r].push(pv.data[r][c]);
-              pv.grand_totals_col[c].push(pv.data[r][c]);
+              pv.grand_totals_col[r].push(pv.data[r][c]);
+              pv.grand_totals_row[c].push(pv.data[r][c]);
                }
         //$this.opts.pivot_data = pv; 
          if ($this.opts.AfterPrepare != null) $this.opts.AfterPrepare();
@@ -695,7 +695,7 @@ function jpv_pivotDrawData($this)
                   for (var c=0; c < td_data_cols_start; c++) table_data[add][c]=[null,null];
                   table_data[add][0]=['GT','colspan="'+(row_keys_length)+'"']; 
                   for (var c=row_keys_length; c < pv.data_row_length; c++)     
-                      table_data[add][c+pv2td_data_col_diff]=[pv.grand_totals_col[c],'class="pv_table_total"'];
+                      table_data[add][c+pv2td_data_col_diff]=[pv.grand_totals_row[c],'class="pv_table_total"'];
                   td_rows_map[r_index++]=[null,add++];
             td_rows_count = add;   
             //create row spans
@@ -793,7 +793,7 @@ function jpv_pivotDrawData($this)
                       if(td_rows_map[r][0]==null) //totals intrsect
                           table_data[rn][add]=[[],null]; // this is  total row - add empty                      
                       else
-                          table_data[rn][add]=[pv.grand_totals_row[tc++],''];                          
+                          table_data[rn][add]=[pv.grand_totals_col[tc++],''];                          
                       }
                     }  
                td_cols_map[ind++]=[null,add++];          
