@@ -366,17 +366,26 @@ function jPivot_save($this)
      }
 function jPivot_restore(obj,$this)
    {
-   $this.opts.data_headers = obj.data_headers;
-   $this.opts.data_col = obj.data_col;
-   $this.opts.cols =obj.cols;
-   $this.opts.rows = obj.rows;
-   $this.opts.agregate = obj.agregate;
-   $this.opts.filter = obj.filter;
-   $this.opts.totals_mask = obj.totals_mask;
+   $this.opts.data_headers = (typeof obj.data_headers == 'undefined' ) ? [] : obj.data_headers;
+   $this.opts.data_col = (typeof obj.data_col == 'undefined' ) ? [] : obj.data_col;
+   $this.opts.cols =(typeof obj.cols == 'undefined' ) ? [] : obj.cols;
+   $this.opts.rows = (typeof obj.rows == 'undefined' ) ? [] : obj.rows;
+   $this.opts.agregate = (typeof obj.agregate == 'undefined' ) ? [] : obj.agregate;
+   $this.opts.filter = (typeof obj.filter == 'undefined' ) ? [] : obj.filter;
+   $this.opts.totals_mask = (typeof obj.totals_mask == 'undefined' ) ? [] : obj.totals_mask;
    }   
 function jpv_build_filters($this)
       {
-        var drl = ($this.pv.data_row_length===undefined) ? $this.opts.data[0].length : $this.pv.data_row_length; 
+/*         
+        $this.opts.totals_mask = $this.opts.getTotalsMask($this.pv.data_row_length);        
+        $this.pv.head_filter=$this.opts.getHeadFilter($this.pv.data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        $this.pv.dialog_filter=$this.opts.getDialogFilter($this.pv.data_row_length); //hold dialog filter values for each key
+			    	$this.pv.dialog_sort=$this.opts.getSort($this.pv.data_row_length); //sort direction for each data index
+
+return;        
+*/ 
+        //var drl = ($this.pv.head_filter === undefined) ? $this.opts.data[0].length : $this.pv.data_row_length; 
+        var drl = $this.opts.data[0].length ; 
         $this.opts.totals_mask = $this.opts.getTotalsMask(drl);        
         $this.pv.head_filter=$this.opts.getHeadFilter(drl);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
         $this.pv.dialog_filter=$this.opts.getDialogFilter(drl); //hold dialog filter values for each key
@@ -401,6 +410,15 @@ function jpv_preparePv($this)
 				// head_filter,dialog_filter,dialog_sort
 				//jpv_build_filters($this) - buildin ol filters by dialok @OK@ button click;
 				jpv_build_filters($this)
+/*				
+   if ($this.pv.head_filter === undefined)
+      {
+        $this.opts.totals_mask = $this.opts.getTotalsMask(data_row_length);        
+        $this.pv.head_filter=$this.opts.getHeadFilter(data_row_length);//=jpv_create_2Darray(data_row_length); //hold head filter values for each key
+        $this.pv.dialog_filter=$this.opts.getDialogFilter(data_row_length); //hold dialog filter values for each key
+			    	$this.pv.dialog_sort=$this.opts.getSort(data_row_length); //sort direction for each data index
+				   }
+*/				
 
 				   if ($this.opts.BeforePrepare !== null) $this.opts.BeforePrepare();
         //////////////// datt processing /////////////////				
