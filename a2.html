@@ -44,7 +44,7 @@ var pv_json=[];
 $(document).ready(function()
 	{
 	var pivots=$('#pv').jPivot({
-			data:data,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
+			data:data,rows:rows,cols:cols,data_col:data_col_cnt,data_headers:data_headers,agregate:agregate
 			,filter:filter
 	    ,styles:{Key:'class="ui-state-default"'}
 	    ,ExternalManage:true
@@ -87,12 +87,12 @@ $(document).ready(function()
                    ,{pv_table:JSON.stringify(pv_json)}
                    )
                    }
-		,printValue:function(data_indexes,rn,cn)
+		,printValue:function(data_indexes)
 					{
 					var rclass = this.styles.Value;
 					if ($('#use_percent_by_totals').is(':checked') &&    ($('#totals_dropdown').val() != null)) 
 					   {
-					   return print_value_by_total(this,data_indexes,rn,cn);
+					   return print_value_by_total(this,data_indexes);
 					   }
 		      
     			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
@@ -171,7 +171,7 @@ function precalc_totals(precalc_total,tot_ptr)
     					    vals = tot_ptr[r][c][i];
     					    if (typeof vals === 'undefined') continue;
     					    for (var j =0 ; j < vals.length; j++)
-    							ret += parseFloat(pv0.opts.data[vals[j]][pv0.opts.data_col]);	
+    							ret += parseFloat(pv0.opts.data[vals[j]][data_col_cnt]);	
     						  } 
               precalc_total[r][c]=ret;    				      
               } 
@@ -179,10 +179,11 @@ function precalc_totals(precalc_total,tot_ptr)
     }  
 function  precalc_val_func (data_indexes)
     {
+        if (data_indexes==undefined) return  0; 
    					var len =data_indexes.length;
    					var ret=0; 
     					for (i=0;i < len; i++) 
-    							ret += parseFloat(pv0.opts.data[data_indexes[i]][pv0.opts.data_col]);	
+    							ret += parseFloat(pv0.opts.data[data_indexes[i]][data_col_cnt]);	
     			  return ret;
     }     
 function AfterPrepare()
@@ -280,12 +281,13 @@ function print_value_by_total($this,data_indexes)
 					if (debug==2) ret='trv'+data_indexes.join(' +');
 					if (!debug)
     					{
-    							ret = data_indexes[0];	
-    				  }
     		  if (data_indexes[1] > 0) ret=Math.round(100*(100*data_indexes[0]/data_indexes[1]))/100;
     		  else ret=0;
+    				  }
+
     		  return  [ret,rclass];	         
-      }    
+      }   
+      
 function save_state()
     {
     serial=pv0.save();
@@ -399,6 +401,6 @@ div.form-container div.controlset label { width: 100px;}
       <div id='chart2div'></div>
 
 
-<script type="text/javascript" src="./math.js"></script>      
+<script type="text/javascript" src="./data_small.js"></script>      
    </body>
    
