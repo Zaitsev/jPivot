@@ -1,21 +1,6 @@
-// ----------------------------------------------------------------------------
-// Script Name: jpivot	
-// Creation Date: 10.01.2010 19:04:11
-// Last Modified: 10.04.2010 19:04:14
-// Copyright (c)2010
-// Purpose: Pivot table fot java-script
-// ----------------------------------------------------------------------------
-
 (function($) { 
 // Private Variables and Functions
 var  jpv_keys_placeholder_update_list_cnt=0; 
-/**
- * 
-* @param  a 
-* @param  b 
-* @param  this 
-* @return 
-*/
 function jpv_rowsSort(a,b,$this)
         {
          //Compare "a" and "b" in some fashion, and return -1, 0, or 1
@@ -82,7 +67,7 @@ len =array.length
           }
       return null;
         }
-
+  
 function jpv_create_2Darray(len)
         {
         var a=[];
@@ -173,14 +158,6 @@ function jpv_OnCreateManage($this)
               
           }
         
-/**
- * used for catch update event from controls 
- * fill filters and init prepare if needed
-* @param  this 
-* @param  event 
-* @param  ui 
-* @return 
-*/
 function jpv_keys_placeholder_update($this, event, ui)
         {
         //this func called for each lists (we have 4) so wait until last 
@@ -220,13 +197,6 @@ function jpv_keys_placeholder_update($this, event, ui)
             if ($this.opts.immediate_draw) {jpv_preparePv($this);$this.opts.OnDrawData($this);}
             }
         }    
-        
-        
-/**
- * create dialogs for keys, bind its to keys
-* @param  this 
-* @return 
-*/
 function jpv_keys_placeholder_popup($this)
         {
         var opts = $this.opts;
@@ -370,7 +340,7 @@ function jpv_nullifyHeaderData($this)
                 return this;                    
     });        
 
-    }
+        }
 ;jQuery.fn.jPivot_preparePv =        function($this)
       {
       return this.each(function() { 

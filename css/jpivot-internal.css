@@ -12,5 +12,5 @@
 			.pv_FliterPlaceholder li, .pv_KeysRowsPlaceholder li {float:left; padding:3px 5px 3px 5px ;}	
 			.pv_KeysRowsPlaceholder ul{padding-bottom:5px;}
 			.pv_KeysColsPlaceholder ul{padding-bottom:0px;}
-			.pv_AgregatePlaceholder{background-color:red;}
+			.pv_AggregatePlaceholder{background-color:red;}
 			#pv_filter,#pv_agregate {padding-bottom:5px;}

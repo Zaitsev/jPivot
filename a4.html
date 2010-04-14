@@ -1,0 +1,360 @@
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<link type="text/css" href="./js/redmond/jquery-ui.css" rel="stylesheet" />
+   <link type="text/css" href="./css/jpivot-external.css" rel="stylesheet" />
+
+ <script language="javascript" type="text/javascript" src="./js/jquery-1.4.2.min.js"/></script>
+ <script type="text/javascript" src="./js/jquery-ui-1.8.custom.min.js"></script>
+
+		 <script type="text/javascript" src="./jpivot_v3.js"></script>
+
+<script type="text/javascript" >
+
+var debug=0;
+
+$(document).ready
+	(function()
+		{
+		$("#dbg_level").slider({
+			value:0,
+			min: 0,
+			max: 3,
+			step: 1,
+			stop: function(event, ui) {
+				debug = ui.value;
+			}
+		});
+		debug = $("#dbg_level").slider("value");
+		$("#trsh_rnd").slider({
+			value:0.7,
+			min: 0.5,
+			max: 1,
+			step: 0.05,
+			slide:function(event,ui)
+					{
+					$('#trsh_txt').text(ui.value);
+					}
+
+		});
+
+		$(".vals_n").slider({
+			value:3,
+			min: 1,
+			max: 10,
+			step: 1,
+			stop:function(event, ui)
+				{
+				str='i,j,k,l,m=';
+				var vl=1;
+				$(".vals_n").each(
+					function(i)
+						{
+					  var a = $(".vals_n").eq(i).slider("value")
+					  vl *= a
+					  str +='x'+a;
+						}
+					);
+			 str += '='+vl;
+			 $('#vals_comp').text(str);
+
+				}
+			});
+		create_data();
+
+		var pivots=$('#pv').jPivot
+				 ({
+			data:data_local,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
+			,filter:filter
+	    ,styles:{Key:'class="ui-state-default"'}
+	    ,ExternalManage:true
+	    ,immediate_draw:false
+			,aggregateValParam:{type:'SUM'}
+			,aggregateTotalParam:{type:'SUM'}
+	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
+	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
+	    ,onAfterDraw:function(){AfterDraw()}
+	    ,onBeforeDraw:function(){
+	    		BeforeDraw()
+	    		}
+	    ,onBeforePrepare:function(){
+	    		BeforePrepare()
+	    		}
+
+      /*
+	    ,onCustomFilter:function(pvdata_row)
+	    		{
+	    		if (!use_custom_filter) return false;// do not filter
+	    		var val=this.data[pvdata_row][data_col];
+	    		if ((custom_filter_cmp==0) && (val >= custom_filter_val)) return false;
+	    		if ((custom_filter_cmp==1) && (val != custom_filter_val)) return false;
+             if ((custom_filter_cmp==2) && (val <= custom_filter_val)) return false;
+             if ((custom_filter_cmp==3) && (val == custom_filter_val)) return false;
+             return true; //do not pass row
+            }
+*/
+       ,getDataForExcel:function()
+                  {
+                  var tr=0; var td=0; var tmp; var cs;var rs;var cl;var bg;
+                  $('#jpivot_placeholder tr').each(function (i)
+                           {
+                           pv_json[tr]=[];td=0;
+                           $('td',this).each(function (i)
+                                       {
+                                       tmp = $(this);
+                                       cs=tmp.attr('colspan'); cs=(typeof cs === 'undefined') ? 1 : cs;
+                                       rs=tmp.attr('rowspan'); rs=(typeof rs === 'undefined') ? 1 : rs;
+                                       cl=tmp.attr('class'); cl=(typeof cl === 'undefined') ? '' : cl;
+                                       bg=tmp.css('background-color'); bg=(typeof bg === 'undefined') ? '' : bg;
+                                       pv_json[tr][td++]=[tmp.text(),cs,rs,cl,bg];
+                                       });
+                           tr++;
+                           });
+                   $.postJSON(
+                   'ajax.php?mode=export_excel'
+                   ,{pv_table:JSON.stringify(pv_json)}
+                   )
+                   }
+
+
+         });
+
+
+     //redraw_pivot();
+   pv0=pivots[0];
+   $('#pv').jPivot('drawData');
+
+
+   //init colorpickers
+/*
+    $('#colors input').each(function(i)
+        {
+        colors[i]=$(this).colorPicker();
+        }
+    )
+
+   $("#resize_chart_1").resizable({
+
+    stop:function(){redraw()}
+    ,handles: 'all'
+   });
+*/
+    	//ready end
+		});
+
+
+
+var colors=[];
+var use_custom_filter=0;custom_filter_cmp=0;custom_filter_val=0;
+
+var tot_perc = null;
+function BeforePrepare()
+   {
+   use_custom_filter = $('#use_custom_filter').is(':checked');
+   custom_filter_cmp = parseInt($('#custom_filter_cmp').val());
+   custom_filter_val = parseFloat($('#custom_filter_val').val());
+   }
+
+
+
+function BeforeDraw()
+   {
+    //preapre colors
+    colors=[];
+    $('#colors input').each(function(i)
+        {
+        colors[i]=[parseFloat($(this).attr('level')),$(this).val()]
+        }
+    )
+   //save state
+   tot_perc =  $('#totals_dropdown').val();
+   }
+
+function AfterDraw()
+   {
+      //create totals dropdown
+      $('#totals_dropdown').empty();
+      //get cols and rows keys captions
+      var headers=pv0.opts.data_headers;
+      var l = pv0.opts.rows.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.rows[i]+'">'+headers[pv0.opts.rows[i]]+'</option>');
+      var l = pv0.opts.cols.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.cols[i]+'">'+headers[pv0.opts.cols[i]]+'</option>');
+      //restore state
+      $('#totals_dropdown').val(tot_perc);
+   }
+function print_value_by_total($this,data_indexes)
+      {
+       var rclass = $this.styles.Value;
+    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			var ret=0;
+					if (debug==1) ret='trv'
+					if (debug==2) ret='trv'+data_indexes.join(' +');
+					if (!debug)
+    					{
+    							ret = data_indexes[0];
+    				  }
+    		  if (data_indexes[1] > 0) ret=Math.round(100*(100*data_indexes[0]/data_indexes[1]))/100;
+    		  else ret=0;
+    		  return  [ret,rclass];
+      }
+
+
+function save_state()
+    {
+    serial=$('#pv').jPivot('saveGridParam');
+    console.dir(serial);
+    }
+function restore()
+    {
+    $('#pv').jPivot('restoreGridParam',serial);//.jPivot('prepareData').jPivot('drawData')
+    }
+
+function export_pivot()
+      {
+       pv0.getDataForExcel();
+      }
+ function redraw_pivot()
+    {
+
+    $('#pv').jPivot('drawData');
+
+    }
+
+
+
+function prepare_pivot()
+    {
+    $('#pv').jPivot('prepareData');
+    }
+function 		re_create_data()
+		{
+		create_data();
+		$('#pv').jPivot('setGridParam',{data:data_local});
+		}
+function create_data()
+{
+	var trsh = $("#trsh_rnd").slider("value");
+	data_local=[];
+	var snum=0;var cnt=0;
+	var il=$(".vals_n").eq(0).slider("value");
+	var jl = $(".vals_n").eq(1).slider("value");
+	var kl = $(".vals_n").eq(2).slider("value");
+	var ll = $(".vals_n").eq(3).slider("value");
+	var ml =  $(".vals_n").eq(4).slider("value");
+	var pl = $(".vals_n").eq(5).slider("value");
+	for (var i=0; i < il; i++)
+	{
+		for (var j=0; j < jl; j++)
+		{
+			if (Math.random() > trsh) continue;
+			for (var k=0;k < kl; k++)
+			{
+				if (Math.random() > trsh) continue;
+				for (var l=0;l < ll ; l++)
+				{
+					if (Math.random() > trsh) continue;
+					for (var m=0;m < ml ; m++)
+					{
+						if (Math.random() > trsh) continue;
+						for (var p=0;p < pl; p++)
+						{
+							if (Math.random() > trsh) continue;
+							//data.push(['i'+i,'j'+j,'k'+k,'L'+l,'m'+m,'i'+i+'j'+j+'k'+k+'L'+l+'m'+m])  ;
+							data_local[cnt]=['I'+i,'J'+j,'K'+k,'L'+l,'M'+m,'N'+p,snum++]  ;
+							cnt++;
+						}
+					}
+				}
+			}
+		}
+	}
+	$('#vals_comp').text('created '+cnt+'rows');
+}
+var data_local=[];
+var rows = [0,1,2];
+var cols = [3,4,5];
+var data_col=6;
+var agregate = [];
+var filter = [];
+var data_headers=['capt_i','capt_j','capt_k','capt_l','capt_m','capt_n']              ;
+	</script>
+
+
+      <style>
+
+body *{font-size:12px;}
+         #chart2div, #resize_chart_1 { width: 800px; height: 400px;}
+div#color_custom{display:block;}
+ div.controlset {display: block; float:left; width: 100%; padding: 0.25em 0;}
+div.controlset label,
+ div.controlset input,
+div.controlset div { display: inline; float: left; }
+
+div.form-container div.controlset label { width: 100px;}
+.partbl td{width:100px;}
+      </style>
+<table>
+	<tr>
+		<td style="width:220px;">
+debug level:<span id="dbg_lvl"></span><div id="dbg_level" style="width:100px;"></div><br>
+		</td>
+		<td style="width:220px;">
+var coplexity = <span id="vals_comp"></span>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<button onclick="re_create_data()">recreate</button>
+		</td>
+		<td style="width:220px;">
+trash_hold: <span id="trsh_txt"></span><div id="trsh_rnd" style="width:100px;"></div><br>
+		</td>
+</tr>
+</table>
+<div id="dbg_level" style="width:100px;"></div>
+<table border=1 class="partbl">
+    <tr><td>Rows</td><td>Cols</td><td>Aggr</td><td>Filter</td><td>colors</td></tr>
+     <tr>
+      <td id='qpv_row_keys_placeholder'>herereww</td>
+      <td id='qpv_col_keys_placeholder'>herecol</td>
+      <td id='pv_aggregate_placeholder'>ag</td>
+      <td id='pv_filter_placeholder'>f</td>
+      <td id="colors" width="120px">
+         <div class="controlset"><label for="color3">80</label> <input level="80" type="text" name="color3" value="#008000" /></div>
+         <div class="controlset"><label for="color3">50</label> <input level="50" type="text" name="color3" value="#99cc00" /></div>
+         <div class="controlset"><label for="color2">30</label> <input level="30" type="text" name="color2" value="#FFFF00" /></div>
+         <div class="controlset"><label for="color1">10</label> <input level="10" type="text" name="color1" value="#FF0000" /></div>
+      </td>
+      <td>
+         <input type="checkbox" id="use_custom_filter" value="1">значенение
+            <select id="custom_filter_cmp">
+            <option value="0">&ge;</option>
+            <option value="1">&ne;</option>
+            <option value="2">&le;</option>
+            <option value="3">=</option>
+          </select>
+         <input type="text" style="width:20px;" id="custom_filter_val" value="50">
+      </td>
+      <td>
+         <input type="checkbox" checked id="use_percent_by_totals" value="1">
+         %from totals by key <select  id="totals_dropdown"></select>
+      </td>
+     </tr>
+</table>
+<button name="dr" onclick="redraw_pivot()">Draw</button>
+<button name="dr" onclick="prepare_pivot()">Prepare</button>
+<button name="dr" onclick="export_pivot()">Excel</button>
+<button name="dr" onclick="save_state()">Save</button>
+<button name="dr" onclick="restore()">Restore</button>
+
+
+		 <div id="pv"></div>
+
+	<script type="text/javascript">
+
+	</script>
