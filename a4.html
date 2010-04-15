@@ -69,8 +69,8 @@ $(document).ready
 	    ,styles:{Key:'class="ui-state-default"'}
 	    ,ExternalManage:true
 	    ,immediate_draw:false
-			,aggregateValParam:{type:'SUM'}
-			,aggregateTotalParam:{type:'AVG',precision:2,cnt_col:data_col_cnt}
+			,aggregateValParam:{type:'AVG',precision:2,data_col_cnt:data_col_cnt}
+			,aggregateTotalParam:{type:'AVG',precision:3,data_col_cnt:data_col_cnt}
 	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
 	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
 	    ,onAfterDraw:function(){AfterDraw()}
