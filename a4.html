@@ -64,13 +64,13 @@ $(document).ready
 
 		var pivots=$('#pv').jPivot
 				 ({
-			data:data_local,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,agregate:agregate
+			data:data_local,rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,aggregate:aggregate
 			,filter:filter
 	    ,styles:{Key:'class="ui-state-default"'}
 	    ,ExternalManage:true
 	    ,immediate_draw:false
 			,aggregateValParam:{type:'SUM'}
-			,aggregateTotalParam:{type:'AVG'}
+			,aggregateTotalParam:{type:'AVG',precision:2,cnt_col:data_col_cnt}
 	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
 	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
 	    ,onAfterDraw:function(){AfterDraw()}
@@ -242,6 +242,7 @@ function 		re_create_data()
 		}
 function create_data()
 {
+	return;
 	var trsh = $("#trsh_rnd").slider("value");
 	data_local=[];
 	var snum=0;var cnt=0;
@@ -288,7 +289,7 @@ var filter = [];
 var data_headers=['capt_i','capt_j','capt_k','capt_l','capt_m','capt_n']              ;
 	</script>
 
-
+ <script type="text/javascript" src="./data_small.js"></script>
       <style>
 
 body *{font-size:12px;}

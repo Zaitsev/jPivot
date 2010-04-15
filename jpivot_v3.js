@@ -1,6 +1,18 @@
-/// TODO - function.call(this) - transfer context to events
-////  - redraw dialogs on prepare (if data changed we need to redraw dialogs)
-//upload test
+/* TODO - function.call(this) 
+
+* - transfer context to events
+
+* - create standart calc function for reusing in onPRint events
+    see ,jpivot_PrintValue:function (data_indexes)
+    
+* - redraw dialogs on prepare (if data changed we need to redraw dialogs)
+
+* - create average aggregate function for AVG when counts in data_col_cnt (pass it as aggregateTotalParam:{type:'AVG',precision:2,cnt_col:data_col_cnt}
+    this is needed when we wnat calc avg from pre-aggeregated queries ex. select  sum(val) as data_col, cont(val) as data_col_cnt
+
+* - restore aggregateTotalParam from save
+
+*/
 
 ;
 (function ($)
@@ -143,12 +155,12 @@
       filter_drag += '</ul>';
 
 
-      $ ('#'+opts.filter_keys_placeholder)
+      $('#'+opts.filter_keys_placeholder)
       .empty()
       .append (filter_drag)
       .addClass (opts.styles.FliterPlaceholder);
       if ($this.opts.immediate_draw)
-         $ ('#'+opts.filter_keys_placeholder+' select').bind (
+         $('#'+opts.filter_keys_placeholder+' select').bind (
             "change"
             ,function (e)
          {
@@ -157,10 +169,10 @@
          }
       );
 
-      $ ('#'+opts.aggregate_keys_placeholder).empty().append (aggregate_drag).addClass (opts.styles.aggregatePlaceholder);
-      $ ('#'+opts.col_keys_placeholder).empty().append (col_drag).addClass (opts.styles.KeysColsPlaceholder);
-      $ ('#'+opts.row_keys_placeholder).empty().append (row_drag).addClass (opts.styles.KeysRowsPlaceholder);
-      $ ('#pv_row_keys_list, #pv_col_keys_list, #pv_aggregate, #pv_filter')
+      $('#'+opts.aggregate_keys_placeholder).empty().append (aggregate_drag).addClass (opts.styles.aggregatePlaceholder);
+      $('#'+opts.col_keys_placeholder).empty().append (col_drag).addClass (opts.styles.KeysColsPlaceholder);
+      $('#'+opts.row_keys_placeholder).empty().append (row_drag).addClass (opts.styles.KeysRowsPlaceholder);
+      $('#pv_row_keys_list, #pv_col_keys_list, #pv_aggregate, #pv_filter')
       .addClass ('pv_connectWith')
       .sortable (
       {
@@ -194,28 +206,28 @@
             var cols=[];
             var filter=[];
             var aggregate=[];
-            $ ('li','#pv_col_keys_list').each (
+            $('li','#pv_col_keys_list').each (
                function ()
             {
-               cols.push ($ (this).attr ('value') )
+               cols.push ($(this).attr ('value') )
             }
             );
-            $ ('li','#pv_row_keys_list').each (
+            $('li','#pv_row_keys_list').each (
                function ()
             {
-               rows.push ($ (this).attr ('value') )
+               rows.push ($(this).attr ('value') )
             }
             )    ;
-            $ ('li','#pv_filter').each (
+            $('li','#pv_filter').each (
                function ()
             {
-               filter.push ($ (this).attr ('value') )
+               filter.push ($(this).attr ('value') )
             }
             )    ;
-            $ ('li','#pv_aggregate').each (
+            $('li','#pv_aggregate').each (
                function ()
             {
-               aggregate.push ($ (this).attr ('value') )
+               aggregate.push ($(this).attr ('value') )
             }
             )    ;
             jpv_keys_placeholder_update_list_cnt=0;
@@ -248,13 +260,13 @@
             unique_keys_length=pv.unique_keys[k].length;
             if ( (unique_keys == null) ||  (unique_keys_length == 0) )
                {
-                  $ ('#pv_dlg_plh'+k).remove(); //remove placeholder
+                  $('#pv_dlg_plh'+k).remove(); //remove placeholder
                   continue;
                }
             //is the dialog for col and row headers
             if (pv.dialog_filter[k].length > 0) //we have filtered keys - show this
-               $ ('#pv_key_header'+k).addClass (opts.styles.class_add_KeyHeaderFiltered);
-            if ($ ('#pv_dlg_plh'+k).length == 0) //if dialog not created
+               $('#pv_key_header'+k).addClass (opts.styles.class_add_KeyHeaderFiltered);
+            if ($('#pv_dlg_plh'+k).length == 0) //if dialog not created
                { //we have no dialog,create
                   tstr='<div id="pv_dlg_plh'+k+'" style="display:none">';
                   tstr +='<div id="radio_order">asc<input type="radio" checked name="radio_order'+k+'"  value="A"/>'
@@ -264,8 +276,8 @@
                   for (i=0; i < unique_keys_length; i++)
                      tstr +='<input type="checkbox" checked value="'+opts.onPrintKey (k,unique_keys[i]) [0]+'">'+opts.onPrintKey (k,unique_keys[i]) [0]+'<br>'
                             tstr +='</div></div>';
-                  $ ($this).append (tstr);
-                  $ ('#pv_dlg_plh'+k).dialog
+                  $($this).append (tstr);
+                  $('#pv_dlg_plh'+k).dialog
                   (
                   {
                      autoOpen:false
@@ -281,24 +293,24 @@
                                  jpv_preparePv ($this);
                                  $this.opts.nDrawData ($this);
                               }
-                           $ (this).dialog ('close');
+                           $(this).dialog ('close');
                         }
                         ,Cancel: function()
                         {
-                           $ (this).dialog ('close');
+                           $(this).dialog ('close');
                         }
                      }
 
                   });
                }
             //bind click event, we must rebind for each time in case header was restored from aggregate or filter state
-            $ ('#pv_key_header'+k).bind
+            $('#pv_key_header'+k).bind
             (
                "click"
                , {selector:'#pv_dlg_plh'+k}
                ,function (e)
             {
-               $ (e.data.selector)
+               $(e.data.selector)
                .dialog ('option', 'position', [e.pageX,e.pageY])
                .dialog ("open")
             }
@@ -312,7 +324,7 @@
             var filter_len=opts.dialog_filter.length;
             for (var i=0;i < filter_len; i++ )
                {
-                  var chks=$ ('#filter input:checkbox','#pv_dlg_plh'+i);
+                  var chks=$('#filter input:checkbox','#pv_dlg_plh'+i);
                   //try to check/uncheck keys in dialogs if exists
                   if (chks.length)
                      {
@@ -1132,9 +1144,9 @@
             str += '<td id="'+opts.filter_keys_placeholder+'" '+opts.styles.FliterPlaceholder+'></td></tr></table></div>';
          }
       str += '<table  class="pv_table">'+td_print.join (' ') +'</table>';
-      if ($ ("#jpivot_placeholder",$this).length == 0)
-         $ ($this).empty().append ('<div id="jpivot_placeholder"></div>');
-      $ ("#jpivot_placeholder",$this).empty().append (str);
+      if ($("#jpivot_placeholder",$this).length == 0)
+         $($this).empty().append ('<div id="jpivot_placeholder"></div>');
+      $("#jpivot_placeholder",$this).empty().append (str);
 
       opts.onCreateManage.call ($this);
 
@@ -1233,14 +1245,14 @@
             {
                var a=[];
                for (i=0;i < data_row_length; i++ )
-                  a[i] = $ ('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;
+                  a[i] = $('#radio_order :radio:checked','#pv_dlg_plh'+i).val() == 'D' ? 1 : -1;
                return a;
             }
             ,getTotalsMask:function (data_row_length)
             {
                var a=[];
                for (i=0;i < data_row_length; i++ )
-                  a[i] = $ ('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr ('checked') ?  1 : 0;
+                  a[i] = $('input[name=total]:checkbox', '#pv_dlg_plh'+i).attr ('checked') ?  1 : 0;
                return a;
             }
             ,onCustomFilter:null
@@ -1256,9 +1268,9 @@
                var a=[];
                for (i=0;i < data_row_length; i++ )
                   a[i]=null;
-               $ ('#pv_filter li').each ( function()
+               $('#pv_filter li').each ( function()
                {
-                  a[$ (this).attr ('value') ]=$ ('select',this).val()
+                  a[$(this).attr ('value') ]=$('select',this).val()
                                            });
                return a;
             }
@@ -1278,9 +1290,9 @@
                      return a;
                   }
                for (var i=0;i < data_row_length; i++ )
-                  $ ('#filter input:checkbox','#pv_dlg_plh'+i).not (':checked').each (function()
+                  $('#filter input:checkbox','#pv_dlg_plh'+i).not (':checked').each (function()
                   {
-                     a[i].push ($ (this).val() )
+                     a[i].push ($(this).val() )
                   })
                return a;
             }
@@ -1356,10 +1368,41 @@
                if (typeof data_indexes.cell_value == 'undefined') return  null;
                return jpv_aggregate_val.call (this,data_indexes,this.aggregateValParam);
             }
+            /**
+            * aggregateValParam.type: is 'SUM' - no additioanl params needed
+            * 'AVG' 
+            	 aggregateValParam {
+		            	 type: 'AVG' 
+		            	 , precision:number of digits after digital delimiter,default is 2
+		            	 ,data_col_cnt - index of conts for dataset row from query (ex. select  sum(val) as data_col, cont(val) as data_col_cnt)
+		            	 			if not set used simple rows counting
+										}
+		            	   
+            * 'PERC' - calculate percent from totals. 
+            			which total to use selscted by totalBy and key
+            			!!! this need precalculateTotals=true for performance !!!
+            		aggregateValParam	{ 
+            			  type:'PERC'
+            			, precision:number of digits after digital delimiter,default is 2
+            			, totalBy: [
+            			       'R' - by row Key totlas
+            			       'C' - by col key totlas
+            			       'GR' - by row grand totlas
+            			       'GC' -by col cols totlas
+            			       ]
+            		  , key: index of key in dataset
+            		  }
+            * aggregateValParam.type: is 'CUSTOM' - no additioanl paams needed  , for calcs used callback function onAggregateVal(data_indexes)
+            *
+            */
             ,aggregateValParam:
             {
                type:'SUM'
             }
+            /**
+            *
+            *  see aggregateValParam
+            */
             ,aggregateTotalParam:
             {
                type:'SUM'
@@ -1378,12 +1421,6 @@
          this.opts = opts;
          this.pv={}; //context pivot data
          this.opts.pivot_data = this.pv ;// ptr to context pivot data
-         //Methods
-         //      this.drawData = function(){this.opts.OnDrawData(this)}
-         //      this.getDataForExcel = function(){this.opts.getDataForExcel(this)}
-         //      this.preparePv = function(){jpv_preparePv(this)}
-         //      this.save = function(){return jPivot_save(this);}
-         //      this.restore = function(obj) {jPivot_restore(obj,this);}
          jpv_preparePv.call (this)
          if (this.opts.immediate_draw)
             this.opts.onDrawData.call (this);
@@ -1404,35 +1441,37 @@
          return [dbg_prefix+data_col+val,rclass ];
       return [val,rclass];
    }
-   function jpv_aggregatePERC_val (cell_val,cell_obj)
-   {
-// pv.data_rows_totals_pos[rw][i][key] =  key_pos
-      var tot = 0;
-      var pv=this.pivot_data;
-      var agp = this.aggregateValParam.params;
-      if ( (agp.totalBy=='R') &&	(typeof (cell_obj.totals_pos.row[agp.key]) !== 'undefined' ) )
-         {
-            tot=pv.rows_totals[agp.key][cell_obj.totals_pos.row[agp.key]][cell_obj.data_pos.col]
-             }
-          if ( (agp.totalBy=='C') &&	(typeof (cell_obj.totals_pos.col[agp.key]) !== 'undefined' ) )
-         {
-            tot=pv.cols_totals[agp.key][cell_obj.totals_pos.col[agp.key]][cell_obj.data_pos.row]
-             }
-          if ( (agp.totalBy=='GC') )
-         {
-            tot=pv.grand_cols_totals[cell_obj.data_pos.row]
-             }
-          if ( (agp.totalBy=='GR') )
-         {
-            tot=pv.grand_rows_totals[cell_obj.data_pos.col]
-             }
-          if (typeof (tot) ===  'object')
-             tot=jpv_aggregate_total.call (this,tot,this.aggregateValParam);
-      var ret =  tot ?	 Math.round ( (10*agp.precision) * (100*cell_val/tot) ) / (10*agp.precision) : null;
-      if (debug==3)
-         return ret+'%='+cell_val+'/'+tot;
-      return ret;
-   }
+function jpv_aggregatePERC_val (cell_val,cell_obj)
+{
+	// pv.data_rows_totals_pos[rw][i][key] =  key_pos
+	var tot = 0;
+	var pv=this.pivot_data;
+	var agp = this.aggregateValParam;
+	if ( (agp.totalBy=='R') &&	(typeof (cell_obj.totals_pos.row[agp.key]) !== 'undefined' ) )
+	{
+		tot=pv.rows_totals[agp.key][cell_obj.totals_pos.row[agp.key]][cell_obj.data_pos.col]
+	}
+	if ( (agp.totalBy=='C') &&	(typeof (cell_obj.totals_pos.col[agp.key]) !== 'undefined' ) )
+	{
+		tot=pv.cols_totals[agp.key][cell_obj.totals_pos.col[agp.key]][cell_obj.data_pos.row];
+	}
+	if ( (agp.totalBy=='GC') )
+	{
+		tot=pv.grand_cols_totals[cell_obj.data_pos.row];
+	}
+	if ( (agp.totalBy=='GR') )
+	{
+		tot=pv.grand_rows_totals[cell_obj.data_pos.col];
+	}
+	if (typeof (tot) ===  'object')
+	{
+		tot=jpv_aggregate_total.call (this,tot,this.aggregateValParam);
+	}
+	var ret =  tot ?	 Math.round ( (10*agp.precision) * (100*cell_val/tot) ) / (10*agp.precision) : null;
+	if (debug==3)
+	return ret+'%='+cell_val+'/'+tot;
+	return ret;
+}
    function jpv_aggregateSUM_val (data_indexes)
    {
       var ret=0;
@@ -1458,9 +1497,8 @@
    function jpv_aggregate_val	(data_indexes,aggregateValParam)
    {
       var ret=null;
-      var AgP;
-      AgP =   (aggregateValParam.type=='PERC')  ? '' : aggregateValParam.type;
-      switch (AgP)
+
+      switch (aggregateValParam.type)
          {
          case 'SUM':
             ret=jpv_aggregateSUM_val.call (this,data_indexes);
@@ -1471,18 +1509,17 @@
          case 'CUSTOM':
             ret=this.onAggregateVal.call (this,data_indexes);
             break;
-         default:
-            ret=jpv_aggregateSUM_val.call (this,data_indexes); //default
-         }
-      if (aggregateValParam.type=='PERC')
-         {
+         case 'PERC':
             //if (!this.precalculateTotals) throw ("jpivot - PERC method require precalculateTotals set to true ");
             if (typeof aggregateValParam.params.precision	=== 'undefined')
                aggregateValParam.params.precision=2;
 
             //postprocess
-            ret=jpv_aggregatePERC_val.call (this,ret,data_indexes);
+            ret=jpv_aggregatePERC_val.call (this,ret,data_indexes);         	
+         default:
+            ret=jpv_aggregateSUM_val.call (this,data_indexes); //default
          }
+
 
       return ret;
    }
