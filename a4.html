@@ -80,30 +80,20 @@ $(document).ready
 	    ,onBeforePrepare:function(){
 	    		BeforePrepare()
 	    		}
-
-      /*
-	    ,onCustomFilter:function(pvdata_row)
-	    		{
-	    		if (!use_custom_filter) return false;// do not filter
-	    		var val=this.data[pvdata_row][data_col];
-	    		if ((custom_filter_cmp==0) && (val >= custom_filter_val)) return false;
-	    		if ((custom_filter_cmp==1) && (val != custom_filter_val)) return false;
-             if ((custom_filter_cmp==2) && (val <= custom_filter_val)) return false;
-             if ((custom_filter_cmp==3) && (val == custom_filter_val)) return false;
-             return true; //do not pass row
-            }
-
-
-            */
+       ,aggregate_total_col:
+       		{
+       		 aggregator:'AVG'
+       		 ,data_col_cnt:data_col_cnt //for AVG
+       		}
+       ,aggregate_total_row:
+       		{
+       		 aggregator:'AVG'
+       		 ,data_col_cnt:data_col_cnt //for AVG
+       		}
        ,aggregate_value:
        		{
        		 aggregator:'AVG'
-       		,precision:3
-       		,formatter:function(val)
-            {
-            if (val == null )return ['','style="color:red;"'];
-            return [val ,'style="color:red;"'];
-            }
+       		,precision:2
           ,data_col_cnt:data_col_cnt //for AVG
        		}
        ,getDataForExcel:function()
@@ -245,12 +235,18 @@ function prepare_pivot()
     	{
     	$('#pv').jPivot('setGridParam',{
     			aggregate_value:{
-    				aggregator:'PERC'
+    				 aggregator:'PERC'
     				,totalBy:'GC'
     				,key:$('#totals_dropdown').val()
     				}
     			});
-    	} 	
+    	}
+    else 	
+    	{
+   		$('#pv').jPivot('setGridParam',{
+					aggregate_value:{aggregator:'SUM'}
+				})  		
+    	}
     	
     	
     $('#pv').jPivot('prepareData');

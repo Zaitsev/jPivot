@@ -87,21 +87,6 @@
     return 0;
     }
 
-  function in_array (element, array, addIfAbsent)
-    {
-    var ret = array.indexOf ( element );
-
-    if (ret != -1)
-      return ret;
-
-    if (addIfAbsent)
-        {
-        array.push (element);
-        return (array.length - 1);
-        }
-
-    return null;
-    }
 
   function in_array (element, array, addIfAbsent)
     {
@@ -889,8 +874,8 @@
 
           case 'PERC':
             opts.aggregate_value.aggregator=jpv_aggregatePERC_val;
+            break;
             }
-
         switch (opts.aggregate_total_col.aggregator)
             {
 
@@ -916,7 +901,7 @@
           case 'AVG':
             opts.aggregate_total_row.aggregator=jpv_aggregateAVG_total;
             break;
-            }            
+            }
         }
 
     //set default precision for values calculations
@@ -925,13 +910,13 @@
 
     opts.aggregate_value.precision_k = Math.pow(10,opts.aggregate_value.precision);
     if  ( (typeof(opts.aggregate_total_col.precision)	=== 'undefined') || (opts.aggregate_total_col.precision==null))
-                                         opts.aggregate_total_col.precision=2;
+      opts.aggregate_total_col.precision=2;
     opts.aggregate_total_col.precision_k = Math.pow(10,opts.aggregate_total_col.precision);
-                                           //opts.pivot_data = pv;
+    //opts.pivot_data = pv;
     if  ( (typeof(opts.aggregate_total_row.precision)	=== 'undefined') || (opts.aggregate_total_row.precision==null))
-                                         opts.aggregate_total_row.precision=2;
+      opts.aggregate_total_row.precision=2;
     opts.aggregate_total_row.precision_k = Math.pow(10,opts.aggregate_total_row.precision);
-                                           //opts.pivot_data = pv;
+    //opts.pivot_data = pv;
     if (opts.precalculateTotals)
         {
         jpv_precalculateTotals (opts);
@@ -1395,16 +1380,16 @@
                 else if ( (td_rows_map[r][0]== null) && (td_cols_map[c][0]== null) )
                   val= opts.onPrintTotalIntersect();
                 else if (td_rows_map[r][0]== null)
-                		{
-                  	//val = opts.onPrintTotalRowValue (table_data[rn][cn][0]);
-                    val = opts.aggregate_total_row.aggregator.call(opts,table_data[rn][cn][0],'TR');
-                    val = opts.aggregate_total_row.formatter.call(opts,val,'TR');
+                    {
+                    //val = opts.onPrintTotalRowValue (table_data[rn][cn][0]);
+                    val = opts.aggregate_total_row.aggregator.call(opts,table_data[rn][cn][0],'R');
+                    val = opts.aggregate_total_row.formatter.call(opts,val,'R');
                     }
                 else if (td_cols_map[c][0]== null)
                     {
                     //val = opts.onPrintTotalColValue (table_data[rn][cn][0]);
-                    val = opts.aggregate_total_col.aggregator.call(opts,table_data[rn][cn][0],'TC');
-                    val = opts.aggregate_total_col.formatter.call(opts,val,'TC');
+                    val = opts.aggregate_total_col.aggregator.call(opts,table_data[rn][cn][0],'C');
+                    val = opts.aggregate_total_col.formatter.call(opts,val,'C');
                     }
                 else
                   val = opts.onPrintTotalColValue (table_data[rn][cn][0]); //intersect of totals
@@ -1805,7 +1790,7 @@
     return ret;
     }
 
-  function jpv_aggregatePERC_val (cell_val,cell_obj)
+  function jpv_aggregatePERC_val (data_indexes)
     {
     // pv.data_rows_totals_pos[rw][i][key] =  key_pos
     var tot = 0;
@@ -1818,33 +1803,38 @@
     var pv=this.pivot_data;
 
     var agp = this.aggregate_value;
-
-    if ( (agp.totalBy=='R') &&	(typeof (cell_obj.totals_pos.row[agp.key]) !== 'undefined' ) )
+    var cell_aggregator=null; //set cell agregation same as for total
+    if ( (agp.totalBy=='R') &&	(typeof (data_indexes.totals_pos.row[agp.key]) !== 'undefined' ) )
         {
-        tot=pv.rows_totals[agp.key][cell_obj.totals_pos.row[agp.key]][cell_obj.data_pos.col];
+        cell_aggregator = this.aggregate_total_row.aggregator;
+        tot=pv.rows_totals[agp.key][data_indexes.totals_pos.row[agp.key]][data_indexes.data_pos.col];
         }
 
-    if ( (agp.totalBy=='C') &&	(typeof (cell_obj.totals_pos.col[agp.key]) !== 'undefined' ) )
+    if ( (agp.totalBy=='C') &&	(typeof (data_indexes.totals_pos.col[agp.key]) !== 'undefined' ) )
         {
-        tot=pv.cols_totals[agp.key][cell_obj.totals_pos.col[agp.key]][cell_obj.data_pos.row];
+        cell_aggregator = this.aggregate_total_col.aggregator;
+        tot=pv.cols_totals[agp.key][data_indexes.totals_pos.col[agp.key]][data_indexes.data_pos.row];
         }
 
     if ( (agp.totalBy=='GC') )
         {
-        tot=pv.grand_cols_totals[cell_obj.data_pos.row];
+        cell_aggregator = this.aggregate_total_col.aggregator;
+        tot=pv.grand_cols_totals[data_indexes.data_pos.row];
         }
 
     if ( (agp.totalBy=='GR') )
         {
-        tot=pv.grand_rows_totals[cell_obj.data_pos.col];
+        cell_aggregator = this.aggregate_total_row.aggregator;
+        tot=pv.grand_rows_totals[data_indexes.data_pos.col];
         }
 
     if (typeof (tot) ===  'object')
         {
-        tot=jpv_aggregate_total.call (this,tot);
+        tot=cell_aggregator.call (this,tot,agp.totalBy);
         }
+    cell_val = cell_aggregator.call(this,[data_indexes.cell_value],agp.totalBy);
+    var ret =  tot ?	 cell_val/tot  : null;
 
-    var ret =  tot ?	 Math.round ( this.aggregate_value.data_col_cnt* cell_val/tot ) / this.aggregate_value.data_col_cnt : null;
 
     if (debug==3)
       return ret+'%='+cell_val+'/'+tot;
@@ -1900,8 +1890,8 @@
             cnt ++;
             }
         }
-
-    var ret_t = cnt ? Math.round (  this.aggregate_value.precision_k  * ret/cnt)  / this.aggregate_value.precision_k   : 0;
+    var ret_t = cnt ? ret/cnt : null;
+    //var ret_t = cnt ? Math.round (  this.aggregate_value.precision_k  * ret/cnt)  / this.aggregate_value.precision_k   : 0;
 
     if (debug==3)
       return ret_t +'='+ret+'/'+cnt;
@@ -1918,14 +1908,17 @@
         {
         ret='';
         }
-
+    if (typeof ret==='number')
+        {
+        ret = Math.round ( this.aggregate_value.precision_k* ret ) / this.aggregate_value.precision_k ;
+        }
     return  [ret,rclass];
     }
 
 
 
 
-// totals aggregate 
+// totals aggregate
   function jpv_debug_total (data_indexes,T_type)
     {
     if (typeof data_indexes === 'undefined')
@@ -1940,20 +1933,14 @@
       ret=T_type+' null';
     return  T_type+ret;
     }
-  function jpv_precalc_totals_cells_col (opts,arr)
+  function jpv_precalc_totals_cells (aggregate_total,arr)
     {
     var len=arr.length;
 
     for (var i=0 ; i < len ; i++)
-      arr[i] = opts.aggregate_total_call.call (opts,arr[i]);
+      arr[i] = aggregate_total.aggregator.call (opts,arr[i]);
     }
-  function jpv_precalc_totals_cells_row (opts,arr)
-    {
-    var len=arr.length;
 
-    for (var i=0 ; i < len ; i++)
-      arr[i] = opts.aggregate_total_row.call (opts,arr[i]);
-    }
 
   function jpv_precalculateTotals (opts)
     {
@@ -1963,11 +1950,11 @@
 
     for (var i=0 ; i < pv.rows_totals.length ; i++)
       for (var j=0 ; j < pv.rows_totals[i].length ; j++)
-        jpv_precalc_totals_cells_row (opts,pv.rows_totals[i][j]);
+        jpv_precalc_totals_cells(opts.aggregate_total_row,pv.rows_totals[i][j]);
 
     for (var i=0 ; i < pv.cols_totals.length ; i++)
       for (var j=0 ; j < pv.cols_totals[i].length ; j++)
-        jpv_precalc_totals_cells_col (opts,pv.cols_totals[i][j]);
+        jpv_precalc_totals_cells(opts.aggregate_total_col,pv.cols_totals[i][j]);
     }
 
   function jpv_aggregateSUM_total (data_indexes_tot,T_type)
@@ -1975,7 +1962,7 @@
     if (typeof data_indexes_tot === 'undefined')
         {
         return null;
-        }    	
+        }
     if (typeof (data_indexes_tot) !== 'object')
       return data_indexes_tot; //preaggregated
 
@@ -2004,7 +1991,7 @@
     if (typeof data_indexes_tot === 'undefined')
         {
         return null;
-        }       	
+        }
     if (typeof (data_indexes_tot) !== 'object')
       return data_indexes_tot; //preaggregated
 
@@ -2017,7 +2004,7 @@
     var cnt=0;
 
     //simple or with precalc avg method
-    
+
     for (i=0; i < len; i++)
         {
         vals = data_indexes_tot[i];
@@ -2026,7 +2013,7 @@
           continue;
 
         //use one if (not check in loop) for performance
-        if ( ((T_type=='TR') && (this.aggregate_total_row.data_col_cnt != null)) || ((T_type=='TC') && (this.aggregate_total_col.data_col_cnt != null)) )
+        if ( ( ((T_type=='R') ||(T_type=='GR')) && (this.aggregate_total_row.data_col_cnt != null)) || ( ((T_type=='C') ||(T_type=='GC')) && (this.aggregate_total_col.data_col_cnt != null)) )
             {
             //with precalc avg method
             for (var j =0 ; j < vals.length; j++)
@@ -2045,10 +2032,11 @@
                 }
             }
         }
-    var pricision=1;
-    if (T_type=='TR') pricision = this.aggregate_total_row.precision_k;
-    if (T_type=='TC') pricision = this.aggregate_total_col.precision_k;
-    var ret_r = cnt ? Math.round ( pricision * ret/cnt ) / pricision  : 0;
+    //var pricision=1;
+    //if ((T_type=='R') || (T_type=='GR')) pricision = this.aggregate_total_row.precision_k;
+    //if ((T_type=='C') || (T_type=='GC')) pricision = this.aggregate_total_col.precision_k;
+    //var ret_r = cnt ? Math.round ( pricision * ret/cnt ) / pricision  : 0;
+    var ret_r = cnt ? ret/cnt : null;
 
     if (debug==3)
       return ret_r +'='+ret+'/'+cnt;
@@ -2056,44 +2044,28 @@
     return ret_r;
     }
 
-  /**
-  *
-  *@params
-  *  - data_indexes: cell data, aggregateParam: objact with params
-  *@return aggregated value
-  * THis called from 'PERC' with aggregateParam=aggregateValParam and
-
-  function jpv_aggregate_total	(data_indexes)
-    {
-    var ret=null;
-    switch (this.aggregateTotalParam.type)
-        {
-      case 'SUM':
-        ret=jpv_aggregateSUM_total.call (this,data_indexes);
-        break;
-      case 'AVG':
-        ret=jpv_aggregateAVG_total.call (this,data_indexes);
-        break;
-      case 'CUSTOM':
-        ret=this.onAggregateTotal.call (this,data_indexes);
-        break;
-      default:
-        ret=jpv_aggregateSUM_total.call (this,data_indexes); //default
-        }
-    return ret;
-    }
-  */
   function jpv_format_total (ret,T_type)
     {
     var rclass = '';
-    if (T_type='TC') rclass = this.styles.TotalColValue;
-    if (T_type='TR') rclass = this.styles.TotalRowValue;
-
+    var precision=1;
+    if ((T_type=='GC')||(T_type=='C'))
+        {
+        rclass = this.styles.TotalColValue;
+        precision=this.aggregate_total_col.precision_k;
+        }
+    if ((T_type=='GR')||(T_type=='R'))
+        {
+        rclass = this.styles.TotalRowValue;
+        precision=this.aggregate_total_row.precision_k;
+        }
     if (ret==null)
         {
         ret='';
         }
-
+    if (typeof ret==='number')
+        {
+        ret = Math.round ( precision * ret ) / precision ;
+        }
     return  [ret,rclass];
     }
 
@@ -2127,7 +2099,7 @@
         {
         if (this.opts && typeof (newParams) === 'object')
             {
-            $.extend (this.opts,newParams);
+            $.extend (true,this.opts,newParams);
             }
         });
       }
@@ -2184,7 +2156,7 @@
         {
         if (this.opts && typeof (savedParams) === 'object')
             {
-            $.extend (this.opts,savedParams);
+            $.extend (true,this.opts,savedParams);
             }
         });
       }
