@@ -1844,7 +1844,7 @@
 
   function jpv_aggregateSUM_val (data_indexes)
     {
-    if (typeof data_indexes === 'undefined')
+     if ( typeof data_indexes.cell_value === 'undefined')
         {
         return null;
         }
