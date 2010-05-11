@@ -1,0 +1,716 @@
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<link type="text/css" href="./js/redmond/jquery-ui.css" rel="stylesheet" />
+   <link type="text/css" href="./css/jpivot-external.css" rel="stylesheet" />
+
+ <script language="javascript" type="text/javascript" src="./js/jquery-1.4.2.min.js"></script>
+ <script type="text/javascript" src="./js/jquery-ui-1.8.custom.min.js"></script>
+
+		 <script type="text/javascript" src="./jpivot5.js"></script>
+
+<script type="text/javascript" >
+
+var debug=0;
+
+$(document).ready
+	(function()
+		{
+		$("#dbg_level").slider({
+			value:0,
+			min: 0,
+			max: 3,
+			step: 1,
+			stop: function(event, ui) {
+				debug = ui.value;
+			}
+		});
+		debug = $("#dbg_level").slider("value");
+		$("#trsh_rnd").slider({
+			value:1,
+			min: 0.5,
+			max: 1,
+			step: 0.05,
+			slide:function(event,ui)
+					{
+					$('#trsh_txt').text(ui.value);
+					}
+
+		});
+
+		$(".vals_n").slider({
+			value:2,
+			min: 1,
+			max: 10,
+			step: 1,
+			stop:function(event, ui)
+				{
+				str='i,j,k,l,m=';
+				var vl=1;
+				$(".vals_n").each(
+					function(i)
+						{
+					  var a = $(".vals_n").eq(i).slider("value")
+					  vl *= a
+					  str +='x'+a;
+						}
+					);
+			 str += '='+vl;
+			 $('#vals_comp').text(str);
+
+				}
+			});
+		create_data();
+
+		var pivots=$('#pv').jPivot
+				 (data_local,{
+			rows:rows,cols:cols,data_col:data_col,data_headers:data_headers,aggregate:aggregate
+			,filter:filter
+			,totals_mask:totals_mask
+	    //,styles:{Key:'class="ui-state-default"'}
+	    ,ExternalManage:true
+	    ,immediate_draw:false
+	    ,row_keys_placeholder:'qpv_row_keys_placeholder'
+	    ,col_keys_placeholder:'qpv_col_keys_placeholder'
+	    ,onAfterDraw:function(){AfterDraw()}
+	    ,onBeforeDraw:function(){
+	    		BeforeDraw()
+	    		}
+	    ,onBeforePrepare:function(){
+	    		BeforePrepare()
+	    		}
+       ,aggregate_total_col:
+       		{
+       		 aggregator:'SUM'
+       		 ,data_col_cnt:data_col_cnt //for AVG
+       		}
+       ,aggregate_total_row:
+       		{
+       		 aggregator:'SUM'
+       		 ,data_col_cnt:data_col_cnt //for AVG
+       		}
+       ,aggregate_value:
+       		{
+       		 aggregator:'SUM'
+       		,precision:2
+          ,data_col_cnt:data_col_cnt //for AVG
+       		}
+       ,getDataForExcel:function()
+                  {
+                  var tr=0; var td=0; var tmp; var cs;var rs;var cl;var bg;
+                  $('#jpivot_placeholder tr').each(function (i)
+                           {
+                           pv_json[tr]=[];td=0;
+                           $('td',this).each(function (i)
+                                       {
+                                       tmp = $(this);
+                                       cs=tmp.attr('colspan'); cs=(typeof cs === 'undefined') ? 1 : cs;
+                                       rs=tmp.attr('rowspan'); rs=(typeof rs === 'undefined') ? 1 : rs;
+                                       cl=tmp.attr('class'); cl=(typeof cl === 'undefined') ? '' : cl;
+                                       bg=tmp.css('background-color'); bg=(typeof bg === 'undefined') ? '' : bg;
+                                       pv_json[tr][td++]=[tmp.text(),cs,rs,cl,bg];
+                                       });
+                           tr++;
+                           });
+                   $.postJSON(
+                   'ajax.php?mode=export_excel'
+                   ,{pv_table:JSON.stringify(pv_json)}
+                   )
+                   }
+        ,onPrintRowKey: function(key_index,total_index,val)
+        		{
+        		if (key_index < this.pivot_data.row_keys_length -1 )
+        				{
+        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_row(this)">+</a> '+val,	this.styles.Key+' row_key="'+key_index+'" totind="'+total_index+'"'];
+        				}
+        	    else
+        	    		{
+        				//do not print collapse fror last key
+        				return [val,this.styles.Key];
+        	    		}
+        	    		
+        		}
+		,onPrintTotalRowKey: function(key_index,val)
+				{
+				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_row(this)">-</a> '+val,this.styles.TotalRowKey];
+				}	
+		,onPrintRowKeyHeader:function (key_index,val)
+				{
+				if (key_index < this.pivot_data.row_keys_length -1 )
+					{
+					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="row_exp_key(this)">+</a> '+val,this.styles.KeyHeader+' row_key="'+key_index+'"'];
+					}
+				else
+					{
+					return[val,this.styles.KeyHeader];
+					}
+				}
+				
+     ,onPrintColKey: function(key_index,total_index,val)
+        		{
+        		if (key_index < this.pivot_data.col_keys_length -1 )
+        				{
+        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_col(this)">+</a> '+val,	this.styles.Key+' col_key="'+key_index+'" totind="'+total_index+'"'];
+        				}
+        	    else
+        	    		{
+        				//do not print collapse fror last key
+        				return [val,this.styles.Key];
+        	    		}
+        	    		
+        		}    				
+		,onPrintTotalColKey: function(key_index,val)
+				{
+				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_col(this)">-</a> '+val,this.styles.TotalColKey];
+				}					
+		,onPrintColKeyHeader:function (key_index,val)
+				{
+				if (key_index < this.pivot_data.col_keys_length -1 )
+					{
+					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="col_exp_key(this)">+</a> '+val,this.styles.KeyHeader+' col_key="'+key_index+'"'];
+					}
+				else
+					{
+					return[val,this.styles.KeyHeader];
+					}
+				}
+         });
+
+
+     //redraw_pivot();
+   pv0=pivots[0];
+   $('#pv').jPivot('drawData');
+
+
+   //init colorpickers
+/*
+    $('#colors input').each(function(i)
+        {
+        colors[i]=$(this).colorPicker();
+        }
+    )
+
+   $("#resize_chart_1").resizable({
+
+    stop:function(){redraw()}
+    ,handles: 'all'
+   });
+*/
+    	//ready end
+		});
+function row_exp_key($href_kh)
+		{
+		var ttd=$($href_kh).parent();
+		var keyind=ttd.attr('row_key');	
+
+        //if we have no total for thos row - draw
+		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
+		var rows=$('#pv').jPivot('getGridParam','rows');
+		if (! totals_mask[rows[keyind]])
+				{
+				//save id for resoring
+		        var td_id=ttd.attr('id');
+				totals_mask[rows[keyind]] = 1;
+				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
+				$('#pv').jPivot('drawData');
+				//restore 
+				ttd= $('#'+td_id);
+				$href_kh = $('a',ttd);
+				}
+		var tds = $('#jpivot_placeholder td[row_key='+keyind+']').slice(1);	//all td except keyheader 
+		
+		
+		if ($($href_kh).is('.jpv_tot_collapsed') )
+				{//expand
+			    $($href_kh).addClass('jpv_collapse_process');
+				for (var t=0;t < tds.length; t++)
+						{
+						__collapse_expand_row( $(tds[t]), true );
+						}			    
+			    $('#jpivot_placeholder td.pv_TotalRowKey[keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');	
+				$($href_kh).removeClass('jpv_tot_collapsed jpv_collapse_process').addClass('jpv_tot_expanded');
+				}	   			
+	   	 else
+				{//collapse
+			    $($href_kh).addClass('jpv_collapse_process');
+				for (var t=0;t < tds.length; t++)
+						{
+						__collapse_expand_row( $(tds[t]), false);
+						}	
+			    $('#jpivot_placeholder td.pv_TotalRowKey[keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');		    
+				$($href_kh).removeClass('jpv_tot_expanded jpv_collapse_process').addClass('jpv_tot_collapsed');	   				
+	   			}		
+
+		}
+
+function expand_row($href)
+		{
+		var ttd=$($href).parent();
+		var totind=parseInt(ttd.attr('totind'));
+		var keyind=ttd.attr('keyind');			
+		var td = $('#jpivot_placeholder td[row_key='+keyind+']').eq(totind+1);//skip key header		
+		$('#jpivot_placeholder td.pv_TotalRowKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');
+		__collapse_expand_row(td,true )	;
+		}
+
+		
+function collapse_row($href)
+		{
+		var td=$($href).parent();
+		var keyind=td.attr('row_key');
+    var totind=td.attr('totind');
+		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
+		var rows=$('#pv').jPivot('getGridParam','rows');
+		if (! totals_mask[rows[keyind]])
+				{
+		        var td_id=td.attr('id');
+				totals_mask[rows[keyind]] = 1;
+				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
+				$('#pv').jPivot('drawData');
+				//restore td after redraw
+				td= $('#'+td_id);
+				}
+		$('#jpivot_placeholder td.pv_TotalRowKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
+		__collapse_expand_row(td,false);
+
+		}
+function __collapse_expand_row(td,set_css)
+		{
+		var td_rc=td.attr('id').split(/(\d+)/); //return ["jpivot_rc_", "4", "_", "0", ""] from jpivot_rc_4_0_0		
+		var start_col=parseInt(td_rc[3]);
+		var r=parseInt(td_rc[1]);
+		var rs=parseInt(td.attr('rowspan'));
+		var rows_len=$('#pv').jPivot('getGridParam','pivot_data').data_row_length*2; //mul to 2 for totals
+		for (var i= r ; i < r+rs; i++)
+				{
+				for (var j=start_col; j < rows_len; j++)
+						{
+						//$('#jpivot_rc_'+i+'_'+j).css(set_css); 
+						if (!set_css) 
+								$('#jpivot_rc_'+i+'_'+j).addClass('jpv_collapsed_row'); 
+					  else
+					  		$('#jpivot_rc_'+i+'_'+j).removeClass('jpv_collapsed_row'); 
+						}
+				}
+		}		
+
+function col_exp_key($href_kh)
+		{
+		var ttd=$($href_kh).parent();
+		var keyind=ttd.attr('col_key');	
+
+        //if we have no total for thos row - draw
+		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
+		var rows=$('#pv').jPivot('getGridParam','rows');
+		if (! totals_mask[cols[keyind]])
+				{
+				//save id for resoring
+		        var td_id=ttd.attr('id');
+				totals_mask[cols[keyind]] = 1;
+				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
+				$('#pv').jPivot('drawData');
+				//restore 
+				ttd= $('#'+td_id);
+				$href_kh = $('a',ttd);
+				}
+		var tds = $('#jpivot_placeholder td[col_key='+keyind+']').slice(1);	//all td except keyheader 
+		
+		
+		if ($($href_kh).is('.jpv_tot_collapsed') )
+				{//expand
+			    $($href_kh).addClass('jpv_collapse_process');
+				for (var t=0;t < tds.length; t++)
+						{
+						__collapse_expand_col( $(tds[t]), true );
+						}			    
+			    $('#jpivot_placeholder td.pv_TotalColKey[keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');	
+				$($href_kh).removeClass('jpv_tot_collapsed jpv_collapse_process').addClass('jpv_tot_expanded');
+				}	   			
+	   	 else
+				{//collapse
+			    $($href_kh).addClass('jpv_collapse_process');
+				for (var t=0;t < tds.length; t++)
+						{
+						__collapse_expand_col( $(tds[t]), false);
+						}	
+			    $('#jpivot_placeholder td.pv_TotalColKey[keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');		    
+				$($href_kh).removeClass('jpv_tot_expanded jpv_collapse_process').addClass('jpv_tot_collapsed');	   				
+	   			}		
+
+		}		
+function expand_col($href)
+		{
+		var ttd=$($href).parent();
+		var totind=parseInt(ttd.attr('totind'));
+		var keyind=ttd.attr('keyind');			
+		var td = $('#jpivot_placeholder td[col_key='+keyind+']').eq(totind+1);//skip key header		
+		$('#jpivot_placeholder td.pv_TotalColKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');
+		__collapse_expand_col(td,true )	;
+		}		
+
+function collapse_col($href)
+		{
+		var td=$($href).parent();
+		var keyind=td.attr('col_key');
+    var totind=td.attr('totind');
+		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
+		var cols=$('#pv').jPivot('getGridParam','cols');
+		if (! totals_mask[cols[keyind]])
+				{
+		    var td_id=td.attr('id');
+				totals_mask[cols[keyind]] = 1;
+				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
+				$('#pv').jPivot('drawData');
+				//restore td after redraw
+				td= $('#'+td_id);
+				}
+		$('#jpivot_placeholder td.pv_TotalColKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
+		__collapse_expand_col(td,false);
+
+		}
+
+
+function __collapse_expand_col(td,set_css)
+		{
+		var td_rc=td.attr('id').split(/(\d+)/); //return ["jpivot_rc_", "4", "_", "0", ""] from jpivot_rc_4_0_0		
+		var start_row=parseInt(td_rc[1]);
+		var c=parseInt(td_rc[3]);
+		//var cs=parseInt(td.attr('colspan'));
+		var cs=parseInt(td.attr('oldcolspan'));
+    if ( isNaN(cs)) 
+    		{
+    		cs=parseInt(td.attr('colspan'));
+    		td.attr('oldcolspan',cs);
+    		}
+		var cols_len=$('#pv').jPivot('getGridParam','pivot_data').data_rows_count*2 //mul to 2 for totals
+if (!set_css		)
+{
+	var sub_c=parseInt(td.attr('c'))
+	var sub_cs=parseInt(td.attr('colspan'))
+	var sub_r=parseInt(td.attr('r'))
+	for (var i=0; i < sub_r; i++)//all above
+	{
+			$('#jpivot_placeholder td[r='+i+']').each(
+					function()
+					{
+						var cc=parseInt($(this).attr('c'));
+						
+						var ccs=parseInt($(this).attr('oldcolspan'));
+				    if ( isNaN(ccs)) 
+				    		{
+				    		ccs=parseInt($(this).attr('colspan'));
+				    		}						
+										
+						if ( (cc <= sub_c ) && (cc+ccs - 1 >= sub_c) )
+								{
+								var new_colspan=parseInt($(this).attr('colspan')); 
+								new_colspan = new_colspan - sub_cs;
+				    		$(this)
+				    		 .attr('oldcolspan',ccs)
+								 .attr('colspan',new_colspan)
+								 .css({color:'red'})
+								;
+								}
+					}
+					);
+	}
+} 
+else
+{
+	
+	var sub_cs=parseInt(td.attr('oldcolspan'))
+
+	if ( !isNaN(sub_cs))
+	{
+		var sub_c=parseInt(td.attr('c'))
+  	var sub_r=parseInt(td.attr('r'))
+		td.attr('colspan',sub_cs); //restore this
+		for (var i=0; i < sub_r; i++) // restore all above
+		{
+			$('#jpivot_placeholder td[r='+i+'][oldcolspan]').each(
+			function()
+			{
+				var cc=parseInt($(this).attr('c'));
+				var ccs=parseInt($(this).attr('oldcolspan'));
+				if ( (cc <= sub_c ) && (cc+ccs -1 >= sub_c) )
+				{
+					var new_colspan=parseInt($(this).attr('colspan'));
+					$(this).attr('colspan',new_colspan+sub_cs);
+					$(this).css({color:'blue'});
+				}
+
+			}
+			);
+		}
+	}
+	
+}
+	
+		for (var i= c ; i < c+cs; i++)
+				{
+				for (var j=start_row; j < cols_len; j++)
+						{
+						//$('#jpivot_rc_'+j+'_'+i).css(set_css); 
+						if (!set_css) 
+								{
+								$('#jpivot_rc_'+j+'_'+i).addClass('jpv_collapsed_col').css({color:'green'});// 
+								}
+					  else
+					  		{
+					  		var $this = $('#jpivot_rc_'+j+'_'+i);
+					  		$this.removeClass('jpv_collapsed_col').css({color:'blue'});//
+								var ccs=parseInt($this.attr('oldcolspan'));
+						    if ( !isNaN(ccs)) 
+						    		{
+						    		$this.attr('colspan',ccs).css({color:'green'});
+						    		}							  		
+					  	  }
+						}
+				}
+		}
+
+var colors=[];
+var use_custom_filter=0;var custom_filter_cmp=0;var custom_filter_val=0;
+
+var tot_perc = null;
+function BeforePrepare()
+   {
+   use_custom_filter = $('#use_custom_filter').is(':checked');
+   custom_filter_cmp = parseInt($('#custom_filter_cmp').val());
+   custom_filter_val = parseFloat($('#custom_filter_val').val());
+   }
+
+
+
+function BeforeDraw()
+   {
+    //preapre colors
+    colors=[];
+    $('#colors input').each(function(i)
+        {
+        colors[i]=[parseFloat($(this).attr('level')),$(this).val()]
+        }
+    )
+   //save state
+   tot_perc =  $('#totals_dropdown').val();
+   }
+
+function AfterDraw()
+   {
+      //create totals dropdown
+      $('#totals_dropdown').empty();
+      //get cols and rows keys captions
+      var headers=pv0.opts.data_headers;
+      var l = pv0.opts.rows.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.rows[i]+'">'+headers[pv0.opts.rows[i]]+'</option>');
+      var l = pv0.opts.cols.length;
+      for (var i=0; i < l; i++)
+         $('#totals_dropdown').append('<option value="'+pv0.opts.cols[i]+'">'+headers[pv0.opts.cols[i]]+'</option>');
+      //restore state
+      $('#totals_dropdown').val(tot_perc);
+   }
+function print_value_by_total($this,data_indexes)
+      {
+       var rclass = $this.styles.Value;
+    			if (typeof data_indexes == 'undefined') return  ['',rclass];		;
+    			var ret=0;
+					if (debug==1) ret='trv'
+					if (debug==2) ret='trv'+data_indexes.join(' +');
+					if (!debug)
+    					{
+    							ret = data_indexes[0];
+    				  }
+    		  if (data_indexes[1] > 0) ret=Math.round(100*(100*data_indexes[0]/data_indexes[1]))/100;
+    		  else ret=0;
+    		  return  [ret,rclass];
+      }
+
+
+function save_state()
+    {
+    serial=$('#pv').jPivot('saveGridParam');
+    console.dir(serial);
+    }
+function restore()
+    {
+    $('#pv').jPivot('restoreGridParam',serial);//.jPivot('prepareData').jPivot('drawData')
+    }
+
+function export_pivot()
+      {
+       pv0.getDataForExcel();
+      }
+ function redraw_pivot()
+    {
+
+    $('#pv').jPivot('drawData');
+
+    }
+
+
+
+function prepare_pivot()
+    {
+    	
+    if ($('#use_percent_by_totals').is(':checked'))
+    	{
+    	$('#pv').jPivot('setGridParam',{
+    			aggregate_value:{
+    				 aggregator:'PERC'
+    				,totalBy:'GC'
+    				,key:$('#totals_dropdown').val()
+    				}
+    			});
+    	}
+    else 	
+    	{
+   		$('#pv').jPivot('setGridParam',{
+					aggregate_value:{aggregator:'SUM'}
+				})  		
+    	}
+    	
+    	
+    $('#pv').jPivot('prepareData');
+    }
+function 		re_create_data()
+		{
+		create_data();
+		$('#pv').jPivot(data_local,{});
+		//$('#pv').jPivot('setGridParam',{data:data_local});
+		}
+function create_data()
+{
+	//return;
+	var trsh = $("#trsh_rnd").slider("value");
+	data_local=[];
+	var snum=0;var cnt=0;
+	var il=$(".vals_n").eq(0).slider("value");
+	var jl = $(".vals_n").eq(1).slider("value");
+	var kl = $(".vals_n").eq(2).slider("value");
+	var ll = $(".vals_n").eq(3).slider("value");
+	var ml =  $(".vals_n").eq(4).slider("value");
+	var pl = $(".vals_n").eq(5).slider("value");
+	for (var i=0; i < il; i++)
+	{
+		for (var j=0; j < jl; j++)
+		{
+			if (Math.random() > trsh) continue;
+			for (var k=0;k < kl; k++)
+			{
+				if (Math.random() > trsh) continue;
+				for (var l=0;l < ll ; l++)
+				{
+					if (Math.random() > trsh) continue;
+					for (var m=0;m < ml ; m++)
+					{
+						if (Math.random() > trsh) continue;
+						for (var p=0;p < pl; p++)
+						{
+							if (Math.random() > trsh) continue;
+							//data.push(['i'+i,'j'+j,'k'+k,'L'+l,'m'+m,'i'+i+'j'+j+'k'+k+'L'+l+'m'+m])  ;
+							data_local[cnt]=['I'+i,'J'+j,'K'+k,'L'+l,'M'+m,'N'+p,snum++]  ;
+							cnt++;
+						}
+					}
+				}
+			}
+		}
+	}
+	$('#vals_comp').text('created '+cnt+'rows');
+}
+var data_local=[];
+var rows = [4,5];
+var cols = [0,1,2,3];
+var data_col=6;
+var data_col_cnt=null;
+var aggregate = [];
+var filter = [];
+var totals_mask = [1,1,1,1,1,1,1];
+var data_headers=['capt_i','capt_j','capt_k','capt_l','capt_m','capt_n']              ;
+	</script>
+
+ <script type="text/javascript" src="./__data_small.js"></script>
+ 
+ 
+<style>
+	  td.jpv_collapsed_row{display:none;} 
+	  td.jpv_collapsed_col{display:none;} 
+		a.jpv_collapse {text-decoration:none;border:1px solid black;}
+		a.jpv_collapse_process {background-color:yellow;}
+		.pv_TotalRowKey a.jpv_tot_collapsed, .pv_TotalColKey a.jpv_tot_collapsed  {background-color:red;display:inline;}
+		.pv_TotalRowKey a.jpv_tot_expanded,.pv_TotalColKey a.jpv_tot_expanded   {display:none;}
+		
+		body *{font-size:12px;}
+		         #chart2div, #resize_chart_1 { width: 800px; height: 400px;}
+		div#color_custom{display:block;}
+		 div.controlset {display: block; float:left; width: 100%; padding: 0.25em 0;}
+		div.controlset label,
+		 div.controlset input,
+		div.controlset div { display: inline; float: left; }
+		
+		div.form-container div.controlset label { width: 100px;}
+		.partbl td{width:100px;}
+</style>
+
+
+<table>
+	<tr>
+		<td style="width:220px;">
+debug level:<span id="dbg_lvl"></span><div id="dbg_level" style="width:100px;"></div><br>
+		</td>
+		<td style="width:220px;">
+var coplexity = <span id="vals_comp"></span>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<div class="vals_n" style="width:200px;"></div>
+		<button onclick="re_create_data()">recreate</button>
+		</td>
+		<td style="width:220px;">
+trash_hold: <span id="trsh_txt"></span><div id="trsh_rnd" style="width:100px;"></div><br>
+		</td>
+</tr>
+</table>
+<div id="dbg_level" style="width:100px;"></div>
+<table border=1 class="partbl">
+    <tr><td>Rows</td><td>Cols</td><td>Aggr</td><td>Filter</td><td>colors</td></tr>
+     <tr>
+      <td id='qpv_row_keys_placeholder'>herereww</td>
+      <td id='qpv_col_keys_placeholder'>herecol</td>
+      <td id='pv_aggregate_placeholder'>ag</td>
+      <td id='pv_filter_placeholder'>f</td>
+      <td id="colors" width="120px">
+         <div class="controlset"><label for="color3">80</label> <input level="80" type="text" name="color3" value="#008000" /></div>
+         <div class="controlset"><label for="color3">50</label> <input level="50" type="text" name="color3" value="#99cc00" /></div>
+         <div class="controlset"><label for="color2">30</label> <input level="30" type="text" name="color2" value="#FFFF00" /></div>
+         <div class="controlset"><label for="color1">10</label> <input level="10" type="text" name="color1" value="#FF0000" /></div>
+      </td>
+      <td>
+         <input type="checkbox" id="use_custom_filter" value="1">значенение
+            <select id="custom_filter_cmp">
+            <option value="0">&ge;</option>
+            <option value="1">&ne;</option>
+            <option value="2">&le;</option>
+            <option value="3">=</option>
+          </select>
+         <input type="text" style="width:20px;" id="custom_filter_val" value="50">
+      </td>
+      <td>
+         <input type="checkbox" id="use_percent_by_totals" >
+         %from totals by key <select  id="totals_dropdown"></select>
+      </td>
+     </tr>
+</table>
+<button name="dr" onclick="redraw_pivot()">Draw</button>
+<button name="dr" onclick="prepare_pivot()">Prepare</button>
+<button name="dr" onclick="export_pivot()">Excel</button>
+<button name="dr" onclick="save_state()">Save</button>
+<button name="dr" onclick="restore()">Restore</button>
+
+
+		 <div id="pv"></div>
+
+
