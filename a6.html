@@ -10,7 +10,7 @@
 		 <script type="text/javascript" src="./jpivot5.js"></script>
 
 <script type="text/javascript" >
-
+var dynamic_style=[];
 var debug=0;
 
 $(document).ready
@@ -121,8 +121,12 @@ $(document).ready
         		{
         		if (key_index < this.pivot_data.row_keys_length -1 )
         				{
-        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_row(this)">+</a> '+val,	this.styles.Key+' row_key="'+key_index+'" totind="'+total_index+'"'];
+        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_row(this)">+</a>'+val,	this.styles.Key+' row_key="'+key_index+'" totind="'+total_index+'"'];
         				}
+        		else if (val == 'RSP')
+        				{
+        				return ['','class="pv_Key_rs"'];
+        				}        				
         	    else
         	    		{
         				//do not print collapse fror last key
@@ -132,13 +136,13 @@ $(document).ready
         		}
 		,onPrintTotalRowKey: function(key_index,val)
 				{
-				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_row(this)">-</a> '+val,this.styles.TotalRowKey];
+				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_row(this)">-</a><span>'+val+'</span>',this.styles.TotalRowKey];
 				}	
 		,onPrintRowKeyHeader:function (key_index,val)
 				{
 				if (key_index < this.pivot_data.row_keys_length -1 )
 					{
-					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="row_exp_key(this)">+</a> '+val,this.styles.KeyHeader+' row_key="'+key_index+'"'];
+					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="row_exp_key(this)">+</a><span>'+val+'</span>',this.styles.KeyHeader+' row_key="'+key_index+'"'];
 					}
 				else
 					{
@@ -150,24 +154,32 @@ $(document).ready
         		{
         		if (key_index < this.pivot_data.col_keys_length -1 )
         				{
-        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_col(this)">+</a> '+val,	this.styles.Key+' col_key="'+key_index+'" totind="'+total_index+'"'];
+        				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="collapse_col(this)">+</a> '+val,	this.styles.Key ];
         				}
-        	    else
-        	    		{
-        				//do not print collapse fror last key
-        				return [val,this.styles.Key];
-        	    		}
+        		else if (val == 'CSP')
+        				{
+        				return ['','class="pv_Key_cs"'];
+        				}
+        		else if (val == 'RSP')
+        				{
+        				return ['','class="pv_Key_rs"'];
+        				}        				
+        	  else
+      	    		{
+      					//do not print collapse fror last key
+      					return [val,this.styles.Key];
+      	    		}
         	    		
         		}    				
 		,onPrintTotalColKey: function(key_index,val)
 				{
-				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_col(this)">-</a> '+val,this.styles.TotalColKey];
+				return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="expand_col(this)">-</a><span>'+val+'</span>',this.styles.TotalColKey];
 				}					
 		,onPrintColKeyHeader:function (key_index,val)
 				{
 				if (key_index < this.pivot_data.col_keys_length -1 )
 					{
-					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="col_exp_key(this)">+</a> '+val,this.styles.KeyHeader+' col_key="'+key_index+'"'];
+					return ['<a class="jpv_collapse jpv_tot_expanded" href="javascript:" onclick="col_exp_key(this)">+</a> '+val,this.styles.KeyHeader];
 					}
 				else
 					{
@@ -182,295 +194,203 @@ $(document).ready
    $('#pv').jPivot('drawData');
 
 
-   //init colorpickers
-/*
-    $('#colors input').each(function(i)
-        {
-        colors[i]=$(this).colorPicker();
-        }
-    )
-
-   $("#resize_chart_1").resizable({
-
-    stop:function(){redraw()}
-    ,handles: 'all'
-   });
-*/
-
-
-
-    	//ready end
+   	//ready end
 		});
-function row_exp_key($href_kh)
-		{
-		var ttd=$($href_kh).parent();
-		var keyind=ttd.attr('row_key');	
-
-        //if we have no total for thos row - draw
-		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
-		var rows=$('#pv').jPivot('getGridParam','rows');
-		if (! totals_mask[rows[keyind]])
-				{
-				//save id for resoring
-		        var td_id=ttd.attr('id');
-				totals_mask[rows[keyind]] = 1;
-				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
-				$('#pv').jPivot('drawData');
-				//restore 
-				ttd= $('#'+td_id);
-				$href_kh = $('a',ttd);
-				}
-		var tds = $('#jpivot_placeholder td[row_key='+keyind+']').slice(1);	//all td except keyheader 
+	
+	
+	
 		
+//*************************************************		
+//************ collapse functions *****************		
+//*************************************************		
 		
-		if ($($href_kh).is('.jpv_tot_collapsed') )
-				{//expand
-			    $($href_kh).addClass('jpv_collapse_process');
-				for (var t=0;t < tds.length; t++)
-						{
-						__collapse_expand_row( $(tds[t]), true );
-						}			    
-			    $('#jpivot_placeholder td.pv_TotalRowKey[keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');	
-				$($href_kh).removeClass('jpv_tot_collapsed jpv_collapse_process').addClass('jpv_tot_expanded');
-				}	   			
-	   	 else
-				{//collapse
-			    $($href_kh).addClass('jpv_collapse_process');
-				for (var t=0;t < tds.length; t++)
-						{
-						__collapse_expand_row( $(tds[t]), false);
-						}	
-			    $('#jpivot_placeholder td.pv_TotalRowKey[keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');		    
-				$($href_kh).removeClass('jpv_tot_expanded jpv_collapse_process').addClass('jpv_tot_collapsed');	   				
-	   			}		
-
-		}
-
-function expand_row($href)
+function create_col_dynamic_css(ind_td_rI,tr_start)
 		{
-		var ttd=$($href).parent();
-		var totind=parseInt(ttd.attr('totind'));
-		var keyind=ttd.attr('keyind');			
-		var td = $('#jpivot_placeholder td[row_key='+keyind+']').eq(totind+1);//skip key header		
-		$('#jpivot_placeholder td.pv_TotalRowKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');
-		__collapse_expand_row(td,true )	;
-		}
-
-		
-function collapse_row($href)
-		{
-		var td=$($href).parent();
-		var keyind=td.attr('row_key');
-    var totind=td.attr('totind');
-		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
-		var rows=$('#pv').jPivot('getGridParam','rows');
-		if (! totals_mask[rows[keyind]])
+			if (!$('#dyn_css').length) $('<style id="dyn_css"/>').appendTo('head');
+			var ns = " td.jpv_collapsed_col-"+tr_start+"-"+ind_td_rI+"{display:none;} ";
+			if ($.inArray(ns,dynamic_style) < 0) 
 				{
-		        var td_id=td.attr('id');
-				totals_mask[rows[keyind]] = 1;
-				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
-				$('#pv').jPivot('drawData');
-				//restore td after redraw
-				td= $('#'+td_id);
+				dynamic_style.push(ns);
+				$('#dyn_css').text(dynamic_style.join("\n"));
 				}
-		$('#jpivot_placeholder td.pv_TotalRowKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
-		__collapse_expand_row(td,false);
-
-		}
-function __collapse_expand_row(td,set_css)
-		{
-		var td_rc=td.attr('id').split(/(\d+)/); //return ["jpivot_rc_", "4", "_", "0", ""] from jpivot_rc_4_0_0		
-		var start_col=parseInt(td_rc[3]);
-		var r=parseInt(td_rc[1]);
-		var rs=parseInt(td.attr('rowspan'));
-		var rows_len=$('#pv').jPivot('getGridParam','pivot_data').data_row_length*2; //mul to 2 for totals
-		for (var i= r ; i < r+rs; i++)
-				{
-				for (var j=start_col; j < rows_len; j++)
-						{
-						//$('#jpivot_rc_'+i+'_'+j).css(set_css); 
-						if (!set_css) 
-								$('#jpivot_rc_'+i+'_'+j).addClass('jpv_collapsed_row'); 
-					  else
-					  		$('#jpivot_rc_'+i+'_'+j).removeClass('jpv_collapsed_row'); 
-						}
-				}
+			return "jpv_collapsed_col-"+tr_start+"-"+ind_td_rI; 
 		}		
-
-function col_exp_key($href_kh)
+function create_row_dynamic_css(ind_td_rI)
 		{
-		var ttd=$($href_kh).parent();
-		var keyind=ttd.attr('col_key');	
-
-        //if we have no total for thos row - draw
-		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
-		var rows=$('#pv').jPivot('getGridParam','rows');
-		if (! totals_mask[cols[keyind]])
-				{
-				//save id for resoring
-		        var td_id=ttd.attr('id');
-				totals_mask[cols[keyind]] = 1;
-				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
-				$('#pv').jPivot('drawData');
-				//restore 
-				ttd= $('#'+td_id);
-				$href_kh = $('a',ttd);
-				}
-		var tds = $('#jpivot_placeholder td[col_key='+keyind+']').slice(1);	//all td except keyheader 
-		
-		
-		if ($($href_kh).is('.jpv_tot_collapsed') )
-				{//expand
-			    $($href_kh).addClass('jpv_collapse_process');
-				for (var t=0;t < tds.length; t++)
-						{
-						__collapse_expand_col( $(tds[t]), true );
-						}			    
-			    $('#jpivot_placeholder td.pv_TotalColKey[keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');	
-				$($href_kh).removeClass('jpv_tot_collapsed jpv_collapse_process').addClass('jpv_tot_expanded');
-				}	   			
-	   	 else
-				{//collapse
-			    $($href_kh).addClass('jpv_collapse_process');
-				for (var t=0;t < tds.length; t++)
-						{
-						__collapse_expand_col( $(tds[t]), false);
-						}	
-			    $('#jpivot_placeholder td.pv_TotalColKey[keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');		    
-				$($href_kh).removeClass('jpv_tot_expanded jpv_collapse_process').addClass('jpv_tot_collapsed');	   				
-	   			}		
-
-		}		
-function expand_col($href)
+			if (!$('#dyn_css').length) $('<style id="dyn_css"/>').appendTo('head');
+			var ns = " td.jpv_collapsed_row"+ind_td_rI+"{display:none;} ";
+			if ($.inArray(ns,dynamic_style) < 0) 
+				dynamic_style.push(ns);
+			$('#dyn_css').text(dynamic_style.join("\n"));
+		}				
+function collapse_col(ahref)	
 		{
-		var ttd=$($href).parent();
-		var totind=parseInt(ttd.attr('totind'));
-		var keyind=ttd.attr('keyind');			
-		var td = $('#jpivot_placeholder td[col_key='+keyind+']').eq(totind+1);//skip key header		
-		$('#jpivot_placeholder td.pv_TotalColKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_collapsed').addClass('jpv_tot_expanded');
-		__collapse_expand_col(td,true )	;
-		}		
-
-function collapse_col($href)
-		{
-		var td=$($href).parent();
-		var keyind=td.attr('col_key');
-    var totind=td.attr('totind');
-		var totals_mask=$('#pv').jPivot('getGridParam','totals_mask');
-		var cols=$('#pv').jPivot('getGridParam','cols');
-		if (! totals_mask[cols[keyind]])
-				{
-		    var td_id=td.attr('id');
-				totals_mask[cols[keyind]] = 1;
-				$('#pv').jPivot('setGridParam',{totals_mask:totals_mask});
-				$('#pv').jPivot('drawData');
-				//restore td after redraw
-				td= $('#'+td_id);
-				}
-		$('#jpivot_placeholder td.pv_TotalColKey[totind='+totind+'][keyind='+keyind+'] a').removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
-		__collapse_expand_col(td,false);
-
-		}
-
-
-function __collapse_expand_col(td,set_css)
-		{
-		var td_rc=td.attr('id').split(/(\d+)/); //return ["jpivot_rc_", "4", "_", "0", ""] from jpivot_rc_4_0_0		
-		var start_row=parseInt(td_rc[1]);
-		var c=parseInt(td_rc[3]);
-		//var cs=parseInt(td.attr('colspan'));
-		var cs=parseInt(td.attr('oldcolspan'));
-    if ( isNaN(cs)) 
-    		{
-    		cs=parseInt(td.attr('colspan'));
-    		td.attr('oldcolspan',cs);
-    		}
-		var cols_len=$('#pv').jPivot('getGridParam','pivot_data').data_rows_count*2 //mul to 2 for totals
-if (!set_css		)
-{
-	var sub_c=parseInt(td.attr('c'))
-	var sub_cs=parseInt(td.attr('colspan'))
-	var sub_r=parseInt(td.attr('r'))
-	for (var i=0; i < sub_r; i++)//all above
-	{
-			$('#jpivot_placeholder td[r='+i+']').each(
-					function()
+				var ind_td = $(ahref).parent()[0];
+				var ind_tr = ind_td.parentNode; //get tr
+				var ind_td_rI = ind_td.realIndex; //real td index in row (not  affected by collapse)
+				var ind_td_rcS = ind_td.cSpan;//real colSpan of td (not  affected by collapse)
+				var start = $(ind_tr).children().index(ind_td); //index of  td to show
+				var	cspan= ind_td.colSpan;
+				var tr_set  = $('#pv tr');
+				var tr_start = tr_set.index(ind_tr);
+			  var hidden_class = create_col_dynamic_css(ind_td_rI,tr_start);
+				var total_col  =$(ind_td).next()//total will be next td
+				tr_set.each(function (tr_ind) //for each row
 					{
-						var cc=parseInt($(this).attr('c'));
-						
-						var ccs=parseInt($(this).attr('oldcolspan'));
-				    if ( isNaN(ccs)) 
-				    		{
-				    		ccs=parseInt($(this).attr('colspan'));
-				    		}						
-										
-						if ( (cc <= sub_c ) && (cc+ccs - 1 >= sub_c) )
+								$(this.cells).each(function() //get all td in row
 								{
-								var new_colspan=parseInt($(this).attr('colspan')); 
-								new_colspan = new_colspan - sub_cs;
-				    		$(this)
-				    		 .attr('oldcolspan',ccs)
-								 .attr('colspan',new_colspan)
-								 .css({color:'red'})
-								;
-								}
+											//fix for collapse_all
+											if (tr_ind >= tr_start && this.realIndex >= ind_td_rI && this.realIndex <= ind_td_rI+ind_td_rcS-1 )
+												{ //these to hide						
+														$(this).addClass(hidden_class)
+												}
+												if (tr_ind < tr_start && this.realIndex <= ind_td_rI && this.realIndex + this.cSpan  >= ind_td_rI + ind_td_rcS)
+													{//tese to fix colspan
+			  										this.colSpan = this.colSpan-cspan > 0 ? this.colSpan-cspan : 1;
+														//var txt = $(this).text();$(this).text(txt+(this.colSpan-cspan > 0 ? '-'+cspan : '=1'));
+													}
+								}	
+								);
+							
 					}
-					);
-	}
-} 
-else
+				)
+				;
+			 	$('a',total_col).removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
+	 			$('span',total_col).show();
+		}
+function col_exp_key(ahref)
+		{ //collapse all keys in thes level
+			
+			$('a.jpv_collapse',$(ahref).parent().siblings('.pv_Key:visible')).each(function(){collapse_col(this)})
+		}		
+function expand_col(ahref)
 {
-	
-	var sub_cs=parseInt(td.attr('oldcolspan'))
-
-	if ( !isNaN(sub_cs))
-	{
-		var sub_c=parseInt(td.attr('c'))
-  	var sub_r=parseInt(td.attr('r'))
-		td.attr('colspan',sub_cs); //restore this
-		for (var i=0; i < sub_r; i++) // restore all above
+	var ind_td = $(ahref).parent().prev()[0];
+	var ind_tr = ind_td.parentNode; //get tr
+	var ind_td_rI = ind_td.realIndex;
+	var ind_td_rcS = ind_td.cSpan;//real colSpan of td (not  affected by collapse)
+	var start = $(ind_tr).children().index(ind_td); //index of  td to show
+	var	cspan= ind_td.colSpan;
+	var tr_set  = $('#pv tr');
+	var tr_start = tr_set.index(ind_tr);
+	var hidden_class = create_col_dynamic_css(ind_td_rI,tr_start);
+	$(ind_td).removeClass(hidden_class);
+	tr_set.each(function (tr_ind) //for each row
 		{
-			$('#jpivot_placeholder td[r='+i+'][oldcolspan]').each(
-			function()
-			{
-				var cc=parseInt($(this).attr('c'));
-				var ccs=parseInt($(this).attr('oldcolspan'));
-				if ( (cc <= sub_c ) && (cc+ccs -1 >= sub_c) )
-				{
-					var new_colspan=parseInt($(this).attr('colspan'));
-					$(this).attr('colspan',new_colspan+sub_cs);
-					$(this).css({color:'blue'});
-				}
-
-			}
-			);
-		}
-	}
-	
-}
-	
-		for (var i= c ; i < c+cs; i++)
-				{
-				for (var j=start_row; j < cols_len; j++)
-						{
-						//$('#jpivot_rc_'+j+'_'+i).css(set_css); 
-						if (!set_css) 
+			
+								$(this.cells).each(function() //get all td in row
 								{
-								$('#jpivot_rc_'+j+'_'+i).addClass('jpv_collapsed_col').css({color:'green'});// 
-								}
-					  else
-					  		{
-					  		var $this = $('#jpivot_rc_'+j+'_'+i);
-					  		$this.removeClass('jpv_collapsed_col').css({color:'blue'});//
-								var ccs=parseInt($this.attr('oldcolspan'));
-						    if ( !isNaN(ccs)) 
-						    		{
-						    		$this.attr('colspan',ccs).css({color:'green'});
-						    		}							  		
-					  	  }
-						}
-				}
+											if (tr_ind >= tr_start && this.realIndex >= ind_td_rI && this.realIndex <= ind_td_rI+ind_td_rcS-1 )
+												{ //these to hide						
+														$(this).removeClass(hidden_class)
+												}
+												if (tr_ind < tr_start && this.realIndex <= ind_td_rI && this.realIndex + this.cSpan  >= ind_td_rI + ind_td_rcS)
+													{//tese to fix colspan
+			  										this.colSpan +=  cspan;
+														//var txt = $(this).text();$(this).text(txt+(this.colSpan-cspan > 0 ? '-'+cspan : '=1'));
+													}
+								}	
+								);			
+					
+				
 		}
+	)
+	;
+		$(ahref).addClass('jpv_tot_expanded').removeClass('jpv_tot_collapsed');
+	$('span',ind_td).hide();
+}
+function row_exp_key(ahref)
+		{
+		}		
+function expand_row(ahref)	
+		{
+		var ind_td = $(ahref).parent()[0];
+		var ind_td_rI = ind_td.realIndex;
+		var ind_tr = ind_td.parentNode; //get tr	
+		
+		
+		var tr = $(ind_tr).prev()
+		var notfound=true;
+		while (notfound || !tr.length)
+				{
+				var cls = tr[0].cells;
+				for (var i=0; i < cls.length;i++)
+						{
+						if (cls[i].realIndex == ind_td_rI) {notfound = false;break;}
+						}
+			  if (notfound) tr = tr.prev();
+				}
+	  td = cls[i];
+	  var	span= td.rowSpan; //colaspn of clicked td
+	  var tr_set  = $('#pv tr');
+	  var tr_start = tr_set.index(tr);
+		tr_set.slice(tr_start,tr_start+span).children().removeClass('jpv_collapsed_row'+ind_td_rI);
+		$(ahref).addClass('jpv_tot_expanded').removeClass('jpv_tot_collapsed');
+		$('span',ind_td).hide();
+		}		
+		
+		
+function collapse_row(ahref)	
+		{
+		var ind_td = $(ahref).parent()[0];
+		var ind_td_rI = ind_td.realIndex;
+		create_row_dynamic_css(ind_td_rI);
+		var ind_tr = ind_td.parentNode; //get tr			
+		var	span= ind_td.rowSpan; //colaspn of clicked td
+		
+		var tr_set  = $('#pv tr').has('td.hoverrow');
+		var tr_start = tr_set.index(ind_tr); //index of clicked tr in tr_set
+		
+		
+	  	//set class for total key for expanding
+	  	var cells = tr_set.last().next().children().each(
+	  		function ()
+	  			{
+	  		 	if (this.realIndex == ind_td_rI)
+	  		 			$('a',this).removeClass('jpv_tot_expanded').addClass('jpv_tot_collapsed');
+	  		 			$('span',this).show();
+	  			}
+	    )		
+		
+		//TODO see if no totals cols  - collapse if had no  visible td
+//		tr_set.slice(0,tr_start+1).each(
+//			function()
+//					{//hide row if all hidden
+//					$(this.cells).filter('.hoverrow').each(//all td left to clicked
+//						function()
+//								{
+//								if (this.realIndex < ind_td_rI && ! (this.rSpan=(this.rSpan - span > 0) ? this.rSpan - span : 0)) 
+//										$(this).addClass('jpv_collapsed_row');
+//								}
+//					)
+//					}
+//		)
+		
+	  tr_set.slice(tr_start).each( //all rows from clicked and below
+	  	function()
+	  			{
+	  			$(this.cells).each(
+	  				function()
+	  					{
+	  					if (this.realIndex >= ind_td_rI)
+	  							$(this).addClass('jpv_collapsed_row'+ind_td_rI);
+	  					}
+	  					)
+	  			}
+	  	);
+
+	
+		}		
+
+
+
+
+
+
+
+
+
+
 
 var colors=[];
 var use_custom_filter=0;var custom_filter_cmp=0;var custom_filter_val=0;
@@ -513,18 +433,16 @@ function AfterDraw()
       //restore state
       $('#totals_dropdown').val(tot_perc);
       
-/// create hover      
+/// create hover  
  $('#pv table').tableHover({
  	  rowClass: 'hoverrow'
  	, colClass: 'hover'
- 	, clickClass: 'click'
+ 	//, clickClass: 'click'
  	, headRows: true
  	,footRows: true
  , headCols: true
  , footCols: true
- 
- //,ignoreCols	: [1,2,3,4,5]
- //,ignoreRows	: [1,2,3,4,5]
+ ,ignoreCols: [1,2,3]
  });       
       
       
@@ -560,12 +478,7 @@ function export_pivot()
       {
        pv0.getDataForExcel();
       }
- function redraw_pivot()
-    {
 
-    $('#pv').jPivot('drawData');
-
-    }
 
 
 
@@ -592,6 +505,9 @@ function prepare_pivot()
     	
     $('#pv').jPivot('prepareData');
     }
+    
+    
+    
 function 		re_create_data()
 		{
 		create_data();
@@ -609,7 +525,7 @@ function create_data()
 	var kl = $(".vals_n").eq(2).slider("value");
 	var ll = $(".vals_n").eq(3).slider("value");
 	var ml =  $(".vals_n").eq(4).slider("value");
-	var pl = $(".vals_n").eq(5).slider("value");
+	var nl = $(".vals_n").eq(5).slider("value");
 	for (var i=0; i < il; i++)
 	{
 		for (var j=0; j < jl; j++)
@@ -624,11 +540,11 @@ function create_data()
 					for (var m=0;m < ml ; m++)
 					{
 						if (Math.random() > trsh) continue;
-						for (var p=0;p < pl; p++)
+						for (var n=0;n < nl; n++)
 						{
 							if (Math.random() > trsh) continue;
 							//data.push(['i'+i,'j'+j,'k'+k,'L'+l,'m'+m,'i'+i+'j'+j+'k'+k+'L'+l+'m'+m])  ;
-							data_local[cnt]=['I'+i,'J'+j,'K'+k,'L'+l,'M'+m,'N'+p,snum++]  ;
+							data_local[cnt]=['I'+i,'J'+j,'K'+k,'L'+l,'Mдлинное длинное название'+m,'N'+n,snum++]  ;
 							cnt++;
 						}
 					}
@@ -639,13 +555,13 @@ function create_data()
 	$('#vals_comp').text('created '+cnt+'rows');
 }
 var data_local=[];
-var rows = [4,5];
-var cols = [0,1,2,3];
+var rows = [0,1,2];
+var cols = [3,4,5];
 var data_col=6;
 var data_col_cnt=null;
 var aggregate = [];
 var filter = [];
-var totals_mask = [1,1,1,1,1,1,1];
+var totals_mask = [1,1,1,1,1,1];
 var data_headers=['capt_i','capt_j','capt_k','capt_l','capt_m','capt_n']              ;
 	</script>
 
@@ -653,12 +569,39 @@ var data_headers=['capt_i','capt_j','capt_k','capt_l','capt_m','capt_n']        
  
  
 <style>
+
+	
+	
 	  td.jpv_collapsed_row{display:none;} 
+				
+
+
 	  td.jpv_collapsed_col{display:none;} 
+		
+			  	  	  
+
 		a.jpv_collapse {text-decoration:none;border:1px solid black;}
 		a.jpv_collapse_process {background-color:yellow;}
-		.pv_TotalRowKey a.jpv_tot_collapsed, .pv_TotalColKey a.jpv_tot_collapsed  {background-color:red;display:inline;}
-		.pv_TotalRowKey a.jpv_tot_expanded,.pv_TotalColKey a.jpv_tot_expanded   {display:none;}
+		a.jpv_tot_collapsed  {background-color:red;display:inline;}
+		.pv_TotalColKey span,.pv_TotalRowKey span   {display:none;}
+		.pv_TotalColKey a.jpv_tot_expanded,.pv_TotalRowKey a.jpv_tot_expanded {display:none;}
+		
+		
+		
+		
+		.pv_table td {
+			border-style:solid;
+			border-color:green;
+			border-width:1px 0 0 1px;
+		}
+			
+td.pv_TotalRowKey {
+			border-style:solid;
+			border-color:green;
+			border-width:0 0 1px 1px;
+}
+
+			
 		
 		body *{font-size:12px;}
 		         #chart2div, #resize_chart_1 { width: 800px; height: 400px;}
@@ -690,10 +633,11 @@ td.hovercell, th.hovercell
 td.hoverrow, th.hoverrow
 {
 	background-color: #6df;
-}		
+}
 </style>
 
 <a href="javascript:location.reload(true)">Refresh this page</a>
+
 <table>
 	<tr>
 		<td style="width:220px;">
@@ -744,7 +688,7 @@ trash_hold: <span id="trsh_txt"></span><div id="trsh_rnd" style="width:100px;"><
       </td>
      </tr>
 </table>
-<button name="dr" onclick="redraw_pivot()">Draw</button>
+<button name="dr" onclick=" $('#pv').jPivot('drawData');">Draw</button>
 <button name="dr" onclick="prepare_pivot()">Prepare</button>
 <button name="dr" onclick="export_pivot()">Excel</button>
 <button name="dr" onclick="save_state()">Save</button>
