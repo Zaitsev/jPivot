@@ -9,7 +9,13 @@
 			.pv_dialog {font-size:10px;}
 			.pv_KeyHeaderFiltered {color:green; font-weight:bold;}
 			.pv_FliterPlaceholder,.pv_KeysRowsPlaceholder ,.pv_KeysColsPlaceholder {vertical-align:top}
-			.pv_AggregatePlaceholder ul,.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul {min-width:120px;padding:0px;list-style-type: none; margin:0;}
+			.pv_AggregatePlaceholder ul,.pv_FliterPlaceholder ul,.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul {background: none repeat scroll 0 0 #E0FBFF;
+					    border: 1px solid #C5C5C5;
+					    list-style-type: none;
+					    margin: 0;
+					    min-height: 2em;
+					    min-width:120px;
+    	}
 			.pv_FliterPlaceholder li, .pv_KeysRowsPlaceholder li { padding:3px 5px 3px 5px ;}	
 			.pv_FliterPlaceholder li {background-color:gold;}
 			.pv_KeysRowsPlaceholder ul,.pv_KeysColsPlaceholder ul{padding-bottom:5px;}

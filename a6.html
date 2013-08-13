@@ -3,7 +3,7 @@
 		<link type="text/css" href="./js/redmond/jquery-ui.css" rel="stylesheet" />
    <link type="text/css" href="./css/jpivot-external.css" rel="stylesheet" />
 
- <script language="javascript" type="text/javascript" src="./js/jquery-1.4.2.min.js"></script>
+ <script language="javascript" type="text/javascript" src="./js/jquery-1.7.1.min.js"></script>
  <script type="text/javascript" src="./js/jquery-ui-1.8.custom.min.js"></script>
  <script language="javascript" type="text/javascript" src="./js/jquery.tablehover.js"></script> 
 
@@ -612,7 +612,7 @@ td.pv_TotalRowKey {
 		div.controlset div { display: inline; float: left; }
 		
 		div.form-container div.controlset label { width: 100px;}
-		.partbl td{width:100px;}
+		.partbl td{width:100px;vertical-align:top;}
 		
 td.click, th.click
 {
@@ -659,13 +659,13 @@ trash_hold: <span id="trsh_txt"></span><div id="trsh_rnd" style="width:100px;"><
 </tr>
 </table>
 <div id="dbg_level" style="width:100px;"></div>
-<table border=1 class="partbl">
-    <tr><td>Rows</td><td>Cols</td><td>Aggr</td><td>Filter</td><td>colors</td></tr>
+<table border=0 class="partbl">
+    <tr><th>Rows</th><th>Cols</th><th>Aggr</th><th>Filter</th><th>colors</th></tr>
      <tr>
-      <td id='qpv_row_keys_placeholder'>herereww</td>
-      <td id='qpv_col_keys_placeholder'>herecol</td>
-      <td id='pv_aggregate_placeholder'>ag</td>
-      <td id='pv_filter_placeholder'>f</td>
+      <td id='qpv_row_keys_placeholder'>drag rows here</td>
+      <td id='qpv_col_keys_placeholder'>drag cols here</td>
+      <td id='pv_aggregate_placeholder'>drag aggregates here</td>
+      <td id='pv_filter_placeholder'>drag filters here</td>
       <td id="colors" width="120px">
          <div class="controlset"><label for="color3">80</label> <input level="80" type="text" name="color3" value="#008000" /></div>
          <div class="controlset"><label for="color3">50</label> <input level="50" type="text" name="color3" value="#99cc00" /></div>

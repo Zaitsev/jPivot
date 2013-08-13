@@ -15,7 +15,7 @@
 
 /* TODO	-	function.call(this)
 
-* - create td attributes in objectt style as {colspan:,rowspan:id etc}
+* - create td attributes in object style as {colspan:,rowspan:id etc}
 
 * - create callback function on print TD - pass coordinates of pv.data ab tabla and attributes
 
@@ -27,7 +27,7 @@
 					  	{ 
 							   matrix[i] = []; 
 						  }
-				  3.  //more readable code, use shortcuts for subarrays (arrays passed be reference)
+				  3.  //more readable code, use shortcuts for subarrays (arrays passed by reference)
 				  		var matrixrow = matrix[k];
 							for ( var l = firstAvailCol; l < firstAvailCol + colSpan; l++ )
 									{
@@ -43,7 +43,6 @@
 											$.fn.tableHoverHover = $.fn.removeClass;
 										}
 					5. h = colIndex[cell.realIndex] || []
-* - integrate jQuery tableHover plugin http://p.sohei.org									
 * - integrate jQuery tableHover plugin http://p.sohei.org		for collapsings...							
 						
 */
@@ -246,48 +245,47 @@
     jpv_keys_placeholder_popup ( $this );
     }
     
+  //callback from jqueryui after sorting/dragging cols,rows etc.  
+  
   function jpv_keys_placeholder_update ( $this, event,	ui )
     {
     //this func	called for each	lists	(we	have 4)	so wait	until	last
+    //this.value is value attribute added to dom-elemnt and represent key-id
     if ( jpv_keys_placeholder_update_list_cnt++ > 2 )
         {
-        var	rows = [];
-        var	cols = [];
-        var	filter = [];
-        var	aggregate = [];
+        $this.opts.cols = [];
+        $this.opts.rows = [];
+        $this.opts.filter = [];
+        $this.opts.aggregate = [];
         $( 'li', '#pv_col_keys_list' ).each (
           function ()
           {
-          cols.push	( $( this ).attr	( 'value' )	)
+          $this.opts.cols.push	( this.value	)
           }
           
         );
         $( 'li', '#pv_row_keys_list' ).each (
           function ()
           {
-          rows.push	( $( this ).attr	( 'value' )	)
+          $this.opts.rows.push	( this.value	)
           }
           
         )		 ;
         $( 'li', '#pv_filter' ).each	(
           function ()
           {
-          filter.push	( $( this ).attr	( 'value' )	)
+          $this.opts.filter.push	( this.value)
           }
           
         )		 ;
         $( 'li', '#pv_aggregate' ).each (
           function ()
           {
-          aggregate.push ( $( this ).attr ( 'value' ) )
+          $this.opts.aggregate.push ( this.value )
           }
           
         )		 ;
         jpv_keys_placeholder_update_list_cnt = 0;
-        $this.opts.cols = cols;
-        $this.opts.rows = rows;
-        $this.opts.filter = filter;
-        $this.opts.aggregate = aggregate;
         $this.opts.totals_mask = $this.opts.getTotalsMask	( $this.opts.data[0].length );
         
         if ( $this.opts.immediate_draw )
@@ -297,15 +295,13 @@
             }
         }
     }
-    
+  //create jqueryui popup dialog 
   function jpv_keys_placeholder_popup	( $this )
     {
     var	opts = $this.opts;
     var	pv = $this.pv;
-    //var	keys_index=$this.pv.keys_index;
-    //var	keys_index_length=$this.pv.keys_index.length;
     var	keys_index_length	=	pv.unique_keys.length
-        var	data_headers = opts.data_headers;
+    var	data_headers = opts.data_headers;
     var	tstr = '';
     var	t1;
     var	t2;
@@ -369,6 +365,7 @@
             }
             
         //bind click event,	we must	rebind for each	time in	case header	was	restored from	aggregate	or filter	state
+        //TODO - use on('click') aka live once on create
         $( '#pv_key_header' + k ).bind
         (
           "click"
@@ -384,7 +381,7 @@
         }
         
     //set	values if	we have	dialog_filter
-    //see	getDialogFilter	-	here we	set	filters	an nullify its
+    //see	getDialogFilter	-	here we	set	filters	and nullify its
     if ( ( typeof ( opts.dialog_filter )	 === 'object' ) &&	( opts.dialog_filter	!= null ) )
         {
         var	filter_len = opts.dialog_filter.length;
@@ -1611,7 +1608,7 @@
         , onBeforeDraw: null
         , onAfterDraw: null
         , getSort: function	( data_row_length )
-          {
+          { //return sort orders from dialogs in keys odrder
           var	a = [];
           
           for	( i = 0;	i	<	data_row_length; i++ )
@@ -1621,7 +1618,7 @@
           }
           
         , getTotalsMask: function	( data_row_length )
-          {
+          {//return totlas flags from dialogs in keys odrder
           var	a = [];
           var exists=false;
           for	( i = 0;	i	<	data_row_length; i++ )
@@ -1633,15 +1630,9 @@
           return a;
           }
           
-        , onCustomFilter: null
-        /*
-        		,onCustomFilter:function(pvdata_row)//act	as INCLUDE filter	with 1 value
-        				{
-        				//false	-	pass row,	true - do	not	pass row
-        				return false;
-        				}
-        		*/
-        , getHeadFilter: function	( data_row_length )	//actas	INCLUDE	filter with	1	value
+        , onCustomFilter: null //callback to customer filters
+
+        , getHeadFilter: function	( data_row_length )	//this is	INCLUDE	filter with	1	value
           {
           var	a = [];
           
@@ -1656,8 +1647,8 @@
           return a;
           }
           
-        , getDialogFilter: function	( $this, data_row_length )	//ac tas EXCLUDE filter	with multiple	values
-          {
+        , getDialogFilter: function	( $this, data_row_length )	//this is  EXCLUDE filter	with multiple	values
+          {//return 1 for each key to include in table
           var	a = jpv_create_2Darray ( data_row_length );
           
           if ( ( typeof ( $this.opts.dialog_filter )	 === 'object' ) &&	( $this.opts.dialog_filter	!= null ) )
@@ -1671,12 +1662,13 @@
               $.extend ( a, $this.opts.dialog_filter ); //copy	to a so	length will	not	be less	than data_row_length
               return a;
               }
-              
+          //filter is exlude-fliter so add unchecked only    
           for	( var i = 0;	i	<	data_row_length; i++ )
             $( '#filter input:checkbox', '#pv_dlg_plh' + i ).not	( ':checked' ).each	( function()
               {
               a[i].push	( $( this ).val() )
-              } )
+              } 
+              )
               
           return a;
           }
@@ -1700,13 +1692,7 @@
           {
           return ['&nbsp;',this.styles.TotalIntersect];
           }
-          
-        /*
-        								,onPrintTotalColValue:function (data_indexes)
-        										{
-        										return jpv_print_total.call	(this,data_indexes,this.styles.TotalColValue,'tcv');
-        										}
-        */
+
         , onPrintTotalRowKey: function ( data_col, val )
           {
           return jpv_print_key.call	( this, data_col, val, this.styles.TotalRowKey, 'TRK' );
@@ -1752,7 +1738,7 @@
           {
           aggregator: 'SUM'
           , precision: 2
-          , data_col_cnt: null //col pos in	dataset	fo avg counts
+          , data_col_cnt: null //col pos in	dataset	for avg counts
           , formatter: jpv_format_value	//function for format	values jpv_format_value(value) retutns [value,attribute]
           }
           
@@ -1760,7 +1746,7 @@
           {
           aggregator: 'SUM'
           , precision: 2
-          , data_col_cnt: null //col pos in	dataset	fo avg counts
+          , data_col_cnt: null //col pos in	dataset	for avg counts
           , formatter: jpv_format_total	//function for format	values jpv_format_value(value) retutns [value,attribute]
           }
           
@@ -1768,7 +1754,7 @@
           {
           aggregator: 'SUM'
           , precision: 2
-          , data_col_cnt: null //col pos in	dataset	fo avg counts
+          , data_col_cnt: null //col pos in	dataset	for avg counts
           , formatter: jpv_format_total	//function for format	values jpv_format_value(value) retutns [value,attribute]
           }
           
@@ -1779,9 +1765,8 @@
       ,	$.jpivot.defaults,	options	|| {} );
       
       this.opts.data = data;
-      //this.opts	=	opts;
       this.pv = {}; //context pivot data
-      this.opts.pivot_data = this.pv ;// ptr to	context	pivot	data
+      this.opts.pivot_data = this.pv ;// pointer to	context	pivot	data
       jpv_preparePv.call ( this )
       
       if ( this.opts.immediate_draw )
@@ -1798,18 +1783,20 @@
     if ( typeof val ==	'undefined' )
       return	['',rclass];
       
-    if ( typeof debug === 'undefined' )
-      debug = 0;
-      
-    if ( debug == 1 )
-      return [dbg_prefix,rclass	];
-      
-    if ( debug == 2 )
-      return [dbg_prefix+data_col+val,rclass ];
-    return [val,rclass];
+	    switch (debug)
+	    {
+	    	case 1:
+	    		return [dbg_prefix,rclass	];
+	    		break;
+	    	case 2:
+	    	  return [dbg_prefix+data_col+val,rclass ];
+	    	  break;
+	    	default:
+	    	  return [val,rclass];
+	    }
     }
     
-// values	aggregate
+
   function jpv_debug_value( data_indexes )
     {
     var	ret;
@@ -1819,21 +1806,23 @@
         ret	=	'undef';
         }
         
-    if ( debug == 1 )
-        {
-        ret	= 'v';
-        }
+	    switch (debug)
+	    {
+	    	case 1:
+	    		ret	= 'v';
+	    		break;
+	    	case 2:
+	        ret	=	'vals['	+	data_indexes.cell_value.join ( ',' ) + ']';
+	        ret	+= ' data_pos[' + data_indexes.data_pos.row + ',' + data_indexes.data_pos.col + ']';
+	        ret	+= ' tot_pos[' + data_indexes.totals_pos.row.join	( ',' )	+ '],[' + data_indexes.totals_pos.col.join	( ',' )	+ ']';
+	    	  break;
         
-    if ( debug == 2 )
-        {
-        ret	=	'vals['	+	data_indexes.cell_value.join ( ',' ) + ']';
-        ret	+= ' data_pos[' + data_indexes.data_pos.row + ',' + data_indexes.data_pos.col + ']';
-        ret	+= ' tot_pos[' + data_indexes.totals_pos.row.join	( ',' )	+ '],[' + data_indexes.totals_pos.col.join	( ',' )	+ ']';
-        }
         
+	    }        
+       
     return ret;
     }
-    
+  // values	aggregate  
   function jpv_aggregatePERC_val ( data_indexes )
     {
     // pv.data_rows_totals_pos[rw][i][key] =	key_pos
@@ -1883,7 +1872,7 @@
     var	ret	=	 tot ?	 cell_val / tot	 : null;
     
     if ( debug == 3 )
-      return ret + '%=' + cell_val + '/' + tot;
+      return Math.round(ret*100)/100 + '%=' + cell_val + '/' + tot;
       
     return ret;
     }
