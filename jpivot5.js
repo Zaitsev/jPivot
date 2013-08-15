@@ -568,32 +568,35 @@
         var	is_filtered = false;
         //head filter	unique keys
         
-        if ( ( opts.onCustomFilter ) &&	( opts.onCustomFilter ( dr )	)	)
+        if ( ( opts.onCustomFilter ) &&	( opts.onCustomFilter ( dr )	)	) //onCustomFilter returns true to exclude rows and its keys from pivot
           continue;
           
+        //filter by	head_filter (include behavior) 
         for	( i = 0;	i < filter_length; i++ )
             {
-            //when we	first	add	key	to head_fiter	(just	drag it	into hoder)	we dont	have values	of this	filter (they are creting here)
-            // so	<select> is	not	drawed yet (pv.head_filter[dc]==null)	and	we need	take first value and use it	as filter
+            
             dc = filter_ptr[i];
             key = data_ptr[dr][dc];
             
-            if ( pv.head_filter[dc] == null )
-              pv.head_filter[dc] = key;
+            //when we	first	add	key	to head_fiter	(just	drag it	into hoder)	we dont	have values	of this	filter (they are creting here)
+            // so	<select> is	not	drawed and populated with options yet (pv.head_filter[dc]==null)	and	we need	take first value and use it	as filter
+            if ( pv.head_filter[dc] == null ) 
+              pv.head_filter[dc] = key; //push first possible value to head_filter (include behavior)
               
             pre_uniquie_keys[dc][key] = key;//add	to uniq	keys for using in	filters
             
             if ( pv.head_filter[dc] != key )
                 {
-                is_filtered = true;		//key	not	allowed	(filtered) by	head filter	,	continue this	loop to	add	all	possible values	to filter
+                is_filtered = true;		//key	not	allowed	(filtered) by	head_filter (include behavior)
                 }
             }
             
         if ( is_filtered )
-          continue;	//do not	continue at	loop above to	add	all	possible values	to dialog_filter
+          continue;	//continue loop and	add	all	possible values	to filter  and skip adding row to pivot
           
         composite_row_key	= '';
         
+        //see readme.txt: pv.dialog_filter (exclude behavior)
         for	( i = 0;	i < row_keys_length; i++ )
             {
             dc = rows_ptr[i];
@@ -602,11 +605,11 @@
             
             if ( is_filtered	|| ( in_array	( key, pv.dialog_filter[dc], false ) != null	)	)
                 {
-                is_filtered = true;		//key	not	allowed	(filtered)	in dialog, continue	to add all possible	values to	filter
+                is_filtered = true;		//key	not	allowed	(filtered)	in dialog, continue	to add all possible	values to	filter an skip adding row to pivot
                 continue;
                 }
                 
-            composite_row_key	+= key + '~~~';
+            composite_row_key	+= key + '~~~'; //add to composite_row_key unfiltered  keys
             }
             
         composite_col_key	=	'';
@@ -647,30 +650,6 @@
                 {
                 data_row2pv_col[dr] = composite_col_key_uniq[composite_col_key];
                 }
-                
-            /* new variant is	more complex - use old
-            //create grand totals
-            gt_r=data_row2pv_col[dr]+row_keys_length;
-            gt_c=data_row2pv_row[dr]+col_keys_length;
-            if (typeof	pv.grand_rows_totals[gt_r] === 'undefined' )
-            		{
-            		pv.grand_rows_totals[gt_r]=[];
-            		}
-            if (typeof	pv.grand_rows_totals[gt_r][data_row2pv_row[dr]]	===	'undefined'	)
-            		{
-            			 pv.grand_rows_totals[gt_r][data_row2pv_row[dr]]=[];
-            		}
-            pv.grand_rows_totals[data_row2pv_col[dr]+row_keys_length][data_row2pv_row[dr]].push(dr);
-            if (typeof	pv.grand_cols_totals[gt_c] === 'undefined' )
-            		{
-            		pv.grand_cols_totals[gt_c]=[];
-            		}
-            if (typeof	pv.grand_cols_totals[gt_c][data_row2pv_col[dr]]	===	'undefined'	)
-            		{
-            			 pv.grand_cols_totals[gt_c][data_row2pv_col[dr]] =[];
-            		}
-            pv.grand_cols_totals[gt_c][data_row2pv_col[dr]]	.push([dr]);
-            */
             }
         }
         
