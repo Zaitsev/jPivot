@@ -632,7 +632,11 @@
             
         if ( !is_filtered )
             {
-            //create mapping data	to pvtable
+            /* create mapping data	to pvtable, 
+             for each row index dr we will create data_row2pv_row[dr] that contain index of row in pivot table 
+             and data_row2pv_col[dr] that contain index of col in pivot table
+             see diagrams.xls page mapping
+             */
             if ( typeof composite_row_key_uniq[composite_row_key] === 'undefined' )
                 {
                 composite_row_key_uniq[composite_row_key]	=	data_row2pv_row[dr] = composite_row_key_uniq_len++;
@@ -651,7 +655,7 @@
                 data_row2pv_col[dr] = composite_col_key_uniq[composite_col_key];
                 }
             }
-        }
+        } //end of loop by all data
         
     //create standart	array	from hash;
     for	( var j	in composite_row_key_uniq )
@@ -667,11 +671,8 @@
     
     len = cols_composite_index.length;
     
-    //copy array
-    //for	(i=0;	i	<	len	;	i++)
-    //	cols_composite_sorted[i] = cols_composite_index[i];
+    //copy and sort array
     var	cols_composite_sorted	=	cols_composite_index.slice();
-    
     cols_composite_sorted.sort ( function ( a, b )
       {
       return jpv_colsSort	( a, b, $this );
